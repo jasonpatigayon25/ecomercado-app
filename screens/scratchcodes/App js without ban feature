@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Alert, Keyboard } from 'react-native';
+/* import React, { useState, useEffect } from 'react';
+import { Keyboard } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getFirestore, doc, getDoc, collection, where, getDocs, query } from 'firebase/firestore';
-import registerNNPushToken from 'native-notify';
-
 
 // imported screens
 import SearchResults from './screens/SearchResults';
@@ -34,6 +31,7 @@ import EditProfile from './screens/EditProfile';
 import SellerManagement from './screens/SellerManagement';
 import DonationManagement from './screens/DonationManagement';
 import OrderHistory from './screens/OrderHistory';
+import SwitchAccount from './screens/SwitchAccount';
 import CheckOutScreen from './screens/CheckOutScreen';
 import Cart from './screens/Cart';
 import OrderConfirmation from './screens/OrderConfirmation';
@@ -47,10 +45,6 @@ import SearchDonationScreen from './screens/SearchDonationScreen';
 import DonationDetail from './screens/DonationDetail';
 import RequestDonationScreen from './screens/RequestDonationScreen';
 import SearchDonationResults from './screens/SearchDonationResults';
-import RequestApproval from './screens/RequestApproval';
-import UserVisit from './screens/UserVisit';
-import CheckoutProducts from './screens/CheckoutProducts';
-import OrdersConfirmation from './screens/OrdersConfirmation';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -151,61 +145,17 @@ const CCCTabs = () => {
 };
 
 const App = () => {
-  registerNNPushToken(18163, 'IeIDbRMaVFzD4jHv6s5OZk');
-
   const [user, setUser] = useState(null);
   const [initializing, setInitializing] = useState(true);
 
-  const checkIfUserIsBanned = async (email) => {
-    const db = getFirestore();
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("email", "==", email));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      const userDoc = querySnapshot.docs[0];
-      if (userDoc.data().banned) {
-        // if user is banned, show alert, sign out and navigate to Welcome Screen
-        Alert.alert(
-          "Account Banned",
-          "Your account has been banned. You will be signed out automatically.",
-          [
-            {
-              text: "OK",
-              onPress: async () => {
-                await signOut(getAuth());
-              }
-            }
-          ],
-          { cancelable: false }
-        );
-      }
-    } else {
-      console.log('User document not found with email:', email);
-    }
-  };
-
-
   useEffect(() => {
     const auth = getAuth();
-
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        const hasJustRegistered = await AsyncStorage.getItem('hasJustRegistered');
-        if (hasJustRegistered === 'true') {
-          await AsyncStorage.removeItem('hasJustRegistered');
-        } else {
-          setUser(currentUser);
-          checkIfUserIsBanned(currentUser.email).catch(console.error);
-        }
-      } else {
-        setUser(null);
-      }
-
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
       if (initializing) setInitializing(false);
     });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, [initializing]);
 
   // last screen checking
@@ -249,7 +199,6 @@ const App = () => {
             <>
               <Stack.Screen name="Main" component={MainTabs} />
               <Stack.Screen name="CCC" component={CCCTabs} />
-              <Stack.Screen name="UserVisit" component={UserVisit} />
               <Stack.Screen name="CategoryResults" component={CategoryResults} />
               <Stack.Screen name="SearchScreen" component={SearchScreen} />
               <Stack.Screen name="SearchResults" component={SearchResults} />
@@ -269,13 +218,11 @@ const App = () => {
               <Stack.Screen name="SellerManagement" component={SellerManagement} />
               <Stack.Screen name="DonationManagement" component={DonationManagement} />
               <Stack.Screen name="OrderHistory" component={OrderHistory} />
-              <Stack.Screen name="RequestApproval" component={RequestApproval} />
+              <Stack.Screen name="SwitchAccount" component={SwitchAccount} />
               <Stack.Screen name="CheckOutScreen" component={CheckOutScreen} />
-              <Stack.Screen name="CheckoutProducts" component={CheckoutProducts} />
               <Stack.Screen name="Cart" component={Cart} />
               <Stack.Screen name="Wish" component={Wish} />
               <Stack.Screen name="OrderConfirmation" component={OrderConfirmation} />
-              <Stack.Screen name="OrdersConfirmation" component={OrdersConfirmation} />
               <Stack.Screen name="Login" component={Login} />
               <Stack.Screen name="Logout" component={MainTabs} options={{ headerRight: () => <Button title="Logout" onPress={handleLogout} /> }} />
             </>
@@ -294,4 +241,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default App; */

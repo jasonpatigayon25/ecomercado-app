@@ -1,0 +1,541 @@
+/* import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Modal, Alert } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import * as ImagePicker from 'expo-image-picker';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { donationCollection } from '../config/firebase';
+import { addDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import MapSelector from './MapSelector'
+import { Timestamp } from 'firebase/firestore';
+
+const Donate = ({ navigation }) => {
+
+  const [userEmail, setUserEmail] = useState(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user !== null) {
+      setUserEmail(user.email);
+    }
+  }, []);
+
+  const [donationInfo, setDonationInfo] = useState({
+    photo: null,
+    name: '',
+    location: '',
+    message: '',
+  });
+  const [showModal, setShowModal] = useState(false);
+  const [missingFields, setMissingFields] = useState({
+    photo: false,
+    name: false,
+    location: false,
+  });
+
+  const handleBackPress = () => {
+    navigation.goBack();
+  };
+
+  const uploadImageAsync = async (uri) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    const storage = getStorage();
+    const storageRef = ref(storage, `donations/${Date.now()}`);
+    await uploadBytes(storageRef, blob);
+
+    blob.close();
+
+    return await getDownloadURL(storageRef);
+  };
+
+  const pickImage = async (type) => {
+    let result;
+    if (type === 'camera') {
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    } else {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    }
+
+    if (!result.canceled && result.assets && result.assets[0].uri) {
+      const uploadUrl = await uploadImageAsync(result.assets[0].uri);
+      setDonationInfo({ ...donationInfo, photo: uploadUrl });
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+  
+    try {
+      const createdAt = Timestamp.fromDate(new Date()); 
+  
+      await addDoc(donationCollection, {
+        photo: donationInfo.photo,
+        name: donationInfo.name,
+        location: donationInfo.location,
+        message: donationInfo.message,
+        donor_email: userEmail,
+        createdAt, 
+      });
+  
+      Alert.alert(`Donation of ${donationInfo.name} successfully submitted!`);
+      resetDonationInfo();
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      Alert.alert('An error occurred while submitting your donation. Please try again.');
+    }
+  };
+
+  const handleCancel = () => {
+    setShowModal(false);
+  };
+
+  const validateForm = () => {
+    const missing = {
+      photo: !donationInfo.photo,
+      name: !donationInfo.name,
+      location: !donationInfo.location,
+    };
+
+    setMissingFields(missing);
+
+    if (Object.values(missing).some(field => field)) {
+      Alert.alert("Please provide the missing information");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleDonate = () => {
+    if (validateForm()) {
+      setShowModal(true);
+    }
+  };
+
+  const [isMapVisible, setIsMapVisible] = useState(false);
+
+  const handleLocationSelect = (locationName) => {
+    setDonationInfo({ ...donationInfo, location: locationName });
+    setIsMapVisible(false);
+  };
+
+  const openMap = () => {
+    setIsMapVisible(true);
+  };
+
+  const locationDisplay = donationInfo.location 
+  ? donationInfo.location
+  : 'Select location using map';
+
+  const resetDonationInfo = () => {
+    setDonationInfo({
+      photo: null,
+      name: '',
+      location: '',
+      message: '',
+    });
+  };
+
+  const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
+
+  const PhotoPickerModal = ({ isVisible, onCancel }) => (
+    <Modal
+      visible={isVisible}
+      onRequestClose={onCancel}
+      animationType="slide"
+      transparent={true}
+    >
+      <View style={styles.modalOverlayPhoto}>
+        <View style={styles.modalContainerPhoto}>
+          <TouchableOpacity style={styles.cancelButtonTopRight} onPress={onCancel}>
+            <Icon name="times" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.modalHeader}>Select Photo</Text>
+          <Text style={styles.modalSubHeader}>Choose a photo from the gallery or take a new one.</Text>
+          <View style={styles.photoOptionsContainer}>
+            <TouchableOpacity
+              style={[styles.photoOption, styles.separateBorder]}
+              onPress={async () => {
+                await pickImage('library');
+                onCancel();
+              }}
+            >
+              <Icon name="photo" size={80} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.photoOption, styles.separateBorder]}
+              onPress={async () => {
+                await pickImage('camera');
+                onCancel();
+              }}
+            >
+              <Icon name="camera" size={80} color="#fff" />
+
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const handleChoosePhoto = () => {
+    setIsPhotoPickerModalVisible(true);
+  };
+
+  return (
+    <View style={styles.container}>
+      <PhotoPickerModal
+        isVisible={isPhotoPickerModalVisible}
+        onCancel={() => setIsPhotoPickerModalVisible(false)}
+      />
+      <Modal
+        visible={showModal}
+        onRequestClose={handleCancel}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Donate Confirmation</Text>
+            <View style={styles.modalContent}>
+              {donationInfo.photo && (
+                <Image source={{ uri: donationInfo.photo }} style={styles.modalProductImage} />
+              )}
+
+              <View style={styles.modalProductDetails}>
+                <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Name:</Text> {donationInfo.name}</Text>
+                <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Location:</Text> {donationInfo.location}</Text>
+                <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Message:</Text> {donationInfo.message}</Text>
+              </View>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                <Text style={styles.submitButtonText}>Donate</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleBackPress}>
+          <View style={styles.backContainer}>
+            <Icon name="arrow-left" size={24} color="#05652D" />
+          </View>
+        </TouchableOpacity>
+        <Text style={styles.title}>Donate</Text>
+      </View>
+      <ScrollView style={styles.contentContainer}>
+        <View style={styles.formContainer}>
+        <Text style={styles.label}>
+          Item Photo
+          {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
+        </Text>
+          <TouchableOpacity style={styles.addPhotoContainer} onPress={handleChoosePhoto}>
+            {donationInfo.photo ? (
+              <Image source={{ uri: donationInfo.photo }} style={styles.productImage} />
+            ) : (
+              <Icon name="camera" size={24} color="#05652D" />
+            )}
+          </TouchableOpacity>
+          <Text style={styles.label}>
+            Item Name
+            {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter item name"
+            value={donationInfo.name}
+            onChangeText={(name) => setDonationInfo({ ...donationInfo, name })}
+          />
+          <Text style={styles.label}>
+            Location
+            {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
+          </Text>
+          <TouchableOpacity style={styles.locationDisplay} onPress={openMap}>
+            <Text>{locationDisplay}</Text>
+          </TouchableOpacity>
+          <Text style={styles.label}>Message</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your message"
+            multiline={true}
+            value={donationInfo.message}
+            onChangeText={(message) => setDonationInfo({ ...donationInfo, message })}
+          />
+          <TouchableOpacity style={styles.donateButton} onPress={handleDonate}>
+            <Text style={styles.buttonText}>Donate</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+      <Modal
+        visible={isMapVisible}
+        onRequestClose={() => setIsMapVisible(false)}
+        animationType="slide"
+        transparent={true}
+      >
+        <MapSelector onLocationSelect={handleLocationSelect} />
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
+  header: {
+    paddingTop: 10,
+    marginBottom: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3FCE9',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  backContainer: {
+    marginRight: 10,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#05652D',
+    marginLeft: 10,
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+  },
+  formContainer: {
+    paddingTop: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#000',
+  },
+  addPhotoContainer: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 100,
+    height: 100,
+    marginBottom: 10,
+  },
+  productImage: {
+    width: 100,
+    height: 100,
+  },
+  input: {
+    borderWidth: 0,
+    borderColor: 'transparent',
+    borderBottomWidth: 1,
+    borderBottomColor: '#D3D3D3',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    backgroundColor: '#FFF',
+    color: '#000',
+  },
+  locationDisplay: {
+    borderWidth: 0,
+    borderColor: 'transparent',
+    borderBottomWidth: 1,
+    borderBottomColor: '#D3D3D3',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    backgroundColor: '#FFF',
+    color: '#000',
+  },
+  donateButton: {
+    backgroundColor: '#05652D',
+    paddingVertical: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '90%',
+    padding: 20,
+    borderRadius: 15,
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 5,
+    alignItems: 'center', 
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    alignSelf: 'stretch',
+    textAlign: 'center',
+  },
+  modalContent: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    alignSelf: 'stretch',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalProductImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginRight: 10,
+  },
+  modalProductDetails: {
+    flex: 1,
+  },
+  modalDetail: {
+    fontSize: 18,
+    marginBottom: 10, 
+  },
+  modalLabel: {
+    fontWeight: 'bold',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%', 
+  },
+  cancelButton: {
+    flex: 1,
+    margin: 5,
+    backgroundColor: '#d3d3d3',
+    borderRadius: 5,
+    alignItems: 'center', 
+  },
+  cancelButtonText: {
+    color: '#000',
+    padding: 10,
+  },
+  submitButton: {
+    flex: 1,
+    margin: 5,
+    backgroundColor: '#05652D',
+    borderRadius: 5,
+    alignItems: 'center', 
+  },
+  submitButtonText: {
+    color: '#FFF',
+    padding: 10,
+  },
+  modalOverlayPhoto: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainerPhoto: {
+    width: '100%',
+    backgroundColor: '#05652D',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButtonTopRight: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
+  modalHeader: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 10,
+  },
+  modalSubHeader: {
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 20,
+  },
+  photoOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    padding: 10,
+    borderRadius: 5,
+    marginVertical: 10,
+  },
+  cancelButtonPhoto: {
+    backgroundColor: 'transparent',
+    padding: 10,
+    borderRadius: 5,
+  },
+  cancelTextPhoto: {
+    color: '#fff',
+    fontSize: 18,
+  },   
+  photoOptionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    padding: 10,
+    marginTop: 20,
+  },
+  photoOption: {
+    alignItems: 'center',
+    padding: 10,
+  },
+  separateBorder: {
+    borderWidth: 2,
+    borderColor: '#fff',
+    borderRadius: 10,
+    marginHorizontal: 5,
+  },  
+});
+
+export default Donate; */
