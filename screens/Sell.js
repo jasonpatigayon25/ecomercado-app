@@ -12,7 +12,6 @@ import axios from 'axios';
 import { Dimensions } from 'react-native';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import MapSelector from './MapSelector'
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -21,8 +20,6 @@ const Sell = ({ navigation }) => {
   const [locationSearchModalVisible, setLocationSearchModalVisible] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState('');
   const [locationSearchResults, setLocationSearchResults] = useState([]);
-
-  const [mapSelectorModalVisible, setMapSelectorModalVisible] = useState(false);
 
   const [userEmail, setUserEmail] = useState(null);
   const [productInfo, setProductInfo] = useState({
@@ -44,20 +41,16 @@ const Sell = ({ navigation }) => {
     quantity: false,
   });
 
-  const openMapSelector = () => {
-    setMapSelectorModalVisible(true);
-  };
-
   useEffect(() => {
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
-      registerIndieID(user.email, 18163, 'IeIDbRMaVFzD4jHv6s5OZk')
+      registerIndieID(user.email, 17255, 'bWgMDIdkXldaUhQrV5Z0Zh')
         .then(() => console.log("Device registered for notifications"))
         .catch(err => console.error("Error registering device:", err));
 
       return () => {
-        unregisterIndieDevice(user.email, 18163, 'IeIDbRMaVFzD4jHv6s5OZk')
+        unregisterIndieDevice(user.email, 17255, 'bWgMDIdkXldaUhQrV5Z0Zh')
           .then(() => console.log("Device unregistered for notifications"))
           .catch(err => console.error("Error unregistering device:", err));
       };
@@ -205,8 +198,8 @@ const sendPushNotification = async (subID, title, message) => {
 
   const notificationData = {
     subID: subID,
-    appId: 18163,
-    appToken: 'IeIDbRMaVFzD4jHv6s5OZk',
+    appId: 17255,
+    appToken: 'bWgMDIdkXldaUhQrV5Z0Zh',
     title: title,
     message: message
   };
@@ -602,14 +595,9 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
             Location
             {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
           </Text>
-          <View style={styles.locationInputContainer}>
           <TouchableOpacity style={styles.input}  onPress={() => setLocationSearchModalVisible(true)}>
             <Text>{productInfo.location || 'Enter Location'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.locationIcon} onPress={openMapSelector}>
-    <Icon name="location-arrow" size={24} color="#05652D" />
-  </TouchableOpacity>
-  </View>
           <Text style={styles.label}>
           Quantity:
           {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>}
@@ -673,17 +661,6 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           </View>
         </View>
       </Modal>
-      <Modal
-  animationType="slide"
-  transparent={true}
-  visible={mapSelectorModalVisible}
-  onRequestClose={() => setMapSelectorModalVisible(false)}
->
-  <MapSelector onLocationSelect={(location) => {
-    setProductInfo({ ...productInfo, location: location });
-    setMapSelectorModalVisible(false);
-  }} />
-</Modal>
     </View>
   );
 };
@@ -987,27 +964,6 @@ const styles = StyleSheet.create({
     height: 80, 
     borderRadius: 40, 
     marginBottom: 10, 
-  },
-  locationInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#D3D3D3',
-    borderRadius: 8,
-    marginBottom: 20,
-    backgroundColor: '#FFF',
-  },
-  locationInput: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    color: '#333',
-  },
-  locationIcon: {
-    padding: 10,
-    backgroundColor: 'transparent', 
-    marginRight: 5, 
   },                                                             
 });
 
