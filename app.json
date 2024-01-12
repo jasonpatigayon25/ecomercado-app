@@ -24,6 +24,7 @@
     },
     "android": {
       "package": "com.ucbanilad.ecomercado",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/ecomercado-icon.png",
         "backgroundColor": "#ffffff"
