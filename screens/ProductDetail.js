@@ -53,6 +53,34 @@ const ProductDetail = ({ navigation, route }) => {
     navigation.goBack();
   };
 
+  const incrementProductHit = async (productId) => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+  
+    if (!user) {
+      console.error("No user logged in");
+      return;
+    }
+  
+    const userEmail = user.email;
+    const hitRef = doc(db, 'searchHits', productId);
+  
+    try {
+      await runTransaction(db, async (transaction) => {
+        const hitDoc = await transaction.get(hitRef);
+        const data = hitDoc.data();
+        const users = data ? (data.users || []) : []; 
+        if (!hitDoc.exists() || !users.includes(userEmail)) {
+          const newHits = data && data.hits ? data.hits + 1 : 1;
+          const updatedUsers = users.includes(userEmail) ? users : [...users, userEmail];
+          transaction.set(hitRef, { hits: newHits, users: updatedUsers, productId: productId }, { merge: true });
+        }
+      });
+    } catch (error) {
+      console.error("Error updating product hits:", error);
+    }
+  };
+
   const incrementUserRecommendHit = async (productId) => {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -96,6 +124,7 @@ const ProductDetail = ({ navigation, route }) => {
     }
 
     await incrementUserRecommendHit(product.id);
+    await incrementProductHit(product.id);
   
     const cartRef = doc(db, 'carts', user.email);
     
