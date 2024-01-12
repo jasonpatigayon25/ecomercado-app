@@ -5,6 +5,11 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/ecomercado-icon.png",
+    "notification": {
+      "icon": "./assets/ecomercado-icon.png",
+      "color": "#ffffff", 
+      "iosDisplayInForeground": true 
+    },
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/background.png",

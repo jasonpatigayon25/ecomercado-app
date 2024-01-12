@@ -23,6 +23,8 @@ const Home = ({ navigation }) => {
 
   const [isLocationLoading, setIsLocationLoading] = useState(false);
 
+  const [locationLevel, setLocationLevel] = useState('city');
+
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const [donations, setDonations] = useState([]);
@@ -237,36 +239,60 @@ const Home = ({ navigation }) => {
 
   const handleLocation = async () => {
     setIsLocationLoading(true);
-
+  
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       console.log('Location permission not granted');
+      setIsLocationLoading(false);
       return;
     }
-
+  
     try {
       let location = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = location.coords;
-
+  
       const googleApiKey = 'AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g';
-
+  
       const response = await axios.get(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleApiKey}`
       );
-
+  
       if (response.data.results.length > 0) {
         const addressComponents = response.data.results[0].address_components;
         const cityComponent = addressComponents.find(component => component.types.includes("locality"));
-        const city = cityComponent ? cityComponent.long_name : 'Unknown';
-
-        setUserCity(city);
+        const provinceComponent = addressComponents.find(component => component.types.includes("administrative_area_level_1"));
+        const countryComponent = addressComponents.find(component => component.types.includes("country"));
+  
+        let locationText = '';
+        switch (locationLevel) {
+          case 'city':
+            locationText = cityComponent ? cityComponent.long_name : 'Unknown City';
+            setLocationLevel('province');
+            break;
+          case 'province':
+            locationText = provinceComponent ? provinceComponent.long_name : 'Unknown Province';
+            setLocationLevel('country');
+            break;
+          case 'country':
+            locationText = countryComponent ? countryComponent.long_name : 'Philippines'; // Default to 'Philippines' if not found
+            setLocationLevel('city');
+            break;
+          default:
+            locationText = 'Unknown Location';
+            setLocationLevel('city');
+            break;
+        }
+  
+        setUserCity(locationText);
         setLocationEnabled(true);
       }
       setIsLocationLoading(false);
     } catch (error) {
       console.error('Error fetching location: ', error);
+      setIsLocationLoading(false);
     }
   };
+  
 
   return (
     <View style={styles.container}>
@@ -344,18 +370,36 @@ const Home = ({ navigation }) => {
         <View style={[styles.recommendedContainer, styles.sectionContainer]}>
           <View style={styles.locationHeader}>
             <Text style={styles.sectionTitle}>Recommended for You</Text>
-            <View style={styles.locationContainer}>
+            <View style={styles.locationFilterContainer}>
               {isLocationLoading ? (
                 <ActivityIndicator size="small" color="#05652D" />
               ) : locationEnabled ? (
-                <>
-                  <Text style={styles.locationText}>{userCity}</Text>
-                  <Icon name="map-marker" size={15} color="#05652D" />
-                </>
+                <TouchableOpacity onPress={handleLocation}>
+                  <View style={styles.locationContainer}>
+                    <Text style={styles.locationText}>{userCity}</Text>
+                    <Icon name="map-marker" size={15} color="#05652D" style={styles.locationIcon} />
+                  </View>
+                </TouchableOpacity>
               ) : (
                 <TouchableOpacity onPress={handleLocation} style={styles.enableLocationButton}>
-                  <Text style={styles.locationText}>Enable Nearby</Text>
-                  <Icon name="map-marker" size={15} color="#05652D" />
+                  {locationLevel === 'city' && (
+                    <>
+                      <Text style={styles.locationText}>Enable Nearby</Text>
+                      <Icon name="map-marker" size={15} color="#05652D" style={styles.locationIcon} />
+                    </>
+                  )}
+                  {locationLevel === 'province' && (
+                    <>
+                      <Text style={styles.locationText}>Go to Province</Text>
+                      <Icon name="map-marker" size={15} color="#05652D" style={styles.locationIcon} />
+                    </>
+                  )}
+                  {locationLevel === 'country' && (
+                    <>
+                      <Text style={styles.locationText}>Go to Philippines</Text>
+                      <Icon name="map-marker" size={15} color="#05652D" style={styles.locationIcon} />
+                    </>
+                  )}
                 </TouchableOpacity>
               )}
             </View>
@@ -369,20 +413,20 @@ const Home = ({ navigation }) => {
           </ScrollView>
         </View>
         <View style={[styles.donationsContainer, styles.sectionContainer]}>
-  <View style={styles.donationsHeader}>
-    <Text style={styles.sectionTitle}>Recent Donations</Text>
-    <TouchableOpacity onPress={shuffleDonations} style={styles.shuffleButton}>
-      <Icon name="random" size={20} color="#05652D" />
-    </TouchableOpacity>
-  </View>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-    {donations.map((donation) => (
-      <View key={donation.id}>
-        <DonationItem item={donation} />
-      </View>
-    ))}
-  </ScrollView>
-</View>
+          <View style={styles.donationsHeader}>
+            <Text style={styles.sectionTitle}>Recent Donations</Text>
+            <TouchableOpacity onPress={shuffleDonations} style={styles.shuffleButton}>
+              <Icon name="random" size={20} color="#05652D" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {donations.map((donation) => (
+              <View key={donation.id}>
+                <DonationItem item={donation} />
+              </View>
+            ))}
+          </ScrollView>
+        </View>
       </ScrollView>
     </View>
   );
@@ -634,6 +678,14 @@ searchSuggestions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    top: -10,
+    right: -10,
   },
   locationText: {
     marginRight: 5, 
