@@ -144,7 +144,7 @@ const Home = ({ navigation }) => {
   
         const additionalProducts = [];
         for (const category of categories) {
-          const categoryProductsSnapshot = await getDocs(query(productsRef, where("category", "==", category), limit(3)));
+          const categoryProductsSnapshot = await getDocs(query(productsRef, where("category", "==", category), limit(5)));
           const categoryProducts = categoryProductsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           additionalProducts.push(...categoryProducts);
         }
@@ -152,7 +152,7 @@ const Home = ({ navigation }) => {
         const combinedProducts = [...new Map(topProducts.concat(additionalProducts).map(product => [product.id, product])).values()];
         const availableProducts = combinedProducts.filter(product => product.quantity > 0 && product.seller_email !== userEmail);
   
-        setRecommendedProducts(availableProducts.slice(0, 20));
+        setRecommendedProducts(availableProducts.slice(0, Math.min(20, Math.max(10, availableProducts.length))));
       } else {
 
         const allProductsQuery = query(collection(db, 'products'), orderBy("name"), limit(10));
@@ -162,7 +162,7 @@ const Home = ({ navigation }) => {
         const availableAllProducts = allProducts.filter(product => product.quantity > 0 && product.seller_email !== userEmail);
         availableAllProducts.sort(() => 0.5 - Math.random());
   
-        setRecommendedProducts(availableAllProducts);
+        setRecommendedProducts(availableAllProducts.slice(0, Math.min(20, Math.max(10, availableAllProducts.length))));
       }
     };
   

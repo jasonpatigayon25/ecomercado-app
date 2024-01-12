@@ -127,6 +127,7 @@ const SearchResults = ({ route, navigation }) => {
       style={styles.productItem}
       onPress={async () => {
         await incrementProductHit(product.id);
+        await incrementUserRecommendHit(product.id);
         navigation.navigate('ProductDetail', { product });
       }}
     >

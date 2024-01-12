@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, Tex
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs, addDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs, addDoc, onSnapshot, runTransaction } from 'firebase/firestore';
 import { Rating } from 'react-native-ratings';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
@@ -53,6 +53,36 @@ const ProductDetail = ({ navigation, route }) => {
     navigation.goBack();
   };
 
+  const incrementUserRecommendHit = async (productId) => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+  
+    if (!user) {
+      console.error("No user logged in");
+      return;
+    }
+  
+    const userId = user.uid;
+    const userEmail = user.email;
+    const hitRef = doc(db, 'userRecommend', userId);
+  
+    try {
+      await runTransaction(db, async (transaction) => {
+        const hitDoc = await transaction.get(hitRef);
+        const data = hitDoc.data();
+        const productHits = data ? (data.productHits || {}) : {};
+  
+        if (!hitDoc.exists() || (productHits[productId] || 0) < 10) {
+          const newCount = (productHits[productId] || 0) + 1;
+          productHits[productId] = newCount;
+          transaction.set(hitRef, { productHits, userEmail }, { merge: true });
+        }
+      });
+    } catch (error) {
+      console.error("Error updating user recommendations:", error);
+    }
+  };
+
   const handleAddToCart = async () => {
     if (!user) {
       console.log('User not authenticated');
@@ -64,6 +94,8 @@ const ProductDetail = ({ navigation, route }) => {
       Alert.alert("You cannot cart your own product.");
       return;
     }
+
+    await incrementUserRecommendHit(product.id);
   
     const cartRef = doc(db, 'carts', user.email);
     

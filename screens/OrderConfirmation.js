@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { collection, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDoc, runTransaction } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
@@ -33,6 +33,36 @@ const OrderConfirmation = ({ navigation, route }) => {
         .catch(err => console.error("Error unregistering device:", err));
     };
   }, [user.email]);
+
+  const incrementUserRecommendHit = async (productId) => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+  
+    if (!user) {
+      console.error("No user logged in");
+      return;
+    }
+  
+    const userId = user.uid;
+    const userEmail = user.email;
+    const hitRef = doc(db, 'userRecommend', userId);
+  
+    try {
+      await runTransaction(db, async (transaction) => {
+        const hitDoc = await transaction.get(hitRef);
+        const data = hitDoc.data();
+        const productHits = data ? (data.productHits || {}) : {};
+  
+        if (!hitDoc.exists() || (productHits[productId] || 0) < 10) {
+          const newCount = (productHits[productId] || 0) + 1;
+          productHits[productId] = newCount;
+          transaction.set(hitRef, { productHits, userEmail }, { merge: true });
+        }
+      });
+    } catch (error) {
+      console.error("Error updating user recommendations:", error);
+    }
+  };
 
   const handleProceed = async () => {
     if (orderPlaced) {
@@ -115,6 +145,8 @@ const OrderConfirmation = ({ navigation, route }) => {
   
       sendPushNotification(user.email, 'Order Placed', buyerNotificationMessage);
       sendPushNotification(productDetails.seller_email, 'New Order Received', sellerNotificationMessage);
+
+      await incrementUserRecommendHit(productDetails.productId);
   
       Alert.alert('Order placed successfully!');
       navigation.navigate('Home');
