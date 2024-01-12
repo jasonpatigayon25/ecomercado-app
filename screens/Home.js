@@ -31,6 +31,8 @@ const Home = ({ navigation }) => {
 
   const carouselRef = useRef(null);
 
+  const [isLocationFilterActive, setIsLocationFilterActive] = useState(false);
+
   const [userCity, setUserCity] = useState('');
   const [locationEnabled, setLocationEnabled] = useState(false);
 
@@ -260,7 +262,7 @@ const Home = ({ navigation }) => {
       if (response.data.results.length > 0) {
         const addressComponents = response.data.results[0].address_components;
         const cityComponent = addressComponents.find(component => component.types.includes("locality"));
-        const provinceComponent = addressComponents.find(component => component.types.includes("administrative_area_level_1"));
+        const provinceComponent = addressComponents.find(component => component.types.includes("administrative_area_level_2"));
         const countryComponent = addressComponents.find(component => component.types.includes("country"));
   
         let locationText = '';
