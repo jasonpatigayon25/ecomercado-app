@@ -131,7 +131,7 @@ const Home = ({ navigation }) => {
 
         const topProductHits = Object.entries(userRecommendData.productHits)
           .sort((a, b) => b[1] - a[1])
-          .slice(0, 3);
+          .slice(0, 10);
   
         const topProductIds = topProductHits.map(([productId]) => productId);
         const productsRef = collection(db, 'products');
@@ -152,7 +152,7 @@ const Home = ({ navigation }) => {
         const combinedProducts = [...new Map(topProducts.concat(additionalProducts).map(product => [product.id, product])).values()];
         const availableProducts = combinedProducts.filter(product => product.quantity > 0 && product.seller_email !== userEmail);
   
-        setRecommendedProducts(availableProducts.slice(0, 10));
+        setRecommendedProducts(availableProducts.slice(0, 20));
       } else {
 
         const allProductsQuery = query(collection(db, 'products'), orderBy("name"), limit(10));
@@ -274,7 +274,7 @@ const Home = ({ navigation }) => {
             setLocationLevel('country');
             break;
           case 'country':
-            locationText = countryComponent ? countryComponent.long_name : 'Philippines'; // Default to 'Philippines' if not found
+            locationText = countryComponent ? countryComponent.long_name : 'Philippines'; 
             setLocationLevel('city');
             break;
           default:

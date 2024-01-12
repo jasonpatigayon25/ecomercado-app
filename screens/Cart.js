@@ -111,6 +111,13 @@ const Cart = ({ navigation }) => {
         orderedQuantity: item.userQuantity,
         orderedPrice: item.userQuantity * item.price
       }));
+
+    const isUnavailable = selectedProductsWithQuantities.some(item => item.availableQuantity === 0);
+  
+    if (isUnavailable) {
+      Alert.alert("Unavailable", "Cannot proceed to checkout because one or more selected items are not available.");
+      return;
+    }
   
     if (selectedProductsWithQuantities.length > 0) {
       navigation.navigate('CheckoutProducts', { selectedProducts: selectedProductsWithQuantities });
@@ -118,6 +125,7 @@ const Cart = ({ navigation }) => {
       Alert.alert("No product selected", "Please select at least one product to checkout");
     }
   };
+  
   
   const renderEmptyCart = () => (
     <View style={styles.emptyCartContainer}>
