@@ -13,12 +13,12 @@ const SearchDonationScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchRandomDonations = async () => {
       const donationsRef = collection(db, "donation");
-      const q = query(donationsRef, limit(10)); 
+      const q = query(donationsRef, limit(20)); 
       const querySnapshot = await getDocs(q);
       const donations = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(doc => !doc.isDonated); 
-      setRandomDonations(donations.slice(0, 5));
+      setRandomDonations(donations.slice(0, 20));
     };
   
     fetchRandomDonations();
@@ -44,7 +44,7 @@ const SearchDonationScreen = ({ navigation }) => {
       const querySnapshot = await getDocs(donationQuery);
       const results = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(doc => !doc.isDonated); // Only include donations without 'isDonated' set to true
+        .filter(doc => !doc.isDonated); 
       setSearchResults(results);
     } catch (error) {
       console.error("Error searching donations:", error);

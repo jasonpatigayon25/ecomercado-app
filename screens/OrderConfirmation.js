@@ -23,12 +23,12 @@ const OrderConfirmation = ({ navigation, route }) => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
 
   useEffect(() => {
-    registerIndieID(user.email, 18163, 'IeIDbRMaVFzD4jHv6s5OZk')
+    registerIndieID(user.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
       .then(() => console.log("Device registered for notifications"))
       .catch(err => console.error("Error registering device:", err));
 
     return () => {
-      unregisterIndieDevice(user.email, 18163, 'IeIDbRMaVFzD4jHv6s5OZk')
+      unregisterIndieDevice(user.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
         .then(() => console.log("Device unregistered for notifications"))
         .catch(err => console.error("Error unregistering device:", err));
     };
@@ -176,8 +176,8 @@ const OrderConfirmation = ({ navigation, route }) => {
 
     const notificationData = {
       subID: subID,
-      appId: 18163,
-      appToken: 'IeIDbRMaVFzD4jHv6s5OZk',
+      appId: 18345,
+      appToken: 'TdOuHYdDSqcy4ULJFVCN7l',
       title: 'ECOMercado',
       message: message
     };
