@@ -124,7 +124,36 @@ const Home = ({ navigation }) => {
       }
   
       const userEmail = user.email;
+      
+      const productsRef = collection(db, 'products');
+      let locationFilter;
   
+      if (locationEnabled) {
+        switch (locationLevel) {
+          case 'city':
+            locationFilter = userCity; 
+            break;
+          case 'province':
+            locationFilter = userCity; 
+            break;
+          case 'country':
+            locationFilter = 'Philippines';
+            break;
+          default:
+            locationFilter = null;
+        }
+      }
+  
+      if (locationEnabled && userCity) {
+        const locationQuery = query(productsRef, orderBy("location"));
+        const locationQuerySnapshot = await getDocs(locationQuery);
+        const locationProducts = locationQuerySnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(product => product.location && product.location.includes(userCity))
+          .filter(product => product.quantity > 0 && product.seller_email !== userEmail);
+      
+        setRecommendedProducts(locationProducts);
+      } else {
       const userRecommendRef = doc(db, 'userRecommend', user.uid);
       const userRecommendSnapshot = await getDoc(userRecommendRef);
       const userRecommendData = userRecommendSnapshot.data();
@@ -166,10 +195,11 @@ const Home = ({ navigation }) => {
   
         setRecommendedProducts(availableAllProducts.slice(0, Math.min(20, Math.max(10, availableAllProducts.length))));
       }
+    }
     };
   
     fetchRecommendedProducts();
-  }, []);
+  }, [locationEnabled, locationLevel, userCity]);
   
   const handleSearchFocus = () => {
     navigation.navigate('SearchScreen', { searchText });
@@ -241,15 +271,15 @@ const Home = ({ navigation }) => {
 
   const handleLocation = async () => {
     setIsLocationLoading(true);
-  
+    
+    try {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       console.log('Location permission not granted');
       setIsLocationLoading(false);
       return;
     }
-  
-    try {
+
       let location = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = location.coords;
   
