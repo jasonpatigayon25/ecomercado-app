@@ -200,7 +200,7 @@ const sendPushNotification = async (subID, title, message) => {
     subID: subID,
     appId: 17255,
     appToken: 'bWgMDIdkXldaUhQrV5Z0Zh',
-    title: title,
+    title: 'ECOMercado',
     message: message
   };
 

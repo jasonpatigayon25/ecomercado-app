@@ -84,7 +84,7 @@ const RequestDonationScreen = ({ navigation, route }) => {
       subID: subID,
       appId: 18163, 
       appToken: 'IeIDbRMaVFzD4jHv6s5OZk', 
-      title: title,
+      title: 'ECOMercado',
       message: message
     };
 

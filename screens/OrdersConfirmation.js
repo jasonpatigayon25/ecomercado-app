@@ -182,7 +182,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
       subID: subID,
       appId: 18163,
       appToken: 'IeIDbRMaVFzD4jHv6s5OZk',
-      title: title,
+      title: 'ECOMercado',
       message: message
     };
   
