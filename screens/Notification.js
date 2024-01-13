@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, Modal, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
-import { collection, getDocs, query, where, doc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
 
@@ -35,9 +35,9 @@ const Notification = ({ navigation }) => {
         const q = query(collection(db, 'notifications'), where('email', '==', user.email));
         const querySnapshot = await getDocs(q);
         const fetchedNotifications = querySnapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate()); 
-
+          .map(doc => ({ id: doc.id, isRead: doc.data().isRead || false, ...doc.data() }))
+          .sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate());
+  
         setNotifications(fetchedNotifications);
       } catch (error) {
         console.error('Error fetching notifications: ', error);
@@ -80,6 +80,17 @@ const Notification = ({ navigation }) => {
   };
 
   const handlePress = async (notification) => {
+    if (!notification.isRead) {
+      const notificationRef = doc(db, 'notifications', notification.id);
+      await updateDoc(notificationRef, { isRead: true });
+
+      setNotifications(notifications.map(n => {
+        if (n.id === notification.id) {
+          return { ...n, isRead: true };
+        }
+        return n;
+      }));
+    }
     if (notification.type === 'subscribed_sell') {
       const sellerEmail = notification.productInfo?.sellerEmail;
       if (sellerEmail) {
@@ -416,58 +427,59 @@ const Notification = ({ navigation }) => {
     );
   };
   
-
-const renderNotificationItem = (notification) => {
-  let iconName;
-  let iconColor = "#05652D";
-
-  switch (notification.type) {
-    case 'buy_sell_order':
-      iconName = 'shopping-bag';
-      break;
-    case 'donation_request':
-      iconName = 'heart';
-      break;
-    case 'donation_approved':
-      iconName = 'check';
-      iconColor = 'green';
-      break;
-    case 'donation_denied':
-      iconName = 'times';
-      iconColor = 'red';
-      break;
-    case 'chat_interest':
-      iconName = 'comment'; 
-      break;
-    case 'subscribed_sell':
-      iconName = 'bell'; 
-      break;
-    case 'subscribed_donate':
-      iconName = 'bell'; 
-      break;
-    default:
-      iconName = 'comment'; 
-      break;
-  }
+  const renderNotificationItem = (notification) => {
+    let iconName;
+    let iconColor = "#05652D";
   
+    switch (notification.type) {
+      case 'buy_sell_order':
+        iconName = 'shopping-bag';
+        break;
+      case 'donation_request':
+        iconName = 'heart';
+        break;
+      case 'donation_approved':
+        iconName = 'check';
+        iconColor = 'green';
+        break;
+      case 'donation_denied':
+        iconName = 'times';
+        iconColor = 'red';
+        break;
+      case 'chat_interest':
+        iconName = 'comment'; 
+        break;
+      case 'subscribed_sell':
+      case 'subscribed_donate':
+        iconName = 'bell'; 
+        break;
+      default:
+        iconName = 'comment'; 
+        break;
+    }
+  
+    const notificationStyle = typeof notification.isRead !== 'undefined' && notification.isRead
+    ? styles.notificationItem 
+    : {...styles.notificationItem, ...styles.unreadNotificationItem}; 
 
-  return (
-    <TouchableOpacity
-      key={notification.id}
-      style={styles.notificationItem}
-      onPress={() => handlePress(notification)}
-      onLongPress={() => handleLongPress(notification.id)}
-    >
-      <Icon name={iconName} size={20} color={iconColor} style={styles.notificationIcon} />
-      <View style={styles.notificationContent}>
-        <Text style={styles.notificationText}>{notification.text}</Text>
-        <Text style={styles.notificationTimestamp}>
-          {notification.timestamp.toDate().toLocaleString()}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
+  
+    return (
+      <TouchableOpacity
+        key={notification.id}
+        style={notificationStyle} 
+        onPress={() => handlePress(notification)}
+        onLongPress={() => handleLongPress(notification.id)}
+      >
+        <Icon name={iconName} size={20} color={iconColor} style={styles.notificationIcon} />
+        <View style={styles.notificationContent}>
+          <Text style={styles.notificationText}>{notification.text}</Text>
+          <Text style={styles.notificationTimestamp}>
+            {notification.timestamp.toDate().toLocaleString()}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
 const renderEmptyNotification = () => {
   return (
@@ -822,6 +834,10 @@ const styles = StyleSheet.create({
     color: '#333',
     marginTop: 4,
   },
+  unreadNotificationItem: {
+    backgroundColor: '#E8F4E5', 
+  },
+
 });
 
 export default Notification;

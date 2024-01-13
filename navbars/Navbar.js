@@ -1,9 +1,35 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getAuth } from 'firebase/auth';
+import { db } from '../config/firebase'; 
+import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 
 const Navbar = ({ navigation, activeRoute }) => {
+
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    let unsubscribe = () => {};
+  
+    if (user) {
+      const notificationsRef = collection(db, 'notifications');
+      const q = query(notificationsRef, where('email', '==', user.email));
+      
+      unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const unreadNotifications = querySnapshot.docs.filter(
+          (doc) => doc.data().isRead === false || doc.data().isRead === undefined
+        );
+        setUnreadNotificationsCount(unreadNotifications.length);
+      });
+    }
+  
+    return () => unsubscribe();
+  }, [user]);
+
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const tiltAnim = useRef(new Animated.Value(0)).current; 
 
@@ -70,6 +96,13 @@ const Navbar = ({ navigation, activeRoute }) => {
               color={isActive ? '#05652D' : '#000'}
               style={styles.navbarIcon}
             />
+            {routeName === 'Notification' && unreadNotificationsCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.badgeText}>
+                  {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                </Text>
+              </View>
+            )}
           </Animated.View>
           <Text style={[styles.navbarLabel, { color: isActive ? '#05652D' : '#888' }]}>
             {routeName}
@@ -127,6 +160,21 @@ const styles = StyleSheet.create({
   navbarLabel: {
     fontSize: 12,
     marginTop: 5,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    right: -3,
+    top: -1,
+    backgroundColor: 'red',
+    borderRadius: 16,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 14,
   },
 });
 
