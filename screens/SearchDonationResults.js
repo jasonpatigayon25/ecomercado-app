@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const SearchDonationResults = ({ route, navigation }) => {
   const { searchQuery } = route.params;
   const [donations, setDonations] = useState([]);
+  const [otherDonations, setOtherDonations] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDonations = async () => {
       setLoading(true);
       
+      // Fetch donations based on search query
       try {
         const donationsQuery = query(
           collection(db, "donation"),
@@ -22,12 +24,27 @@ const SearchDonationResults = ({ route, navigation }) => {
         const querySnapshot = await getDocs(donationsQuery);
         const searchedDonations = querySnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(donation => donation.isDonated !== true); 
+          .filter(donation => donation.isDonated !== true);
 
         setDonations(searchedDonations);
       } catch (error) {
         console.error("Error fetching donations:", error);
-        // Handle the error appropriately
+      }
+
+      // Fetch other random donations
+      try {
+        const otherDonationsQuery = query(
+          collection(db, "donation"),
+          limit(10) // Limit to 10 documents
+        );
+        const otherSnapshot = await getDocs(otherDonationsQuery);
+        const randomDonations = otherSnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(donation => donation.isDonated !== true);
+
+        setOtherDonations(randomDonations);
+      } catch (error) {
+        console.error("Error fetching other donations:", error);
       }
 
       setLoading(false);
@@ -65,6 +82,12 @@ const SearchDonationResults = ({ route, navigation }) => {
     </View>
   );
 
+  const renderOtherDonationsHeader = () => (
+    <View>
+      <Text style={styles.relatedTitle}>Other Donations</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -80,6 +103,18 @@ const SearchDonationResults = ({ route, navigation }) => {
               <View style={styles.emptyContainer}>
                 <Icon name="search" size={50} color="#ccc" />
                 <Text style={styles.emptyText}>No Results Found</Text>
+              </View>
+            )}
+          />
+          <FlatList
+            data={otherDonations}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <DonationItem donation={item} />}
+            ListHeaderComponent={renderOtherDonationsHeader}
+            ListEmptyComponent={() => (
+              <View style={styles.emptyContainer}>
+                <Icon name="gift" size={50} color="#ccc" />
+                <Text style={styles.emptyText}>No Other Donations Found</Text>
               </View>
             )}
           />
