@@ -38,7 +38,8 @@ const SearchDonationScreen = ({ navigation }) => {
       const donationQuery = query(
         collection(db, "donation"),
         where("name", ">=", trimmedSearchText),
-        where("name", "<=", trimmedSearchText + '\uf8ff')
+        where("name", "<=", trimmedSearchText + '\uf8ff'),
+        where("isDisabled", "==", false)
       );
   
       const querySnapshot = await getDocs(donationQuery);

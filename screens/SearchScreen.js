@@ -161,6 +161,7 @@ const SearchScreen = ({ navigation }) => {
     if (searchText.trim() === '') {
       setProductSuggestions([]);
       setRandomProducts([]);
+      setSearchResults([]);
       setLoading(false);
       return;
     }
@@ -203,7 +204,9 @@ const SearchScreen = ({ navigation }) => {
 
   useEffect(() => {
     if (searchText.trim().length > 0) {
-      handleSearch();
+      handleSearch(searchText);
+    } else {
+      setSearchResults([]); 
     }
   }, [searchText]);
 
@@ -230,6 +233,24 @@ const SearchScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+  const renderProductItems = () => {
+    if (loading) {
+      return;
+    }
+
+    if (searchResults.length === 0) {
+      return null; 
+    }
+
+    return (
+      <FlatList
+        data={searchResults}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <ProductItem product={item} />}
+      />
+    );
+  };
+
   const renderItem = ({ item, index }) => {
     if (item.type === 'sectionTitle') {
       return <Text style={styles.sectionTitle}>{item.title}</Text>;
@@ -252,7 +273,7 @@ const SearchScreen = ({ navigation }) => {
   
   const renderListData = () => {
     const combinedData = [];
-    if (recentSearches.length > 0) {
+    if (recentSearches.length > 0 && searchText.trim().length === 0) {
       combinedData.push({ type: 'sectionTitle', title: 'Recent Searches', id: 'recentSearches' });
       recentSearches.forEach((search, index) => combinedData.push({ 
         type: 'recentSearch', 
@@ -289,17 +310,19 @@ const SearchScreen = ({ navigation }) => {
         <Icon2 name="hand-heart" size={18} color="#05652D" style={styles.icon} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Wish')} style={styles.wishlistButton}>
-          <Image
-            source={require('../assets/wishlist2.png')}
-            style={styles.wishlistIcon}
-          />
-        </TouchableOpacity>
-        <FlatList
+        <Image
+          source={require('../assets/wishlist2.png')}
+          style={styles.wishlistIcon}
+        />
+      </TouchableOpacity>
+      {renderProductItems()}
+      <FlatList
         data={renderListData()}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         ListHeaderComponent={() => loading ? <Text>Loading...</Text> : null}
       />
+
     </View>
   );
 };

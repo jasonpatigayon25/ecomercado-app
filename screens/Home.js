@@ -96,17 +96,17 @@ const Home = ({ navigation }) => {
       const searchHitsRef = collection(db, "searchHits");
       const hitsQuery = query(searchHitsRef, orderBy("hits", "desc"), limit(5));
       const querySnapshot = await getDocs(hitsQuery);
-  
+    
       const productPromises = querySnapshot.docs.map(async (hit) => {
         const productRef = doc(db, "products", hit.data().productId);
         const productSnap = await getDoc(productRef);
         return productSnap.exists() ? { id: productSnap.id, ...productSnap.data() } : null;
       });
-  
+    
       const products = (await Promise.all(productPromises))
         .filter(Boolean)
-        .filter(product => product.quantity > 0); 
-  
+        .filter(product => !product.isDisabled && product.quantity > 0);
+    
       setMostPopularProducts(products);
     };
   
@@ -159,12 +159,16 @@ const Home = ({ navigation }) => {
         recommendedProducts = allProductsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       }
 
+      recommendedProducts = recommendedProducts.filter(product => 
+        !product.isDisabled && product.quantity > 0 && product.seller_email !== userEmail
+      );
+
       if (locationEnabled && userCity) {
         recommendedProducts = recommendedProducts.filter(product => 
-          product.location && product.location.includes(userCity) && product.quantity > 0 && product.seller_email !== userEmail
+          product.location && product.location.includes(userCity)
         );
       }
-
+  
       setRecommendedProducts(recommendedProducts.slice(0, Math.min(20, Math.max(10, recommendedProducts.length))));
     };
   
@@ -216,6 +220,7 @@ const Home = ({ navigation }) => {
       let donationsList = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(donation => donation.isDonated !== true)
+        .filter(donation => donation.isDisabled !== true)
         .filter(donation => donation.donor_email !== user.email);
   
       setDonations(donationsList);
