@@ -17,7 +17,7 @@ const SearchDonationScreen = ({ navigation }) => {
       const querySnapshot = await getDocs(q);
       const donations = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(doc => !doc.isDonated); 
+        .filter(doc => !doc.isDisabled && !doc.isDonated);
       setRandomDonations(donations.slice(0, 20));
     };
   
@@ -39,7 +39,7 @@ const SearchDonationScreen = ({ navigation }) => {
         collection(db, "donation"),
         where("name", ">=", trimmedSearchText),
         where("name", "<=", trimmedSearchText + '\uf8ff'),
-        where("isDisabled", "==", false)
+        where("isDisabled", "==", false) 
       );
   
       const querySnapshot = await getDocs(donationQuery);
@@ -48,7 +48,7 @@ const SearchDonationScreen = ({ navigation }) => {
         .filter(doc => !doc.isDonated); 
       setSearchResults(results);
     } catch (error) {
-      console.error("Error searching donations:", error);
+      console.log("Error searching donations:", error);
       setSearchResults([]);
     }
   

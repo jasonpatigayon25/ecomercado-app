@@ -1,51 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const SearchDonationResults = ({ route, navigation }) => {
   const { searchQuery } = route.params;
   const [donations, setDonations] = useState([]);
-  const [randomDonations, setRandomDonations] = useState([]);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  const fetchDonations = async () => {
-    setLoading(true);
-    
-    try {
-      const donationsQuery = query(
-        collection(db, "donation"),
-        where("name", ">=", searchQuery),
-        where("name", "<=", searchQuery + '\uf8ff')
-      );
-      const querySnapshot = await getDocs(donationsQuery);
-      const searchedDonations = querySnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(donation => donation.isDonated !== true); 
+  useEffect(() => {
+    const fetchDonations = async () => {
+      setLoading(true);
+      
+      try {
+        const donationsQuery = query(
+          collection(db, "donation"),
+          where("name", ">=", searchQuery),
+          where("name", "<=", searchQuery + '\uf8ff')
+        );
+        const querySnapshot = await getDocs(donationsQuery);
+        const searchedDonations = querySnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(donation => donation.isDonated !== true); 
 
-      const randomDonationsRef = query(
-        collection(db, "donation"),
-        where("isDonated", "!=", true),
-        limit(5)
-      );
-      const randomQuerySnapshot = await getDocs(randomDonationsRef);
-      const randomResults = randomQuerySnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }));
+        setDonations(searchedDonations);
+      } catch (error) {
+        console.error("Error fetching donations:", error);
+        // Handle the error appropriately
+      }
 
-      setDonations(searchedDonations);
-      setRandomDonations(randomResults);
-    } catch (error) {
-      console.error("Error fetching donations:", error);
-      //
-    }
+      setLoading(false);
+    };
 
-    setLoading(false);
-  };
-
-  fetchDonations();
-}, [searchQuery]);
+    fetchDonations();
+  }, [searchQuery]);
 
   const DonationItem = ({ donation }) => (
     <TouchableOpacity
@@ -54,15 +43,15 @@ useEffect(() => {
       <Image source={{ uri: donation.photo }} style={styles.donationImage} />
       <View style={styles.donationInfo}>
         <Text 
-        style={styles.donationName}
-        numberOfLines={1}
-        ellipsizeMode="tail">{donation.name}</Text>
+          style={styles.donationName}
+          numberOfLines={1}
+          ellipsizeMode="tail">{donation.name}</Text>
         <Text style={styles.donationLocation}
-        numberOfLines={1}
-        ellipsizeMode="tail">{donation.location}</Text>
+          numberOfLines={1}
+          ellipsizeMode="tail">{donation.location}</Text>
         <Text style={styles.donationMessage}
-        numberOfLines={1}
-        ellipsizeMode="tail">{donation.message}</Text>
+          numberOfLines={1}
+          ellipsizeMode="tail">{donation.message}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -75,8 +64,6 @@ useEffect(() => {
       <Text style={styles.headerTitle}>Results for "{searchQuery}"</Text>
     </View>
   );
-
-  const hasSearchResults = donations.length > 0;
 
   return (
     <View style={styles.container}>
@@ -96,17 +83,6 @@ useEffect(() => {
               </View>
             )}
           />
-
-          {hasSearchResults && (
-            <>
-              <Text style={styles.relatedTitle}>Other Donations</Text>
-              <FlatList
-                data={randomDonations}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <DonationItem donation={item} />}
-              />
-            </>
-          )}
         </>
       )}
     </View>
