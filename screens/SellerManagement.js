@@ -18,6 +18,7 @@ import { db } from '../config/firebase';
 import { FlatList } from 'react-native-gesture-handler';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import SellerTab from '../navbars/SellerTab';
 
 const window = Dimensions.get("window");
 
@@ -29,6 +30,8 @@ const SellerManagement = ({ navigation }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
+
+  const [selectedTab, setSelectedTab] = useState('Approved Posts');
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editableProduct, setEditableProduct] = useState({
@@ -418,6 +421,7 @@ const SellerManagement = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.title}>Seller Management</Text>
       </View>
+      <SellerTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       <FlatList
         data={products}
         keyExtractor={(item) => item.id.toString()}

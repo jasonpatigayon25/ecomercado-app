@@ -12,12 +12,15 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
 import { collection, getDocs, query, where, updateDoc, doc, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import OrderTab from '../navbars/OrderTab';
 
 const OrderHistory = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [hideModalVisible, setHideModalVisible] = useState(false);
+
+  const [selectedTab, setSelectedTab] = useState('Completed');
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -162,6 +165,7 @@ const OrderHistory = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.title}>Order History</Text>
       </View>
+      <OrderTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
 
       {orders.length > 0 ? (
       <ScrollView>
