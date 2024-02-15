@@ -20,6 +20,7 @@ const Home = ({ navigation }) => {
   const [mostPopularProducts, setMostPopularProducts] = useState([]);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [searchText, setSearchText] = useState('');
+  const [categorySearchText, setCategorySearchText] = useState('');
 
   const [isLocationLoading, setIsLocationLoading] = useState(false);
 
@@ -81,13 +82,14 @@ const Home = ({ navigation }) => {
   useEffect(() => {
     const fetchCategories = async () => {
       const querySnapshot = await getDocs(collection(db, "categories"));
-      const categories = querySnapshot.docs.map(doc => ({
+      let categories = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      categories.sort((a, b) => a.title.localeCompare(b.title));
       setFirestoreCategories(categories);
     };
-
+  
     fetchCategories();
   }, []);
 
@@ -340,13 +342,33 @@ const Home = ({ navigation }) => {
             <TouchableOpacity style={styles.closeModalIconContainer} onPress={toggleModal}>
               <Icon name="times-circle" size={30} color="#05652D" />
             </TouchableOpacity>
+            <TextInput
+              style={styles.modalSearchInput}
+              placeholder="Search Categories"
+              value={categorySearchText}
+              onChangeText={setCategorySearchText}
+            />
+            {categorySearchText !== '' && (
+              <Text style={styles.searchingText}>Searching '{categorySearchText}'...</Text>
+            )}
             <ScrollView contentContainerStyle={styles.modalGrid}>
-              {firestoreCategories.map((category) => (
-                <Category key={category.id} id={category.id} image={category.image} title={category.title} />
-              ))}
+              {firestoreCategories.filter(category => 
+                category.title.toLowerCase().includes(categorySearchText.toLowerCase())
+              ).length > 0 ? (
+                firestoreCategories.filter(category => 
+                  category.title.toLowerCase().includes(categorySearchText.toLowerCase())
+                ).map((category) => (
+                  <Category key={category.id} id={category.id} image={category.image} title={category.title} />
+                ))
+              ) : (
+                <View style={styles.notFoundContainer}>
+                  <Text style={styles.notFoundText}>Category not found.</Text>
+                </View>
+              )}
             </ScrollView>
           </View>
         </Modal>
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContainer}>
           {firestoreCategories.map((category) => (
             <Category key={category.id} id={category.id} image={category.image} title={category.title} />
@@ -789,6 +811,33 @@ searchSuggestions: {
     top: -5,
     right: -5,
   }, 
+  modalSearchInput: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 25,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    backgroundColor: '#FFF',
+    color: '#000',
+  },
+  searchingText: {
+    textAlign: 'left',
+    marginBottom: 10,
+    marginHorizontal: 10,
+    color: '#05652D',
+  },
+  notFoundContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  notFoundText: {
+    marginTop: 10,
+    fontSize: 16,
+  }, 
+  
 });
 
 

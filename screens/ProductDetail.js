@@ -447,7 +447,7 @@ const ProductDetail = ({ navigation, route }) => {
             <Text style={styles.infoCategory}>{product.category}</Text>
           </View>
           <View style={styles.infoItem}>
-            <Text style={styles.infoText}>Quantity: </Text>
+            <Text style={styles.infoText}>Quantity Remaining: </Text>
             {product.quantity > 0 ? (
               <Text style={styles.infoText}>{product.quantity}</Text>
             ) : (
