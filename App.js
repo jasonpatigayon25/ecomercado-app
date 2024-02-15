@@ -7,6 +7,7 @@ import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore, doc, getDoc, collection, where, getDocs, query } from 'firebase/firestore';
 import registerNNPushToken from 'native-notify';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 
 // imported screens
@@ -241,6 +242,7 @@ const App = () => {
   };
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <UserContext.Provider value={{ user, setUser }}>
       <NavigationContainer>
         <Stack.Navigator initialRouteName={user ? 'Main' : 'WelcomeHome'} screenOptions={{ headerShown: false }}>
@@ -291,6 +293,7 @@ const App = () => {
         </Stack.Navigator>
       </NavigationContainer>
     </UserContext.Provider>
+    </GestureHandlerRootView>
   );
 };
 

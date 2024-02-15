@@ -421,7 +421,7 @@ const Home = ({ navigation }) => {
         </View>
         <View style={[styles.donationsContainer, styles.sectionContainer]}>
           <View style={styles.donationsHeader}>
-            <Text style={styles.sectionTitle}>Recent Donations</Text>
+            <Text style={styles.sectionTitle}>Recent Donations for Users</Text>
             <TouchableOpacity onPress={shuffleDonations} style={styles.shuffleButton}>
               <Icon name="random" size={20} color="#05652D" />
             </TouchableOpacity>
