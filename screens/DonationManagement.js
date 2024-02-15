@@ -18,6 +18,7 @@ import { db } from '../config/firebase';
 import { FlatList, TextInput } from 'react-native-gesture-handler';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import DonorTab from '../navbars/DonorTab';
 
 const window = Dimensions.get("window");
 
@@ -27,6 +28,8 @@ const DonationManagement = ({ navigation }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
+
+  const [selectedTab, setSelectedTab] = useState('Posted');
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editableDonation, setEditableDonation] = useState(null);
@@ -345,6 +348,7 @@ const DonationManagement = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.title}>Donation Management</Text>
       </View>
+      <DonorTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       <FlatList
         data={donations}
         keyExtractor={(item) => item.id.toString()}

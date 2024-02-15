@@ -5,10 +5,12 @@ import { getAuth } from 'firebase/auth';
 import { collection, getDocs, query, updateDoc, doc, where, writeBatch, getDoc, addDoc, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import axios from 'axios';
+import RequestorTab from '../navbars/RequestorTab';
 
 const RequestApproval = ({ navigation }) => {
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [selectedTab, setSelectedTab] = useState('All');
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
@@ -106,11 +108,9 @@ const RequestApproval = ({ navigation }) => {
         })
       );
   
-      // send push notification to the requester
       const requesterNotificationMessage = `Your request for "${requestData.donationDetails.name}" has been approved.`;
       sendPushNotification(requestData.requesterEmail, 'Donation Request Approved', requesterNotificationMessage);
 
-      // send push notification to the donor (current user)
       const donorNotificationMessage = `You approved the request for "${requestData.donationDetails.name}".`;
       sendPushNotification(requestData.donorEmail, 'Donation Approved', donorNotificationMessage);
 
@@ -203,6 +203,7 @@ const RequestApproval = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.title}>Donation Requests</Text>
       </View>
+      <RequestorTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       <ScrollView style={styles.scrollView}>
       {requests.map((request) => (
         <TouchableOpacity
