@@ -240,11 +240,13 @@ const Donate = ({ navigation }) => {
         message: donationInfo.message,
         donor_email: userEmail,
         createdAt, 
+        publicationStatus: 'pending',
       });
 
       const updatedDonationInfo = {
         ...donationInfo,
-        id: donationDocRef.id
+        id: donationDocRef.id,
+        publicationStatus: 'pending',
       };
 
       await notifySubscribers(userEmail, updatedDonationInfo);

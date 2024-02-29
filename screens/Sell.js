@@ -260,11 +260,13 @@ const handleSubmit = async () => {
       seller_email: userEmail,
       quantity: productInfo.quantity,
       createdAt,
+      publicationStatus: 'pending',
     });
 
     const updatedProductInfo = {
       ...productInfo,
-      id: productDocRef.id
+      id: productDocRef.id,
+      publicationStatus: 'pending'
     };
 
     await notifySubscribers(userEmail, updatedProductInfo);
