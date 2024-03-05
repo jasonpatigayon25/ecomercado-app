@@ -245,49 +245,28 @@ const SellerManagement = ({ navigation }) => {
   );
 
   const ProductItem = ({ item }) => (
-    <View style={styles.productContainer}>
-      <Image source={{ uri: item.photo }} style={styles.productImage} />
-      <View style={styles.productDetails}>
-        <Text 
-          style={styles.productName}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.name}
-        </Text>
-        <Text 
-          style={styles.productPrice}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.price}
-        </Text>
-        <Text 
-          style={styles.productCategory}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.category}
-        </Text>
-        <Text 
-          style={styles.productQuantity}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          Quantity: {item.quantity}
-        </Text>
-        <Text 
-          style={styles.productDescription}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.description}
-        </Text>
+    <View style={styles.productItemContainer}>
+      <Image source={{ uri: item.photo }} style={styles.productItemImage} />
+      <View style={styles.productItemDetails}>
+        <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+        <Text style={styles.productItemPrice} numberOfLines={1} ellipsizeMode="tail">₱{item.price}</Text>
+        <View style={styles.productItemMetaContainer}>
+          <Text style={styles.productItemCategory} numberOfLines={1} ellipsizeMode="tail">{item.category}</Text>
+          <Text style={styles.productItemQuantity} numberOfLines={1} ellipsizeMode="tail">Qty: {item.quantity}</Text>
+        </View>
+        <View style={styles.productItemLocationContainer}>
+          <Icon name="map-marker" size={14} color="#666" />
+          <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">{item.location}</Text>
+        </View>
+        <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">{item.description}</Text>
+        {item.isApproved && (
+          <View style={styles.approvedIconContainer}>
+            <Icon name="check" size={14} color="#05652D" />
+            <Text style={styles.approvedText} numberOfLines={1} ellipsizeMode="tail">Approved</Text>
+          </View>
+        )}
       </View>
-      <TouchableOpacity 
-        style={styles.optionsButton} 
-        onPress={(event) => showOptions(item, event)}
-      >
+      <TouchableOpacity style={styles.productItemOptionsButton} onPress={(event) => showOptions(item, event)}>
         <Icon name="ellipsis-v" size={20} color="#05652D" />
       </TouchableOpacity>
     </View>
@@ -745,6 +724,99 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginHorizontal: 5,
   },  
+  productItemContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+    marginVertical: 8,
+    padding: 10,
+    alignItems: 'center',
+  },
+  
+  productItemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 10,
+  },
+  
+  productItemDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  
+  productItemName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  
+  productItemPrice: {
+    fontSize: 14,
+    color: '#05652D',
+    marginTop: 4,
+  },
+  
+  productItemMetaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  
+  productItemCategory: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#ECECEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  
+  productItemQuantity: {
+    fontSize: 12,
+    color: '#666',
+  },
+  
+  productItemLocationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  
+  productItemLocation: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+  },
+  
+  productItemDescription: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  
+  approvedIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  
+  approvedText: {
+    fontSize: 12,
+    marginLeft: 4,
+    color: '#05652D',
+  },
+  
+  productItemOptionsButton: {
+    padding: 8,
+    marginLeft: 10,
+  },
 });
 
 export default SellerManagement;

@@ -153,26 +153,37 @@ const Account = ({ navigation }) => {
         <View style={styles.divider} />
         <Text style={styles.settingTitle}>My Transactions</Text>
         <View style={styles.optionsContainer}>
-          <TouchableOpacity style={styles.optionItem} onPress={handleSellerManagement}>
-          <Image source={marketIcon} style={styles.transactionsIcon } />
-            <Text style={styles.optionLabel}>Seller Management</Text>
-            <Icon name="angle-right" size={25} color="#05652D" style={styles.optionArrowIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.optionItem} onPress={handleDonationManagement}>
-          <Image source={donationIcon} style={styles.transactionsIcon } />
-            <Text style={styles.optionLabel}>Donation Management</Text>
-            <Icon name="angle-right" size={25} color="#05652D" style={styles.optionArrowIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.optionItem} onPress={handleOrderHistory}>
-          <Icon name="history" size={25} color="#05652D" style={styles.settingIcon} />
-            <Text style={styles.optionLabel}>Order History</Text>
-            <Icon name="angle-right" size={25} color="#05652D" style={styles.optionArrowIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.optionItem} onPress={handleRequestApproval}>
-          <Icon name="check-circle" size={25} color="#05652D" style={styles.settingIcon} />
-            <Text style={styles.optionLabel}>Donation Requests Approval</Text>
-            <Icon name="angle-right" size={25} color="#05652D" style={styles.optionArrowIcon} />
-          </TouchableOpacity>
+        <View style={styles.transactionsRow}>
+  <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleSellerManagement}>
+    <View style={styles.optionIconContainer}>
+      <Image source={marketIcon} style={styles.transactionsIcon} />
+    </View>
+    <Text style={styles.optionLabel}>Seller Management</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleDonationManagement}>
+    <View style={styles.optionIconContainer}>
+      <Image source={donationIcon} style={styles.transactionsIcon} />
+    </View>
+    <Text style={styles.optionLabel}>Donation Management</Text>
+  </TouchableOpacity>
+</View>
+
+<View style={styles.transactionsRow}>
+  <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleOrderHistory}>
+    <View style={styles.optionIconContainer}>
+      <Icon name="history" size={25} color="#05652D" style={styles.transactionsIcon} />
+    </View>
+    <Text style={styles.optionLabel}>Order History</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleRequestApproval}>
+    <View style={styles.optionIconContainer}>
+      <Icon name="check-circle" size={25} color="#05652D" style={styles.transactionsIcon} />
+    </View>
+    <Text style={styles.optionLabel}>Donation Requests Approval</Text>
+  </TouchableOpacity>
+</View>
         </View>
         <View style={styles.divider} />
         <Text style={styles.settingTitle}>Settings</Text>
@@ -380,6 +391,44 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 100, 
     alignSelf: 'center', 
+  },
+  transactionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  
+  optionItemCube: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    padding: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100,
+  },
+  
+  halfWidth: {
+    width: '48%', 
+  },
+  
+  optionIconContainer: {
+    marginBottom: 5, 
+  },
+  
+  transactionsIcon: {
+    width: 30,
+    height: 30,
+  },
+  
+  optionLabel: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#05652D',
   },
 });
 
