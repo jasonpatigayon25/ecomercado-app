@@ -196,38 +196,29 @@ const DonationManagement = ({ navigation }) => {
   };
   
   const DonationItem = ({ item }) => (
-    <View style={styles.donationContainer}>
-      <Image source={{ uri: item.photo }} style={styles.donationImage} />
-      <View style={styles.donationDetails}>
-        <Text 
-          style={[styles.donationName, item.isDonated ? styles.donatedText : null]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.name}
-        </Text>
-        <Text 
-          style={[styles.donationLocation, item.isDonated ? styles.donatedText : null]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.location}
-        </Text>
-        <Text 
-          style={[styles.donationMessage, item.isDonated ? styles.donatedText : null]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.message}
-        </Text>
-        {item.isDonated && (
-          <Text style={styles.donatedLabel}>DONATED</Text>
-        )}
+    <View style={styles.productItemContainer}>
+      <Image source={{ uri: item.photo }} style={styles.productItemImage} />
+      <View style={styles.productItemDetails}>
+        <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+        <View style={styles.productItemMetaContainer}>
+
+          <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail"><Icon name="map-marker" size={14} color="#666" /> {item.location}</Text>
+        </View>
+        <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">{item.message}</Text>
       </View>
-      <TouchableOpacity 
-        style={styles.optionsButton} 
-        onPress={(event) => showOptions(item, event)}
-      >
+      {item.publicationStatus === 'approved' && (
+        <View style={styles.statusIconContainer}>
+          <Icon name="check" size={14} color="green" />
+          <Text style={styles.statusText}>Approved</Text>
+        </View>
+      )}
+      {item.publicationStatus === 'pending' && (
+        <View style={styles.statusIconContainer}>
+          <Icon name="clock-o" size={14} color="orange" />
+          <Text style={styles.statusText}>Pending</Text>
+        </View>
+      )}
+      <TouchableOpacity style={styles.productItemOptionsButton} onPress={(event) => showOptions(item, event)}>
         <Icon name="ellipsis-v" size={20} color="#05652D" />
       </TouchableOpacity>
     </View>
@@ -625,6 +616,104 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 5,
   },
+  productItemContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+    marginVertical: 8,
+    padding: 10,
+    position: 'relative', 
+    alignItems: 'center',
+  },
+  
+  productItemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 10,
+  },
+  
+  productItemDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  
+  productItemName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  
+  productItemMetaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  
+  productItemLocationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  
+  productItemLocation: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 10,
+  },
+  
+  productItemDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    marginLeft: 10,
+  },
+  
+  approvedIconContainer: {
+  position: 'absolute',
+  top: 10, 
+  right: 10, 
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  borderRadius: 5, 
+  padding: 2, 
+},
+
+approvedText: {
+  fontSize: 12,
+  marginLeft: 4,
+  color: 'green',
+},
+  
+  productItemOptionsButton: {
+    padding: 8,
+    marginLeft: 10,
+  },
+  statusIconContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 5,
+    padding: 2,
+  },
+  
+  statusText: {
+    fontSize: 12,
+    marginLeft: 4,
+    color: '#808080',
+  },
+ 
 });
 
 export default DonationManagement;
