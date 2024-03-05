@@ -261,9 +261,15 @@ const SellerManagement = ({ navigation }) => {
         <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">{item.description}</Text>
       </View>
       {item.publicationStatus === 'approved' && (
-        <View style={styles.approvedIconContainer}>
+        <View style={styles.statusIconContainer}>
           <Icon name="check" size={14} color="green" />
-          <Text style={styles.approvedText}>Approved</Text>
+          <Text style={styles.statusText}>Approved</Text>
+        </View>
+      )}
+      {item.publicationStatus === 'pending' && (
+        <View style={styles.statusIconContainer}>
+          <Icon name="clock-o" size={14} color="orange" />
+          <Text style={styles.statusText}>Pending</Text>
         </View>
       )}
       <TouchableOpacity style={styles.productItemOptionsButton} onPress={(event) => showOptions(item, event)}>
@@ -828,6 +834,22 @@ approvedText: {
   productItemOptionsButton: {
     padding: 8,
     marginLeft: 10,
+  },
+  statusIconContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 5,
+    padding: 2,
+  },
+  
+  statusText: {
+    fontSize: 12,
+    marginLeft: 4,
+    color: '#808080',
   },
 });
 
