@@ -392,6 +392,12 @@ const SellerManagement = ({ navigation }) => {
     setIsPhotoPickerModalVisible(true);
   };
 
+  const filteredProducts = products.filter(product => {
+    if (selectedTab === 'Approved Posts') return product.publicationStatus === 'approved';
+    if (selectedTab === 'Pending For Approval') return product.publicationStatus === 'pending';
+    return false;
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -402,7 +408,7 @@ const SellerManagement = ({ navigation }) => {
       </View>
       <SellerTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       <FlatList
-        data={products}
+        data={filteredProducts}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => <ProductItem item={item} />}
         ListEmptyComponent={renderEmptyProducts}
