@@ -279,79 +279,83 @@ const SellerManagement = ({ navigation }) => {
   );
 
   const EditProductModal = ({ isVisible, product, onSave, onCancel }) => {
-
     const [tempProduct, setTempProduct] = useState(product);
-
+  
     useEffect(() => {
-      setTempProduct(product); 
+      setTempProduct(product); // Set tempProduct state when product changes
     }, [product]);
   
     const handleSave = () => {
-      onSave(tempProduct); 
+      onSave(tempProduct);
     };
-
+  
     return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onCancel}
-    >
-      <View style={styles.modalOverlay}>
-        <ScrollView style={styles.editModalContainer}>
-          <Text style={styles.editModalTitle}>Edit Product</Text>
-          <TouchableOpacity onPress={pickImage}>
-            {tempProduct?.photo ? (
-              <Image source={{ uri: tempProduct.photo }} style={{ width: 100, height: 100, marginBottom: 20, borderRadius: 15 }} />
-            ) : (
-              <Icon name="camera" size={24} color="#05652D" />
-            )}
-          </TouchableOpacity>
-          <TextInput
-            style={styles.input}
-            placeholder="Product Name"
-            value={tempProduct.name}
-            onChangeText={(text) => setTempProduct({ ...tempProduct, name: text })}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Price"
-            value={tempProduct.price}
-            onChangeText={(text) => setTempProduct({ ...tempProduct, price: text })}
-            keyboardType="numeric"
-          />
-          <TouchableOpacity
-            style={styles.input}
-            onPress={() => setCategoryModalVisible(true)}
-          >
-            <Text style={styles.categorySelectorText}>
-              {tempProduct.category || 'Select a Category'}
-            </Text>
-          </TouchableOpacity>
-          <TextInput
-            style={styles.input}
-            placeholder="Quantity"
-            value={tempProduct.quantity.toString()}
-            onChangeText={(text) => setTempProduct({ ...tempProduct, quantity: parseInt(text, 10) || 0 })}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Description"
-            value={tempProduct.description}
-            onChangeText={(text) => setTempProduct({ ...tempProduct, description: text })}
-          />
-          <TouchableOpacity style={styles.savebutton} onPress={handleSave}>
-            <Text style={styles.savebuttonText}>Save Changes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelbutton} onPress={onCancel}>
-            <Text style={styles.cancelbuttonText}>Cancel</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-    </Modal>
-  );
-};
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isVisible}
+        onRequestClose={onCancel}
+      >
+        <View style={styles.modalOverlay}>
+          <ScrollView style={styles.editModalContainer}>
+            <Text style={styles.editModalTitle}>Edit Product</Text>
+            <TouchableOpacity onPress={pickImage}>
+              {tempProduct?.photo ? (
+                <Image source={{ uri: tempProduct.photo }} style={{ width: 100, height: 100, marginBottom: 20, borderRadius: 15 }} />
+              ) : (
+                <Icon name="camera" size={24} color="#05652D" />
+              )}
+            </TouchableOpacity>
+            <Text style={styles.label}>Product Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter product name"
+              value={tempProduct.name}
+              onChangeText={(text) => setTempProduct({ ...tempProduct, name: text })}
+            />
+            <Text style={styles.label}>Price</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter price"
+              value={tempProduct.price}
+              onChangeText={(text) => setTempProduct({ ...tempProduct, price: text })}
+              keyboardType="numeric"
+            />
+            <Text style={styles.label}>Category</Text>
+            <TouchableOpacity
+              style={styles.categorySelector}
+              onPress={() => setCategoryModalVisible(true)}
+            >
+              <Text style={styles.categorySelectorText}>
+                {tempProduct.category || 'Select a Category'}
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.label}>Quantity</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter quantity"
+              value={tempProduct.quantity.toString()}
+              onChangeText={(text) => setTempProduct({ ...tempProduct, quantity: parseInt(text, 10) || 0 })}
+              keyboardType="numeric"
+            />
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter description"
+              value={tempProduct.description}
+              onChangeText={(text) => setTempProduct({ ...tempProduct, description: text })}
+            />
+            <TouchableOpacity style={styles.savebutton} onPress={handleSave}>
+              <Text style={styles.savebuttonText}>Save Changes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelbutton} onPress={onCancel}>
+              <Text style={styles.cancelbuttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
+    );
+  };
   
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
 
@@ -596,6 +600,16 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   input: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFF',
+    color: '#333',
+    marginBottom: 20,
+  },
+  categorySelector: {
     borderBottomWidth: 1,
     borderColor: '#e1e1e1',
     paddingVertical: 10,
@@ -850,6 +864,12 @@ approvedText: {
     fontSize: 12,
     marginLeft: 4,
     color: '#808080',
+  },
+  label: {
+    fontSize: 14,
+    color: '#05652D', 
+    marginBottom: 5, 
+    fontWeight: 'bold', 
   },
 });
 
