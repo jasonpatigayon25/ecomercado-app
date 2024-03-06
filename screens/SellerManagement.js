@@ -185,6 +185,7 @@ const SellerManagement = ({ navigation }) => {
           category: updatedProduct.category,
           description: updatedProduct.description,
           photo: updatedProduct.photo,
+          location: updatedProduct.location,
           quantity: parseInt(updatedProduct.quantity, 10) || 0,
         });
   
@@ -282,7 +283,7 @@ const SellerManagement = ({ navigation }) => {
     const [tempProduct, setTempProduct] = useState(product);
   
     useEffect(() => {
-      setTempProduct(product); // Set tempProduct state when product changes
+      setTempProduct(product);
     }, [product]);
   
     const handleSave = () => {
@@ -337,6 +338,13 @@ const SellerManagement = ({ navigation }) => {
               value={tempProduct.quantity.toString()}
               onChangeText={(text) => setTempProduct({ ...tempProduct, quantity: parseInt(text, 10) || 0 })}
               keyboardType="numeric"
+            />
+            <Text style={styles.label}>Address:</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter location"
+              value={tempProduct.location}
+              onChangeText={(text) => setTempProduct({ ...tempProduct, description: text })}
             />
             <Text style={styles.label}>Description</Text>
             <TextInput
@@ -610,12 +618,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   categorySelector: {
-    borderBottomWidth: 1,
-    borderColor: '#e1e1e1',
-    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFF',
+    color: '#333',
     marginBottom: 20,
-    fontSize: 16,
-    borderRadius: 5,
   },
   savebutton: {
     backgroundColor: '#05652D',
