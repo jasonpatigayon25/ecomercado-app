@@ -10,6 +10,7 @@
     Dimensions,
     TextInput,
     ScrollView,
+    Animated
   } from 'react-native';
   import Icon from 'react-native-vector-icons/FontAwesome';
   import { getAuth } from 'firebase/auth';
@@ -23,6 +24,8 @@
   const window = Dimensions.get("window");
 
   const SellerManagement = ({ navigation }) => {
+
+    const animation = useRef(new Animated.Value(0)).current;
     const [userEmail, setUserEmail] = useState(null);
     const [categoryModalVisible, setCategoryModalVisible] = useState(false);
     const [categories, setCategories] = useState([]);
@@ -50,6 +53,32 @@
         fetchCategories();
       }
     }, []);
+
+    useEffect(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(animation, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: false 
+          }),
+          Animated.timing(animation, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: false 
+          })
+        ])
+      ).start();
+    }, []);
+  
+    const backgroundColor = animation.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['green', 'yellow'] 
+    });
+  
+    const animatedStyle = {
+      backgroundColor
+    };
 
     const tabs = ['Approved Posts', 'Pending For Approval'];
 
@@ -448,6 +477,11 @@
             <Icon name="arrow-left" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.title}>Seller Management</Text>
+          <Animated.View style={[styles.addProductButton, animatedStyle]}>
+          <TouchableOpacity onPress={() => navigation.navigate('Sell')}>
+            <Icon name="plus" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </Animated.View>
         </View>
         <SellerTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
         <ScrollView
@@ -533,6 +567,7 @@
       paddingTop: 10,
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between', 
       backgroundColor: '#05652D',
       paddingVertical: 10,
       paddingHorizontal: 20,
@@ -917,6 +952,14 @@
       color: '#05652D', 
       marginBottom: 5, 
       fontWeight: 'bold', 
+    },
+
+    addProductButton: {
+      width: 30,
+      height: 30,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 25,
     },
   });
 

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
@@ -9,6 +10,7 @@ import {
   Alert,
   Dimensions,
   ScrollView,
+  Animated
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -23,6 +25,8 @@ import DonorTab from '../navbars/DonorTab';
 const window = Dimensions.get("window");
 
 const DonationManagement = ({ navigation }) => {
+
+  const animation = useRef(new Animated.Value(0)).current;
   const [userEmail, setUserEmail] = useState(null);
   const [donations, setDonations] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -55,6 +59,32 @@ const DonationManagement = ({ navigation }) => {
       default:
         return donations;
     }
+  };
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(animation, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: false 
+        }),
+        Animated.timing(animation, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: false 
+        })
+      ])
+    ).start();
+  }, []);
+
+  const backgroundColor = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['green', 'yellow'] 
+  });
+
+  const animatedStyle = {
+    backgroundColor
   };
 
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -364,6 +394,11 @@ const DonationManagement = ({ navigation }) => {
           <Icon name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.title}>Donation Management</Text>
+        <Animated.View style={[styles.addDonationButton, animatedStyle]}>
+          <TouchableOpacity onPress={() => navigation.navigate('Donate')}>
+            <Icon name="plus" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </Animated.View>
       </View>
       <DonorTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       <ScrollView
@@ -441,6 +476,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between', 
     backgroundColor: '#05652D',
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -752,6 +788,14 @@ approvedText: {
     color: '#808080',
   },
  
+  addDonationButton: {
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25,
+  },
+
 });
 
 export default DonationManagement;
