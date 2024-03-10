@@ -8,7 +8,7 @@ const SellerTab = ({ selectedTab, setSelectedTab }) => {
     const indicatorAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-      const tabIndex = ['Pending For Approval', 'Approved Posts'].indexOf(selectedTab);
+      const tabIndex = ['Approved Posts', 'Pending For Approval' ].indexOf(selectedTab);
       Animated.spring(indicatorAnim, {
         toValue: tabIndex * tabWidth, 
         useNativeDriver: true, 
@@ -32,7 +32,7 @@ const SellerTab = ({ selectedTab, setSelectedTab }) => {
 
     return (
       <View style={styles.tabBar}>
-        {['Pending For Approval', 'Approved Posts'].map(tabName => renderTab(tabName))}
+        {['Approved Posts', 'Pending For Approval'].map(tabName => renderTab(tabName))}
         <Animated.View
           style={[
             styles.indicator,

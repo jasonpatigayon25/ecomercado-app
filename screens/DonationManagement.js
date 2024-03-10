@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -30,6 +30,32 @@ const DonationManagement = ({ navigation }) => {
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
 
   const [selectedTab, setSelectedTab] = useState('Posted');
+  const scrollRef = useRef();
+  const windowWidth = Dimensions.get('window').width;
+
+  useEffect(() => {
+    const tabIndex = ['Posted', 'Successful', 'Acquired'].indexOf(selectedTab);
+    scrollRef.current?.scrollTo({ x: tabIndex * windowWidth, animated: true });
+  }, [selectedTab, windowWidth]);
+
+  const handleScroll = (event) => {
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const tabIndex = Math.floor(scrollX / windowWidth);
+    setSelectedTab(['Posted', 'Successful', 'Acquired'][tabIndex]);
+  };
+
+  const getFilteredDonations = (tab) => {
+    switch (tab) {
+      case 'Posted':
+        return donations.filter(d => d.status === 'posted'); 
+      case 'Successful':
+        return donations.filter(d => d.status === 'successful'); 
+      case 'Acquired':
+        return donations.filter(d => d.status === 'acquired'); 
+      default:
+        return donations;
+    }
+  };
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editableDonation, setEditableDonation] = useState(null);
@@ -340,12 +366,24 @@ const DonationManagement = ({ navigation }) => {
         <Text style={styles.title}>Donation Management</Text>
       </View>
       <DonorTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-      <FlatList
-        data={donations}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <DonationItem item={item} />}
-        ListEmptyComponent={renderEmptyDonations}
-      />
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        ref={scrollRef}
+      >
+        {['Posted', 'Successful', 'Acquired'].map((tab, index) => (
+          <View key={index} style={{ width: windowWidth }}>
+            <FlatList
+              data={getFilteredDonations(tab)}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => <DonationItem item={item} />}
+              ListEmptyComponent={renderEmptyDonations}
+            />
+          </View>
+        ))}
+      </ScrollView>
       <Modal
         animationType="none" 
         transparent={true}
