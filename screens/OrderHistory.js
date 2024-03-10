@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  Dimensions,
   Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -14,13 +15,17 @@ import { collection, getDocs, query, where, updateDoc, doc, orderBy } from 'fire
 import { db } from '../config/firebase';
 import OrderTab from '../navbars/OrderTab';
 
+
+
 const OrderHistory = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [hideModalVisible, setHideModalVisible] = useState(false);
 
-  const [selectedTab, setSelectedTab] = useState('Completed');
+  const [selectedTab, setSelectedTab] = useState('To Pay');
+  const scrollRef = useRef();
+  const windowWidth = Dimensions.get('window').width; 
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -82,6 +87,16 @@ const OrderHistory = ({ navigation }) => {
       return productDetails.map(product => product.name).join(', ');
     }
     return productDetails.name;
+  };
+
+  const handleScroll = (event) => {
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const tabIndex = Math.floor(scrollX / windowWidth);
+    setSelectedTab(['To Pay', 'To Receive', 'Completed', 'Cancelled'][tabIndex]);
+  };
+
+  const getFilteredOrders = (status) => {
+    return orders.filter(order => order.status === status);
   };
 
   const renderOrderModalContent = () => {
@@ -168,27 +183,34 @@ const OrderHistory = ({ navigation }) => {
       <OrderTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
 
       {orders.length > 0 ? (
-      <ScrollView>
-        {orders.map((order) => (
-          <TouchableOpacity
-            key={order.id}
-            onPress={() => handleViewOrder(order)}
-            onLongPress={() => handleLongPressOrder(order)}
-            style={styles.orderContainer}
-          >
-            <View style={styles.orderInfoContainer}>
-              <Text style={styles.orderProductName}>{getProductNames(order.productDetails)}</Text>
-              <Text style={styles.orderPrice}>₱{order.totalPrice.toFixed(2)}</Text>
+      <ScrollView
+      horizontal
+      pagingEnabled
+      showsHorizontalScrollIndicator={false}
+      onMomentumScrollEnd={handleScroll}
+      ref={scrollRef}
+    >
+      {['To Pay', 'To Receive', 'Completed', 'Cancelled'].map((tab, index) => (
+        <View key={index} style={{ width: windowWidth }}>
+          {getFilteredOrders(tab).length > 0 ? (
+            <ScrollView>
+              {getFilteredOrders(tab).map((order) => (
+                <TouchableOpacity
+                  key={order.id}
+                  onPress={() => handleViewOrder(order)}
+                  style={styles.orderContainer}
+                >
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyOrdersContainer}>
+              <Text style={styles.emptyOrdersText}>No {tab} Orders</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => handleViewOrder(order)}
-              style={styles.viewButton}
-            >
-              <Text style={styles.viewButtonText}>View</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+          )}
+        </View>
+      ))}
+    </ScrollView>
     ) : renderEmptyOrders()}
 
       {viewModalVisible && selectedOrder && (

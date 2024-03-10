@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image, Modal } from 'react-native';
+import React, { useState, useEffect, useRef} from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image, Modal, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
 import { collection, getDocs, query, updateDoc, doc, where, writeBatch, getDoc, addDoc, orderBy } from 'firebase/firestore';
@@ -7,11 +7,26 @@ import { db } from '../config/firebase';
 import axios from 'axios';
 import RequestorTab from '../navbars/RequestorTab';
 
+const windowWidth = Dimensions.get('window').width;
+
 const RequestApproval = ({ navigation }) => {
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedTab, setSelectedTab] = useState('All');
   const [modalVisible, setModalVisible] = useState(false);
+  const scrollRef = useRef(); 
+
+  const handleScroll = (event) => {
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const tabIndex = Math.floor(scrollX / windowWidth);
+    const tabNames = ['All', 'Pending', 'Approved', 'Declined'];
+    setSelectedTab(tabNames[tabIndex]);
+  };
+
+  const filteredRequests = requests.filter(request => {
+    if (selectedTab === 'All') return true;
+    return request.status === selectedTab.toLowerCase();
+  });
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -204,53 +219,51 @@ const RequestApproval = ({ navigation }) => {
         <Text style={styles.title}>Donation Requests</Text>
       </View>
       <RequestorTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-      <ScrollView style={styles.scrollView}>
-      {requests.map((request) => (
-        <TouchableOpacity
-          key={request.id}
-          style={styles.requestContainer}
-          onPress={() => handleRequestClick(request)}
-        >
-          <Image
-            source={{ uri: request.donationDetails.photo }} 
-            style={styles.donationImage}
-          />
-          <View style={styles.requestDetailsContainer}>
-            <Text style={styles.requestEmail} numberOfLines={1} ellipsizeMode="tail">{request.requesterEmail}</Text>
-            <Text style={styles.requestMessage} numberOfLines={1} ellipsizeMode="tail">Message: {request.message}</Text>
-            <View style={styles.statusContainer}>
-              {request.status === 'pending' && (
-                <View style={styles.buttonsContainer}>
-                  <TouchableOpacity
-                    onPress={() => handleApproveRequest(request.id)}
-                    style={styles.approveButton}
-                  >
-                    <Text style={styles.buttonText}>Approve</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => handleDenyRequest(request.id)}
-                    style={styles.denyButton}
-                  >
-                    <Text style={styles.buttonText}>Deny</Text>
-                  </TouchableOpacity>
+      <ScrollView
+  horizontal
+  pagingEnabled
+  showsHorizontalScrollIndicator={false}
+  onMomentumScrollEnd={handleScroll}
+  ref={scrollRef}
+>
+  {['All', 'Pending', 'Approved', 'Denied'].map((tab, index) => {
+    const isTabSelected = selectedTab === tab;
+    const tabRequests = requests.filter(request => {
+      if (tab === 'All') return true;
+      return request.status.toLowerCase() === tab.toLowerCase();
+    });
+
+    return (
+      <View key={index} style={{ width: windowWidth }}>
+        {tabRequests.length > 0 ? (
+          <ScrollView style={styles.scrollView}>
+            {tabRequests.map(request => (
+              <TouchableOpacity
+                key={request.id}
+                style={styles.requestContainer}
+                onPress={() => handleRequestClick(request)}
+              >
+                <Image
+                  source={{ uri: request.donationDetails.photo }} 
+                  style={styles.donationImage}
+                />
+                <View style={styles.requestDetailsContainer}>
+                  <Text style={styles.requestEmail}>{request.requesterEmail}</Text>
+                  <Text style={styles.requestMessage}>{request.message}</Text>
+                  <Text style={styles.requestStatus}>{request.status}</Text>
                 </View>
-              )}
-              {request.status === 'approved' && (
-                <Text style={styles.approvedText}>APPROVED</Text>
-              )}
-              {request.status === 'denied' && (
-                <Text style={styles.deniedText}>DENIED</Text>
-              )}
-            </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={styles.emptyRequestsContainer}>
+            <Text style={styles.noRequestsText}>No {tab} requests.</Text>
           </View>
-        </TouchableOpacity>
-      ))}
-      {requests.length === 0 && (
-         <View style={styles.emptyRequestsContainer}>
-         <Text style={styles.noRequestsText}>No pending requests.</Text>
-       </View>
-      )}
-    </ScrollView>
+        )}
+      </View>
+    );
+  })}
+</ScrollView>
       <Modal
         animationType="slide"
         transparent={true}
