@@ -31,7 +31,16 @@
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [viewModalVisible, setViewModalVisible] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState({
+      photo: '',
+      name: '',
+      price: '',
+      category: '',
+      description: '',
+      quantity: '',
+      location: ''
+    });
     const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [editableProduct, setEditableProduct] = useState({
@@ -289,6 +298,14 @@
     );
 
     const ProductItem = ({ item }) => (
+      <TouchableOpacity 
+      onPress={() => {
+        setSelectedProduct(item);
+        if (item) {
+          setViewModalVisible(true);
+        }
+      }}
+    >
       <View style={styles.productItemContainer}>
         <Image source={{ uri: item.photo }} style={styles.productItemImage} />
         <View style={styles.productItemDetails}>
@@ -320,7 +337,48 @@
           <Icon name="ellipsis-v" size={20} color="#05652D" />
         </TouchableOpacity>
       </View>
+      </TouchableOpacity>
     );
+
+    const ViewProductModal = ({ isVisible, product, onClose }) => {
+      return (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isVisible}
+          onRequestClose={onClose}
+        >
+          <View style={styles.modalOverlay}>
+            <ScrollView style={styles.editModalContainer}>
+               <Text style={styles.editModalTitle}></Text>
+              <Image source={{ uri: product?.photo }} style={{ width: 100, height: 100, marginBottom: 20, borderRadius: 15 }} />
+              <Text style={styles.label}>Product Name</Text>
+              <Text style={styles.input}>{product?.name}</Text>
+              <Text style={styles.label}>Price</Text>
+              <Text style={styles.input}>₱{product?.price}</Text>
+              <Text style={styles.label}>Category</Text>
+              <Text style={styles.input}>{product?.category}</Text>
+              <Text style={styles.label}>Quantity</Text>
+              <Text style={styles.input}>{product?.quantity}</Text>
+              <Text style={styles.label}>Location</Text>
+              <Text style={styles.input}>{product?.location}</Text>
+              <Text style={styles.label}>Description</Text>
+              <Text style={styles.input}>{product?.description}</Text>
+              <TouchableOpacity 
+                style={styles.editButton}
+                onPress={() => {
+                  setEditableProduct(product);
+                  setViewModalVisible(false);
+                  setEditModalVisible(true);
+                }}
+              >
+                <Icon name="edit" size={30} color="#05652D" />
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </Modal>
+      );
+    };
 
     const EditProductModal = ({ isVisible, product, onSave, onCancel }) => {
       const [tempProduct, setTempProduct] = useState(product);
@@ -554,6 +612,11 @@
           isVisible={isPhotoPickerModalVisible}
           onCancel={() => setIsPhotoPickerModalVisible(false)}
         />
+        <ViewProductModal
+      isVisible={viewModalVisible}
+      product={selectedProduct}
+      onClose={() => setViewModalVisible(false)}
+    />
       </View>
     );
   };
@@ -960,6 +1023,12 @@
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 25,
+    },
+    editButton: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
+      zIndex: 10
     },
   });
 
