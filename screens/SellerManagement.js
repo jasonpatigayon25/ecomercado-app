@@ -305,6 +305,7 @@
           setViewModalVisible(true);
         }
       }}
+      onLongPress={(event) => showOptions(item, event)}
     >
       <View style={styles.productItemContainer}>
         <Image source={{ uri: item.photo }} style={styles.productItemImage} />
