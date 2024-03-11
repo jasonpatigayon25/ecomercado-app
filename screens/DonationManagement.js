@@ -27,6 +27,7 @@ const window = Dimensions.get("window");
 const DonationManagement = ({ navigation }) => {
 
   const animation = useRef(new Animated.Value(0)).current;
+  const [selectedPostsTab, setSelectedPostsTab] = useState('Approved');
   const [userEmail, setUserEmail] = useState(null);
   const [donations, setDonations] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -51,13 +52,15 @@ const DonationManagement = ({ navigation }) => {
   const getFilteredDonations = (tab) => {
     switch (tab) {
       case 'Posts':
-        return donations.filter(donation => 
-          donation.publicationStatus === 'approved' || donation.publicationStatus === 'pending'
+        return donations.filter(donation =>
+          selectedPostsTab === 'Approved'
+            ? donation.publicationStatus === 'approved'
+            : donation.publicationStatus === 'pending'
         );
       case 'Successful':
         return donations.filter(donation => donation.publicationStatus === 'successful');
       case 'Acquired':
-        return donations.filter(donation => donation.publicationStatus === 'acquired'); 
+        return donations.filter(donation => donation.publicationStatus === 'acquired');
       default:
         return donations;
     }
@@ -404,23 +407,53 @@ const DonationManagement = ({ navigation }) => {
       </View>
       <DonorTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       <ScrollView
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScroll}
-        ref={scrollRef}
-      >
-        {['Posted', 'Successful', 'Acquired'].map((tab, index) => (
-          <View key={index} style={{ width: windowWidth }}>
-            <FlatList
-              data={getFilteredDonations(tab)}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => <DonationItem item={item} />}
-              ListEmptyComponent={renderEmptyDonations}
-            />
+  horizontal
+  pagingEnabled
+  showsHorizontalScrollIndicator={false}
+  onMomentumScrollEnd={handleScroll}
+  ref={scrollRef}
+>
+  {['Posted', 'Successful', 'Acquired'].map((tab, index) => (
+    <View key={index} style={{ width: windowWidth }}>
+      {tab === 'Posted' && (
+        <View>
+          <View style={styles.subTabsContainer}>
+          <TouchableOpacity
+            style={[styles.subTab, selectedPostsTab === 'Approved' ? styles.activeSubTab : {}]}
+            onPress={() => setSelectedPostsTab('Approved')}
+          >
+            <Text style={[styles.subTabText, selectedPostsTab === 'Approved' ? styles.activeTabText : {}]}>
+              Approved
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.subTab, selectedPostsTab === 'Pending' ? styles.activeSubTab : {}]}
+            onPress={() => setSelectedPostsTab('Pending')}
+          >
+            <Text style={[styles.subTabText, selectedPostsTab === 'Pending' ? styles.activeTabText : {}]}>
+              Pending
+            </Text>
+          </TouchableOpacity>
           </View>
-        ))}
-      </ScrollView>
+          <FlatList
+            data={getFilteredDonations('Posts')}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => <DonationItem item={item} />}
+            ListEmptyComponent={renderEmptyDonations}
+          />
+        </View>
+      )}
+      {tab !== 'Posted' && (
+        <FlatList
+          data={getFilteredDonations(tab)}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => <DonationItem item={item} />}
+          ListEmptyComponent={renderEmptyDonations}
+        />
+      )}
+    </View>
+  ))}
+</ScrollView>
       <Modal
         animationType="none" 
         transparent={true}
@@ -797,7 +830,39 @@ approvedText: {
     alignItems: 'center',
     borderRadius: 25,
   },
-
+  subTabsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#FFF',
+    borderBottomWidth: 2,
+    borderColor: '#D3D3D3',
+  },
+  
+  subTab: {
+    padding: 10,
+  },
+  
+  activeSubTab: {
+    borderBottomWidth: 2,
+    color: '#05652D',
+    fontWeight: 'bold',
+    borderColor: '#05652D',
+  },
+  activeTabText: {
+    color: '#05652D',
+    fontWeight: 'bold',
+  }, 
+  subTabText: {
+    fontSize: 16,
+    color: '#888',
+    fontWeight: '600',
+  },
+  indicator: {
+    position: 'absolute',
+    bottom: -2, 
+    height: 2,
+    backgroundColor: '#05652D',
+  },
 });
 
 export default DonationManagement;
