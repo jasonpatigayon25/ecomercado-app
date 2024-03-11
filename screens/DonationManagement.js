@@ -27,6 +27,9 @@ const window = Dimensions.get("window");
 const DonationManagement = ({ navigation }) => {
 
   const animation = useRef(new Animated.Value(0)).current;
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [selectedDonationForView, setSelectedDonationForView] = useState(null);
+
   const [selectedPostsTab, setSelectedPostsTab] = useState('Approved');
   const [userEmail, setUserEmail] = useState(null);
   const [donations, setDonations] = useState([]);
@@ -257,6 +260,7 @@ const DonationManagement = ({ navigation }) => {
   };
   
   const DonationItem = ({ item }) => (
+    <TouchableOpacity onPress={() => handleViewDonation(item)}>
     <View style={styles.productItemContainer}>
       <Image source={{ uri: item.photo }} style={styles.productItemImage} />
       <View style={styles.productItemDetails}>
@@ -283,6 +287,7 @@ const DonationManagement = ({ navigation }) => {
         <Icon name="ellipsis-v" size={20} color="#05652D" />
       </TouchableOpacity>
     </View>
+    </TouchableOpacity>
   );
 
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
@@ -330,6 +335,46 @@ const DonationManagement = ({ navigation }) => {
     setIsPhotoPickerModalVisible(true);
   };
 
+  const handleViewDonation = (donation) => {
+    setSelectedDonationForView(donation);
+    setViewModalVisible(true);
+  };
+
+  const ViewDonationModal = ({ isVisible, donation, onClose }) => {
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isVisible}
+        onRequestClose={onClose}
+      >
+        <View style={styles.modalOverlay}>
+          <ScrollView style={styles.editModalContainer}>
+            <Text style={styles.editModalTitle}> </Text>
+            <Image source={{ uri: donation?.photo }} style={{ width: 100, height: 100, marginBottom: 20, borderRadius: 15 }} />
+            <Text style={styles.label}>Donation Name</Text>
+            <Text style={styles.readOnlyInput}>{donation?.name}</Text>
+            <Text style={styles.label}>Location</Text>
+            <Text style={styles.readOnlyInput}>{donation?.location}</Text>
+            <Text style={styles.label}>Message</Text>
+            <Text style={styles.readOnlyInput}>{donation?.message}</Text>
+            <TouchableOpacity 
+                style={styles.editButton}
+                onPress={() => {
+                  setEditableDonation(donation);
+                  setViewModalVisible(false);
+                  setEditModalVisible(true);
+                }}
+              >
+                <Icon name="edit" size={30} color="#05652D" />
+              </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
+    );
+  };
+  
+
   const EditDonationModal = ({ isVisible, donation, onSave, onCancel }) => {
     const [tempDonation, setTempDonation] = useState(donation);
   
@@ -360,37 +405,39 @@ const DonationManagement = ({ navigation }) => {
                 <Icon name="camera" size={24} color="#05652D" />
               )}
             </TouchableOpacity>
+            <Text style={styles.label}>Donation Name</Text>
             <TextInput
-              style={styles.editModalInput}
-              placeholder="Name"
+              style={styles.input}
+              placeholder="Enter donation name"
               value={tempDonation.name}
               onChangeText={(text) => setTempDonation({ ...tempDonation, name: text })}
             />
+            <Text style={styles.label}>Location</Text>
             <TextInput
-              style={styles.editModalInput}
-              placeholder="Location"
+              style={styles.input}
+              placeholder="Enter location"
               value={tempDonation.location}
               onChangeText={(text) => setTempDonation({ ...tempDonation, location: text })}
             />
+            <Text style={styles.label}>Message</Text>
             <TextInput
-              style={styles.editModalInput}
-              placeholder="Message"
+              style={styles.input}
+              placeholder="Enter message"
               value={tempDonation.message}
               onChangeText={(text) => setTempDonation({ ...tempDonation, message: text })}
               multiline
-              numberOfLines={4}
             />
-            <TouchableOpacity style={styles.editModalSave} onPress={handleSave}>
-              <Text style={styles.editModalSaveText}>Save</Text>
+            <TouchableOpacity style={styles.savebutton} onPress={handleSave}>
+              <Text style={styles.savebuttonText}>Save Changes</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.editModalCancel} onPress={onCancel}>
-              <Text style={styles.editModalCancelText}>Cancel</Text>
+            <TouchableOpacity style={styles.cancelbutton} onPress={onCancel}>
+              <Text style={styles.cancelbuttonText}>Cancel</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
       </Modal>
     );
-  };
+  };  
   
   return (
     <View style={styles.container}>
@@ -497,6 +544,11 @@ const DonationManagement = ({ navigation }) => {
       <PhotoPickerModal
         isVisible={isPhotoPickerModalVisible}
         onCancel={() => setIsPhotoPickerModalVisible(false)}
+      />
+      <ViewDonationModal
+        isVisible={viewModalVisible}
+        donation={selectedDonationForView}
+        onClose={() => setViewModalVisible(false)}
       />
     </View>
   );
@@ -862,6 +914,62 @@ approvedText: {
     bottom: -2, 
     height: 2,
     backgroundColor: '#05652D',
+  },
+  label: {
+    fontSize: 14,
+    color: '#05652D', 
+    marginBottom: 5, 
+    fontWeight: 'bold', 
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFF',
+    color: '#333',
+    marginBottom: 20,
+  },
+  savebutton: {
+    backgroundColor: '#05652D',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  savebuttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelbutton: {
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  cancelbuttonText: {
+    color: '#333',
+    fontSize: 16,
+  },
+  readOnlyInput: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFF',
+    color: '#333',
+    marginBottom: 20,
+    backgroundColor: '#f7f7f7',
+  },
+
+  editButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 10
   },
 });
 

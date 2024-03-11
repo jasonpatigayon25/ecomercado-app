@@ -354,17 +354,17 @@
                <Text style={styles.editModalTitle}></Text>
               <Image source={{ uri: product?.photo }} style={{ width: 100, height: 100, marginBottom: 20, borderRadius: 15 }} />
               <Text style={styles.label}>Product Name</Text>
-              <Text style={styles.input}>{product?.name}</Text>
+              <Text style={styles.readOnlyInput}>{product?.name}</Text>
               <Text style={styles.label}>Price</Text>
-              <Text style={styles.input}>₱{product?.price}</Text>
+              <Text style={styles.readOnlyInput}>₱{product?.price}</Text>
               <Text style={styles.label}>Category</Text>
-              <Text style={styles.input}>{product?.category}</Text>
+              <Text style={styles.readOnlyInput}>{product?.category}</Text>
               <Text style={styles.label}>Quantity</Text>
-              <Text style={styles.input}>{product?.quantity}</Text>
+              <Text style={styles.readOnlyInput}>{product?.quantity}</Text>
               <Text style={styles.label}>Location</Text>
-              <Text style={styles.input}>{product?.location}</Text>
+              <Text style={styles.readOnlyInput}>{product?.location}</Text>
               <Text style={styles.label}>Description</Text>
-              <Text style={styles.input}>{product?.description}</Text>
+              <Text style={styles.readOnlyInput}>{product?.description}</Text>
               <TouchableOpacity 
                 style={styles.editButton}
                 onPress={() => {
@@ -511,12 +511,6 @@
     const pickImage = () => {
       setIsPhotoPickerModalVisible(true);
     };
-
-    const filteredProducts = products.filter(product => {
-      if (selectedTab === 'Approved Posts') return product.publicationStatus === 'approved';
-      if (selectedTab === 'Pending For Approval') return product.publicationStatus === 'pending';
-      return false;
-    });
 
     const getFilteredProducts = (tab) => {
       switch (tab) {
@@ -1030,6 +1024,17 @@
       top: 10,
       right: 10,
       zIndex: 10
+    },
+    readOnlyInput: {
+      borderWidth: 1,
+      borderColor: '#D3D3D3',
+      borderRadius: 8,
+      paddingVertical: 12,
+      paddingHorizontal: 15,
+      backgroundColor: '#FFF',
+      color: '#333',
+      marginBottom: 20,
+      backgroundColor: '#f7f7f7',
     },
   });
 
