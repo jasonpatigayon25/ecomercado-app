@@ -50,12 +50,14 @@ const DonationManagement = ({ navigation }) => {
 
   const getFilteredDonations = (tab) => {
     switch (tab) {
-      case 'Posted':
-        return donations.filter(d => d.status === 'posted'); 
+      case 'Posts':
+        return donations.filter(donation => 
+          donation.publicationStatus === 'approved' || donation.publicationStatus === 'pending'
+        );
       case 'Successful':
-        return donations.filter(d => d.status === 'successful'); 
+        return donations.filter(donation => donation.publicationStatus === 'successful');
       case 'Acquired':
-        return donations.filter(d => d.status === 'acquired'); 
+        return donations.filter(donation => donation.publicationStatus === 'acquired'); 
       default:
         return donations;
     }
