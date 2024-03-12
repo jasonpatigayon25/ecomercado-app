@@ -60,6 +60,8 @@ const DonationManagement = ({ navigation }) => {
             ? donation.publicationStatus === 'approved'
             : donation.publicationStatus === 'pending'
         );
+      case 'Requests':
+        return donations.filter(donation => donation.publicationStatus === 'approved');
       case 'Successful':
         return donations.filter(donation => donation.publicationStatus === 'successful');
       case 'Acquired':
@@ -290,6 +292,55 @@ const DonationManagement = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+  const fetchRequestCount = async (donationId) => {
+    const q = query(collection(db, "donationRequests"), where("donationId", "==", donationId));
+    try {
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.size;
+    } catch (error) {
+      console.error("Error fetching donation requests: ", error);
+      Alert.alert('Error', 'Unable to fetch donation requests.');
+      return 0;
+    }
+  };
+
+  const RequestItem = ({ item }) => {
+    const [requestCount, setRequestCount] = useState(0);
+    
+    useEffect(() => {
+      const getRequestCount = async () => {
+        const count = await fetchRequestCount(item.id);
+        setRequestCount(count);
+      };
+  
+      getRequestCount();
+    }, []);
+  
+    return (
+      <TouchableOpacity onPress={() => handleViewDonation(item)}>
+        <View style={styles.productItemContainer}>
+          <Image source={{ uri: item.photo }} style={styles.productItemImage} />
+          <View style={styles.productItemDetails}>
+            <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+            <View style={styles.productItemMetaContainer}>
+              <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">
+                <Icon name="map-marker" size={14} color="#666" /> {item.location}
+              </Text>
+            </View>
+            <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">{item.message}</Text>
+          </View>
+          {requestCount > 0 ? (
+            <View style={styles.requestCounter}>
+              <Text style={styles.requestCountText}>{requestCount}</Text>
+            </View>
+          ) : (
+            <Icon name="hourglass-half" size={40} color="orange" />
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
 
   const PhotoPickerModal = ({ isVisible, onCancel }) => (
@@ -460,39 +511,55 @@ const DonationManagement = ({ navigation }) => {
         onMomentumScrollEnd={handleScroll}
         ref={scrollRef}
       >
-        {['Posts', 'Requests', 'Successful', 'Acquired'].map((tab, index) => (
-          <View key={index} style={{ width: windowWidth }}>
-            {tab === 'Posts' && (
-              <View>
-                <View style={styles.subTabsContainer}>
-                <TouchableOpacity
-                  style={[styles.subTab, selectedPostsTab === 'Approved' ? styles.activeSubTab : {}]}
-                  onPress={() => setSelectedPostsTab('Approved')}
-                >
-                  <Text style={[styles.subTabText, selectedPostsTab === 'Approved' ? styles.activeTabText : {}]}>
-                    Approved
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.subTab, selectedPostsTab === 'Pending' ? styles.activeSubTab : {}]}
-                  onPress={() => setSelectedPostsTab('Pending')}
-                >
-                  <Text style={[styles.subTabText, selectedPostsTab === 'Pending' ? styles.activeTabText : {}]}>
-                    Pending
-                  </Text>
-                </TouchableOpacity>
-                </View>
-                <FlatList
-                  data={getFilteredDonations('Posts')}
-                  keyExtractor={(item) => item.id.toString()}
-                  renderItem={({ item }) => <DonationItem item={item} />}
-                  ListEmptyComponent={renderEmptyDonations}
-                />
+      {['Posts', 'Requests', 'Successful', 'Acquired'].map((tab, index) => (
+        <View key={index} style={{ width: windowWidth }}>
+          {tab === 'Posts' && (
+            <View>
+              <View style={styles.subTabsContainer}>
+              <TouchableOpacity
+                style={[styles.subTab, selectedPostsTab === 'Approved' ? styles.activeSubTab : {}]}
+                onPress={() => setSelectedPostsTab('Approved')}
+              >
+                <Text style={[styles.subTabText, selectedPostsTab === 'Approved' ? styles.activeTabText : {}]}>
+                  Approved
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subTab, selectedPostsTab === 'Pending' ? styles.activeSubTab : {}]}
+                onPress={() => setSelectedPostsTab('Pending')}
+              >
+                <Text style={[styles.subTabText, selectedPostsTab === 'Pending' ? styles.activeTabText : {}]}>
+                  Pending
+                </Text>
+              </TouchableOpacity>
               </View>
-            )}
-            {tab !== 'Posts' && (
               <FlatList
-                data={getFilteredDonations(tab)}
+                data={getFilteredDonations('Posts')}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => <DonationItem item={item} />}
+                ListEmptyComponent={renderEmptyDonations}
+              />
+            </View>
+            )}
+            {tab === 'Requests' && (
+              <FlatList
+                data={getFilteredDonations('Requests')}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => <RequestItem item={item} />}
+                ListEmptyComponent={renderEmptyDonations}
+              />
+            )}
+            {tab === 'Successful' && (
+              <FlatList
+                data={getFilteredDonations('Successful')}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => <DonationItem item={item} />}
+                ListEmptyComponent={renderEmptyDonations}
+              />
+            )}
+            {tab === 'Acquired' && (
+              <FlatList
+                data={getFilteredDonations('Acquired')}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => <DonationItem item={item} />}
                 ListEmptyComponent={renderEmptyDonations}
@@ -971,6 +1038,24 @@ approvedText: {
     right: 10,
     zIndex: 10
   },
+
+  requestCounter: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#05652D',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    right: 10,
+    top: 20,
+  },
+  requestCountText: {
+    color: '#FFFFFF',
+    fontSize: 25,
+    fontWeight: 'bold',
+  },
+
 });
 
 export default DonationManagement;
