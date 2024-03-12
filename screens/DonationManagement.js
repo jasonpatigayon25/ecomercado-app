@@ -29,6 +29,7 @@ const DonationManagement = ({ navigation }) => {
   const animation = useRef(new Animated.Value(0)).current;
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [selectedDonationForView, setSelectedDonationForView] = useState(null);
+  const [requestCounts, setRequestCounts] = useState({});
 
   const [selectedPostsTab, setSelectedPostsTab] = useState('Approved');
   const [userEmail, setUserEmail] = useState(null);
@@ -239,14 +240,19 @@ const DonationManagement = ({ navigation }) => {
 
   const fetchUserDonations = async (email) => {
     const userDonations = [];
+    const newRequestCounts = {};
     const q = query(collection(db, "donation"), where("donor_email", "==", email), orderBy("createdAt", "desc"));
-
+  
     try {
       const querySnapshot = await getDocs(q);
-      querySnapshot.forEach((doc) => {
-        userDonations.push({ id: doc.id, ...doc.data() });
-      });
+      for (const doc of querySnapshot.docs) {
+        const donationData = { id: doc.id, ...doc.data() };
+        userDonations.push(donationData);
+        const count = await fetchRequestCount(donationData.id);
+        newRequestCounts[donationData.id] = count;
+      }
       setDonations(userDonations);
+      setRequestCounts(newRequestCounts);
     } catch (error) {
       console.error("Error fetching donations: ", error);
       Alert.alert('Error', 'Unable to fetch donations.');
@@ -304,42 +310,29 @@ const DonationManagement = ({ navigation }) => {
     }
   };
 
-  const RequestItem = ({ item }) => {
-    const [requestCount, setRequestCount] = useState(0);
-    
-    useEffect(() => {
-      const getRequestCount = async () => {
-        const count = await fetchRequestCount(item.id);
-        setRequestCount(count);
-      };
-  
-      getRequestCount();
-    }, []);
-  
-    return (
-      <TouchableOpacity onPress={() => handleViewDonation(item)}>
-        <View style={styles.productItemContainer}>
-          <Image source={{ uri: item.photo }} style={styles.productItemImage} />
-          <View style={styles.productItemDetails}>
-            <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
-            <View style={styles.productItemMetaContainer}>
-              <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">
-                <Icon name="map-marker" size={14} color="#666" /> {item.location}
-              </Text>
-            </View>
-            <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">{item.message}</Text>
+  const RequestItem = ({ item, requestCount }) => (
+    <TouchableOpacity onPress={() => handleViewDonation(item)}>
+      <View style={styles.productItemContainer}>
+        <Image source={{ uri: item.photo }} style={styles.productItemImage} />
+        <View style={styles.productItemDetails}>
+          <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+          <View style={styles.productItemMetaContainer}>
+            <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">
+              <Icon name="map-marker" size={14} color="#666" /> {item.location}
+            </Text>
           </View>
-          {requestCount > 0 ? (
-            <View style={styles.requestCounter}>
-              <Text style={styles.requestCountText}>{requestCount}</Text>
-            </View>
-          ) : (
-            <Icon name="hourglass-half" size={40} color="orange" />
-          )}
+          <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">{item.message}</Text>
         </View>
-      </TouchableOpacity>
-    );
-  };
+        {requestCount > 0 ? (
+          <View style={styles.requestCounter}>
+            <Text style={styles.requestCountText}>{requestCount}</Text>
+          </View>
+        ) : (
+          <Icon name="hourglass-half" size={40} color="orange" />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
 
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
 
@@ -545,7 +538,7 @@ const DonationManagement = ({ navigation }) => {
               <FlatList
                 data={getFilteredDonations('Requests')}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <RequestItem item={item} />}
+                renderItem={({ item }) => <RequestItem item={item} requestCount={requestCounts[item.id]} />}
                 ListEmptyComponent={renderEmptyDonations}
               />
             )}
