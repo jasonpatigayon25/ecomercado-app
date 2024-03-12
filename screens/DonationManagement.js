@@ -37,19 +37,19 @@ const DonationManagement = ({ navigation }) => {
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
 
-  const [selectedTab, setSelectedTab] = useState('Posted');
+  const [selectedTab, setSelectedTab] = useState('Posts');
   const scrollRef = useRef();
   const windowWidth = Dimensions.get('window').width;
 
   useEffect(() => {
-    const tabIndex = ['Posted', 'Successful', 'Acquired'].indexOf(selectedTab);
+    const tabIndex = ['Posts', 'Requests','Successful', 'Acquired'].indexOf(selectedTab);
     scrollRef.current?.scrollTo({ x: tabIndex * windowWidth, animated: true });
   }, [selectedTab, windowWidth]);
 
   const handleScroll = (event) => {
     const scrollX = event.nativeEvent.contentOffset.x;
     const tabIndex = Math.floor(scrollX / windowWidth);
-    setSelectedTab(['Posted', 'Successful', 'Acquired'][tabIndex]);
+    setSelectedTab(['Posts', 'Requests','Successful', 'Acquired'][tabIndex]);
   };
 
   const getFilteredDonations = (tab) => {
@@ -454,53 +454,53 @@ const DonationManagement = ({ navigation }) => {
       </View>
       <DonorTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       <ScrollView
-  horizontal
-  pagingEnabled
-  showsHorizontalScrollIndicator={false}
-  onMomentumScrollEnd={handleScroll}
-  ref={scrollRef}
->
-  {['Posted', 'Successful', 'Acquired'].map((tab, index) => (
-    <View key={index} style={{ width: windowWidth }}>
-      {tab === 'Posted' && (
-        <View>
-          <View style={styles.subTabsContainer}>
-          <TouchableOpacity
-            style={[styles.subTab, selectedPostsTab === 'Approved' ? styles.activeSubTab : {}]}
-            onPress={() => setSelectedPostsTab('Approved')}
-          >
-            <Text style={[styles.subTabText, selectedPostsTab === 'Approved' ? styles.activeTabText : {}]}>
-              Approved
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.subTab, selectedPostsTab === 'Pending' ? styles.activeSubTab : {}]}
-            onPress={() => setSelectedPostsTab('Pending')}
-          >
-            <Text style={[styles.subTabText, selectedPostsTab === 'Pending' ? styles.activeTabText : {}]}>
-              Pending
-            </Text>
-          </TouchableOpacity>
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        ref={scrollRef}
+      >
+        {['Posts', 'Requests', 'Successful', 'Acquired'].map((tab, index) => (
+          <View key={index} style={{ width: windowWidth }}>
+            {tab === 'Posts' && (
+              <View>
+                <View style={styles.subTabsContainer}>
+                <TouchableOpacity
+                  style={[styles.subTab, selectedPostsTab === 'Approved' ? styles.activeSubTab : {}]}
+                  onPress={() => setSelectedPostsTab('Approved')}
+                >
+                  <Text style={[styles.subTabText, selectedPostsTab === 'Approved' ? styles.activeTabText : {}]}>
+                    Approved
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.subTab, selectedPostsTab === 'Pending' ? styles.activeSubTab : {}]}
+                  onPress={() => setSelectedPostsTab('Pending')}
+                >
+                  <Text style={[styles.subTabText, selectedPostsTab === 'Pending' ? styles.activeTabText : {}]}>
+                    Pending
+                  </Text>
+                </TouchableOpacity>
+                </View>
+                <FlatList
+                  data={getFilteredDonations('Posts')}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item }) => <DonationItem item={item} />}
+                  ListEmptyComponent={renderEmptyDonations}
+                />
+              </View>
+            )}
+            {tab !== 'Posts' && (
+              <FlatList
+                data={getFilteredDonations(tab)}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => <DonationItem item={item} />}
+                ListEmptyComponent={renderEmptyDonations}
+              />
+            )}
           </View>
-          <FlatList
-            data={getFilteredDonations('Posts')}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => <DonationItem item={item} />}
-            ListEmptyComponent={renderEmptyDonations}
-          />
-        </View>
-      )}
-      {tab !== 'Posted' && (
-        <FlatList
-          data={getFilteredDonations(tab)}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => <DonationItem item={item} />}
-          ListEmptyComponent={renderEmptyDonations}
-        />
-      )}
-    </View>
-  ))}
-</ScrollView>
+        ))}
+      </ScrollView>
       <Modal
         animationType="none" 
         transparent={true}

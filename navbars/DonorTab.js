@@ -2,13 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Animated, Dimensions } from 'react-native';
 
 const windowWidth = Dimensions.get('window').width;
-const tabWidth = windowWidth / 3;
+const tabWidth = windowWidth / 4;
 
 const DonorTab = ({ selectedTab, setSelectedTab }) => {
     const indicatorAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-      const tabIndex = ['Posted', 'Successful', 'Acquired'].indexOf(selectedTab);
+      const tabIndex = ['Posts', 'Requests','Successful', 'Acquired'].indexOf(selectedTab);
       Animated.spring(indicatorAnim, {
         toValue: tabIndex * tabWidth, 
         useNativeDriver: true, 
@@ -32,7 +32,7 @@ const DonorTab = ({ selectedTab, setSelectedTab }) => {
 
     return (
       <View style={styles.tabBar}>
-        {['Posted', 'Successful', 'Acquired'].map(tabName => renderTab(tabName))}
+        {['Posts', 'Requests','Successful', 'Acquired'].map(tabName => renderTab(tabName))}
         <Animated.View
           style={[
             styles.indicator,
