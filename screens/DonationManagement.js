@@ -375,6 +375,28 @@ const DonationManagement = ({ navigation }) => {
       </View>
     ) : null;
 
+    const handleAccept = () => {
+      Alert.alert(
+        "Accept Request",
+        `Do you want to accept Request?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Accept", onPress: () => console.log("Request accepted") },
+        ]
+      );
+    };
+  
+    const handleDecline = () => {
+      Alert.alert(
+        "Decline Request",
+        `Do you want to decline Request?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Decline", onPress: () => console.log("Request declined") },
+        ]
+      );
+    };
+
     return (
       <View style={styles.requestItemContainer}>
         <View style={styles.requesterDetailSection}>
@@ -395,11 +417,24 @@ const DonationManagement = ({ navigation }) => {
           <View style={styles.donationDetailSection}>
             <Text style={styles.requestingLabel}>Requesting:</Text>
             <Image source={{ uri: donationDetails.photo }} style={styles.donationPhoto} />
-            <Text style={styles.donationName} numberOfLines={1} ellipsizeMode="tail">
-              {donationDetails.name}
-            </Text>
+            <View style={styles.productItemDetails}>
+              <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{donationDetails.name}</Text>
+              <View style={styles.productItemMetaContainer}>
+
+                <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail"><Icon name="map-marker" size={14} color="#666" /> {donationDetails.location}</Text>
+              </View>
+              <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">{donationDetails.message}</Text>
+            </View>
           </View>
         )}
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
+            <Text style={styles.buttonText}>Accept</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
+            <Text style={styles.buttonText}>Decline</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -1226,6 +1261,32 @@ approvedText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',  
+    padding: 10,
+  },
+  acceptButton: {
+    flex: 1,  
+    backgroundColor: 'green',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginRight: 5, 
+    borderRadius: 5,
+  },
+  declineButton: {
+    flex: 1,
+    backgroundColor: 'red',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center', 
   },
 });
 
