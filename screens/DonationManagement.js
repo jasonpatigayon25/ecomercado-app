@@ -255,6 +255,7 @@ const DonationManagement = ({ navigation }) => {
   }, []);
 
   const fetchUserDonations = async (email) => {
+
     const userDonations = [];
     const newRequestCounts = {};
     const q = query(collection(db, "donation"), where("donor_email", "==", email), orderBy("createdAt", "desc"));
@@ -434,8 +435,7 @@ const DonationManagement = ({ navigation }) => {
                       await updateDoc(donationRequestRef, { status: 'accepted' });
                       setResponse('accepted');
                       setIsResponded(true);
-  
-                      // Decline all other requests for the same donation
+
                       await declineOtherRequests(request.id, request.donationId);
                   }
               }
@@ -444,18 +444,25 @@ const DonationManagement = ({ navigation }) => {
   };
   
   const declineOtherRequests = async (acceptedRequestId, donationId) => {
-      const q = query(collection(db, "donationRequests"), where("donationId", "==", donationId), where("id", "!=", acceptedRequestId));
-      const querySnapshot = await getDocs(q);
-      const batch = writeBatch(db);
-      querySnapshot.forEach((docSnapshot) => {
-          const requestRef = doc(db, 'donationRequests', docSnapshot.id);
-          batch.update(requestRef, { status: 'declined' });
-      });
-  
-      await batch.commit();
-      // Refresh the UI to reflect these changes
-      fetchDonationRequests(); // Assuming this is a function that fetches the latest requests and updates state
-  };
+    const q = query(collection(db, "donationRequests"), where("donationId", "==", donationId), where("id", "!=", acceptedRequestId));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        const batch = writeBatch(db);
+        querySnapshot.forEach((docSnapshot) => {
+            batch.update(docSnapshot.ref, { status: 'declined' });
+        });
+        await batch.commit();
+    }
+
+    setDonationRequests(prevRequests =>
+        prevRequests.map(request => {
+            if (request.donationId === donationId && request.id !== acceptedRequestId) {
+                return { ...request, status: 'declined' };
+            }
+            return request;
+        })
+    );
+};
     
     const handleDecline = async () => {
       Alert.alert(
