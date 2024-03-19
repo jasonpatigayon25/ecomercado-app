@@ -46,7 +46,6 @@ const DonationManagement = ({ navigation }) => {
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [selectedDonationForView, setSelectedDonationForView] = useState(null);
   const [requestCounts, setRequestCounts] = useState({});
-
   const [selectedPostsTab, setSelectedPostsTab] = useState('Approved');
   const [userEmail, setUserEmail] = useState(null);
   const [donations, setDonations] = useState([]);
@@ -371,6 +370,19 @@ const DonationManagement = ({ navigation }) => {
   };
 
   const RequestItem = ({ request, donationDetails }) => {
+    
+    const [response, setResponse] = useState(''); 
+    const [isResponded, setIsResponded] = useState(false);
+
+    const getResponseStyle = () => ({
+      responseText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: response === 'accepted' ? '#4CAF50' : '#f44336',
+        textAlign: 'center',
+        marginTop: 10,
+      },
+    });
 
     const renderInitialsImage = (fullName) => {
       const match = fullName.match(/\b(\w)/g) || [];
@@ -391,26 +403,77 @@ const DonationManagement = ({ navigation }) => {
       </View>
     ) : null;
 
-    const handleAccept = () => {
+    const handleAccept = async () => {
       Alert.alert(
         "Accept Request",
-        `Do you want to accept Request?`,
+        "Do you want to accept this request?",
         [
-          { text: "Cancel", style: "cancel" },
-          { text: "Accept", onPress: () => console.log("Request accepted") },
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Accept",
+            onPress: async () => {
+              // Firestore update operation to set the status of the accepted request
+              const donationRequestRef = doc(db, 'donationRequests', request.id);
+              await updateDoc(donationRequestRef, { status: 'accepted' });
+              
+              // Set local state to update UI
+              setResponse('accepted');
+              setIsResponded(true);
+    
+              // Function to decline other requests for the same donation item
+              await declineOtherRequests(request.id, request.donationId);
+              
+              console.log("Request accepted");
+            }
+          }
         ]
       );
     };
-  
-    const handleDecline = () => {
+    
+    const handleDecline = async () => {
       Alert.alert(
         "Decline Request",
-        `Do you want to decline Request?`,
+        "Do you want to decline this request?",
         [
-          { text: "Cancel", style: "cancel" },
-          { text: "Decline", onPress: () => console.log("Request declined") },
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Decline",
+            onPress: async () => {
+              // Firestore update operation to set the status of the declined request
+              const donationRequestRef = doc(db, 'donationRequests', request.id);
+              await updateDoc(donationRequestRef, { status: 'declined' });
+              
+              // Set local state to update UI
+              setResponse('declined');
+              setIsResponded(true);
+    
+              console.log("Request declined");
+            }
+          }
         ]
       );
+    };
+    
+    const declineOtherRequests = async (acceptedRequestId, donationId) => {
+      // Fetch all other requests for the same donation item
+      const q = query(collection(db, "donationRequests"), where("donationId", "==", donationId), where("id", "!=", acceptedRequestId));
+      const querySnapshot = await getDocs(q);
+    
+      // Batch all the updates together
+      const batch = writeBatch(db);
+      querySnapshot.forEach((docSnapshot) => {
+        const requestRef = doc(db, 'donationRequests', docSnapshot.id);
+        batch.update(requestRef, { status: 'declined' });
+      });
+    
+      // Commit the batch
+      await batch.commit();
     };
 
     return (
@@ -444,19 +507,25 @@ const DonationManagement = ({ navigation }) => {
             </View>
           </View>
         )}
-        <View style={styles.actionButtonsContainer}>
-        <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
-          <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
-            <Text style={styles.buttonText}>Accept</Text>
-          </TouchableOpacity>
-        </Animated.View>
+        {!isResponded ? (
+          <View style={styles.actionButtonsContainer}>
+            <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
+              <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
+                <Text style={styles.buttonText}>Accept</Text>
+              </TouchableOpacity>
+            </Animated.View>
 
-        <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
-          <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
-            <Text style={styles.buttonText}>Decline</Text>
-          </TouchableOpacity>
-        </Animated.View>
-        </View>
+            <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
+              <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
+                <Text style={styles.buttonText}>Decline</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        ) : (
+        <Text style={getResponseStyle().responseText}>
+        {response === 'accepted' ? 'Accepted (Pending to be Received)' : 'Declined'}
+        </Text>
+        )}
       </View>
     );
   };
@@ -1321,6 +1390,7 @@ approvedText: {
     fontSize: 16,
     fontWeight: 'bold',
   },
+
 });
 
 export default DonationManagement;
