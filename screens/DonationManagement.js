@@ -372,6 +372,7 @@ const DonationManagement = ({ navigation }) => {
   const RequestItem = ({ request, donationDetails }) => {
     const [response, setResponse] = useState('');
     const [isResponded, setIsResponded] = useState(false);
+    const [showActionButtons, setShowActionButtons] = useState(false);
 
     useEffect(() => {
         const fetchStatus = async () => {
@@ -381,12 +382,12 @@ const DonationManagement = ({ navigation }) => {
                 const { status } = docSnap.data();
                 setResponse(status);
                 setIsResponded(status === 'accepted' || status === 'declined');
+                setShowActionButtons(status === 'pending');
             }
         };
 
         fetchStatus();
     }, [request.id]);
-
 
     const getResponseStyle = () => ({
       responseText: {
@@ -480,56 +481,61 @@ const DonationManagement = ({ navigation }) => {
 
     return (
       <View style={styles.requestItemContainer}>
-        <View style={styles.requesterDetailSection}>
-        <Text style={styles.requestingLabel}>Requester</Text>
-          {photoComponent}
-          <View style={styles.requesterInfo}>
-            <Text style={styles.requesterName} numberOfLines={1} ellipsizeMode="tail">
-              {requesterDetail.fullName}
-            </Text>
-            <Text style={styles.requesterLocation} numberOfLines={1} ellipsizeMode="tail">
-              <Icon name="map-marker" size={14} color="#666" /> {request.requesterAddress}
-            </Text>
-            <Text style={styles.requesterMessage} numberOfLines={1} ellipsizeMode="tail">
-              {request.message}
-            </Text>
-          </View>
-        </View>
-        {donationSection && (
-          <View style={styles.donationDetailSection}>
-            <Text style={styles.requestingLabel}>Requesting</Text>
-            <Image source={{ uri: donationDetails.photo }} style={styles.donationPhoto} />
-            <View style={styles.productItemDetails}>
-              <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{donationDetails.name}</Text>
-              <View style={styles.productItemMetaContainer}>
-
-                <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail"><Icon name="map-marker" size={14} color="#666" /> {donationDetails.location}</Text>
+          <View style={styles.requesterDetailSection}>
+              <Text style={styles.requestingLabel}>Requester</Text>
+              {photoComponent}
+              <View style={styles.requesterInfo}>
+                  <Text style={styles.requesterName} numberOfLines={1} ellipsizeMode="tail">
+                      {requesterDetail.fullName}
+                  </Text>
+                  <Text style={styles.requesterLocation} numberOfLines={1} ellipsizeMode="tail">
+                      <Icon name="map-marker" size={14} color="#666" /> {request.requesterAddress}
+                  </Text>
+                  <Text style={styles.requesterMessage} numberOfLines={1} ellipsizeMode="tail">
+                      {request.message}
+                  </Text>
               </View>
-              <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">{donationDetails.message}</Text>
-            </View>
           </View>
-        )}
-        {!isResponded ? (
-                <View style={styles.actionButtonsContainer}>
-                    <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
-                        <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
-                            <Text style={styles.buttonText}>Accept</Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-
-                    <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
-                        <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
-                            <Text style={styles.buttonText}>Decline</Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-                </View>
-            ) : (
-                <Text style={getResponseStyle().responseText}>
-                    {response === 'accepted' ? 'Accepted (Pending to be Received)' : 'Declined'}
-                </Text>
-            )}
-        </View>
-    );
+          {donationSection && (
+              <View style={styles.donationDetailSection}>
+                  <Text style={styles.requestingLabel}>Requesting</Text>
+                  <Image source={{ uri: donationDetails.photo }} style={styles.donationPhoto} />
+                  <View style={styles.productItemDetails}>
+                      <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{donationDetails.name}</Text>
+                      <View style={styles.productItemMetaContainer}>
+                          <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">
+                              <Icon name="map-marker" size={14} color="#666" /> {donationDetails.location}
+                          </Text>
+                      </View>
+                      <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">
+                          {donationDetails.message}
+                      </Text>
+                  </View>
+              </View>
+          )}
+          {!isResponded && request.status === 'pending' && (
+              <View style={styles.actionButtonsContainer}>
+                  <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
+                      <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
+                          <Text style={styles.buttonText}>Accept</Text>
+                      </TouchableOpacity>
+                  </Animated.View>
+  
+                  <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
+                      <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
+                          <Text style={styles.buttonText}>Decline</Text>
+                      </TouchableOpacity>
+                  </Animated.View>
+              </View>
+          )}
+          {isResponded && (
+              <Text style={getResponseStyle().responseText}>
+                  {response === 'accepted' ? 'Accepted (Pending to be Received)' : 'Declined'}
+              </Text>
+          )}
+      </View>
+  );
+  
 };
 
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
