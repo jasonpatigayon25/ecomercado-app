@@ -25,7 +25,23 @@ import DonorTab from '../navbars/DonorTab';
 const window = Dimensions.get("window");
 
 const DonationManagement = ({ navigation }) => {
-
+  const scale = useRef(new Animated.Value(1)).current;  
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, {
+          toValue: 0.95,
+          duration: 500,
+          useNativeDriver: true
+        }),
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true
+        })
+      ])
+    ).start();
+  }, []);
   const animation = useRef(new Animated.Value(0)).current;
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [selectedDonationForView, setSelectedDonationForView] = useState(null);
@@ -400,6 +416,7 @@ const DonationManagement = ({ navigation }) => {
     return (
       <View style={styles.requestItemContainer}>
         <View style={styles.requesterDetailSection}>
+        <Text style={styles.requestingLabel}>Requester</Text>
           {photoComponent}
           <View style={styles.requesterInfo}>
             <Text style={styles.requesterName} numberOfLines={1} ellipsizeMode="tail">
@@ -415,7 +432,7 @@ const DonationManagement = ({ navigation }) => {
         </View>
         {donationSection && (
           <View style={styles.donationDetailSection}>
-            <Text style={styles.requestingLabel}>Requesting:</Text>
+            <Text style={styles.requestingLabel}>Requesting</Text>
             <Image source={{ uri: donationDetails.photo }} style={styles.donationPhoto} />
             <View style={styles.productItemDetails}>
               <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{donationDetails.name}</Text>
@@ -428,12 +445,17 @@ const DonationManagement = ({ navigation }) => {
           </View>
         )}
         <View style={styles.actionButtonsContainer}>
+        <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
           <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
             <Text style={styles.buttonText}>Accept</Text>
           </TouchableOpacity>
+        </Animated.View>
+
+        <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
           <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
             <Text style={styles.buttonText}>Decline</Text>
           </TouchableOpacity>
+        </Animated.View>
         </View>
       </View>
     );
@@ -1243,7 +1265,7 @@ approvedText: {
   },
  requestingLabel: {
     position: 'absolute', 
-    top: -30, 
+    top: -27, 
     left: 0, 
     fontSize: 14,
     fontWeight: 'bold',
@@ -1267,25 +1289,37 @@ approvedText: {
     justifyContent: 'space-between',  
     padding: 10,
   },
+  buttonContainer: {
+    margin: 5,
+    borderRadius: 25,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  
   acceptButton: {
-    flex: 1,  
-    backgroundColor: 'green',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    marginRight: 5,  
-    borderRadius: 5,
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  
   declineButton: {
-    flex: 1,  
-    backgroundColor: 'red',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 5,
+    backgroundColor: '#f44336',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  
   buttonText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 16,
-    textAlign: 'center', 
+    fontWeight: 'bold',
   },
 });
 
