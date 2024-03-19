@@ -254,6 +254,35 @@ const DonationManagement = ({ navigation }) => {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchDonationAcquired = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+    
+      const userEmail = currentUser.email;
+      const q = query(
+        collection(db, "donationRequests"),
+        where("requesterEmail", "==", userEmail),
+        where("status", "==", "successful")
+      );
+    
+      try {
+        const querySnapshot = await getDocs(q);
+        const acquiredRequests = [];
+        querySnapshot.forEach((doc) => {
+          acquiredRequests.push({ id: doc.id, ...doc.data() });
+        });
+        setDonationRequests(acquiredRequests);
+      } catch (error) {
+        console.error("Error fetching acquired donation requests: ", error);
+        Alert.alert('Error', 'Unable to fetch acquired donation requests.');
+      }
+    };
+  
+    fetchDonationAcquired();
+  }, []);
+
   const fetchUserDonations = async (email) => {
 
     const userDonations = [];
@@ -628,60 +657,58 @@ const SuccessfulItem = ({ request, donationDetails }) => {
             setResponse('successful');
         }
     }, [request.status]);
-  
+
     const getResponseStyle = () => ({
-      responseText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#4CAF50',
-        textAlign: 'center',
-        marginTop: 10,
-      },
+        responseText: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: '#4CAF50',
+            textAlign: 'center',
+            marginTop: 10,
+        },
     });
-  
+
     const renderInitialsImage = (fullName) => {
-      const match = fullName.match(/\b(\w)/g) || [];
-      const initials = ((match.shift() || '') + (match.pop() || '')).toUpperCase();
-      return <Text style={styles.initials}>{initials}</Text>;
+        const match = fullName.match(/\b(\w)/g) || [];
+        const initials = ((match.shift() || '') + (match.pop() || '')).toUpperCase();
+        return <Text style={styles.initials}>{initials}</Text>;
     };
-  
-    const requesterDetail = userDetails[request.requesterEmail] || {};
+
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    const currentUserEmail = currentUser.email;
+
+    const requesterDetail = userDetails[currentUserEmail] || {};
     const photoComponent = requesterDetail.photoUrl 
-      ? <Image source={{ uri: requesterDetail.photoUrl }} style={styles.requesterPhoto} />
-      : renderInitialsImage(requesterDetail.fullName || "");
-  
+        ? <Image source={{ uri: requesterDetail.photoUrl }} style={styles.requesterPhoto} />
+        : renderInitialsImage(requesterDetail.fullName || "");
+
     const donationSection = donationDetails ? (
-      <View style={styles.donationDetailSection}>
-        <Text style={styles.requestingLabel}>Requesting:</Text>
-        <Text style={styles.requestingLabel}>Requesting</Text>
-                    <Image source={{ uri: donationDetails.photo }} style={styles.donationPhoto} />
-                    <View style={styles.productItemDetails}>
-                        <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{donationDetails.name}</Text>
-                        <View style={styles.productItemMetaContainer}>
-                            <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">
-                                <Icon name="map-marker" size={14} color="#666" /> {donationDetails.location}
-                            </Text>
-                        </View>
-                        <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">
-                            {donationDetails.message}
-                        </Text>
-                    </View>
-                  </View>
-              ) : null;
-      return (
+        <View style={styles.donationDetailSection}>
+            <Text style={styles.requestingLabel}>Requesting:</Text>
+            <Image source={{ uri: donationDetails.photo }} style={styles.donationPhoto} />
+            <View style={styles.productItemDetails}>
+                <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{donationDetails.name}</Text>
+                <View style={styles.productItemMetaContainer}>
+                    <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">
+                        <Icon name="map-marker" size={14} color="#666" /> {donationDetails.location}
+                    </Text>
+                </View>
+                <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">
+                    {donationDetails.message}
+                </Text>
+            </View>
+        </View>
+    ) : null;
+
+    return (
         <View style={styles.requestItemContainer}>
             <View style={styles.requesterDetailSection}>
                 <Text style={styles.requestingLabel}>Requester</Text>
                 {photoComponent}
                 <View style={styles.requesterInfo}>
                     <Text style={styles.requesterName} numberOfLines={1} ellipsizeMode="tail">
-                        {requesterDetail.fullName}
-                    </Text>
-                    <Text style={styles.requesterLocation} numberOfLines={1} ellipsizeMode="tail">
-                        <Icon name="map-marker" size={14} color="#666" /> {request.requesterAddress}
-                    </Text>
-                    <Text style={styles.requesterMessage} numberOfLines={1} ellipsizeMode="tail">
-                        {request.message}
+                        {requesterDetail.fullName || 'Current User'}
                     </Text>
                 </View>
             </View>
@@ -690,8 +717,8 @@ const SuccessfulItem = ({ request, donationDetails }) => {
                 {response === 'successful' ? 'Successful' : ''}
             </Text>
         </View>
-      );
-  };
+    );
+};
 
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
 
