@@ -420,28 +420,42 @@ const DonationManagement = ({ navigation }) => {
 
     const handleAccept = async () => {
       Alert.alert(
-        "Accept Request",
-        "Do you want to accept this request?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel"
-          },
-          {
-            text: "Accept",
-            onPress: async () => {
-              const donationRequestRef = doc(db, 'donationRequests', request.id);
-              await updateDoc(donationRequestRef, { status: 'accepted' });
-              setResponse('accepted');
-              setIsResponded(true);
-              await declineOtherRequests(request.id, request.donationId);
-              
-              console.log("Request accepted");
-            }
-          }
-        ]
+          "Accept Request",
+          "Do you want to accept this request?",
+          [
+              {
+                  text: "Cancel",
+                  style: "cancel"
+              },
+              {
+                  text: "Accept",
+                  onPress: async () => {
+                      const donationRequestRef = doc(db, 'donationRequests', request.id);
+                      await updateDoc(donationRequestRef, { status: 'accepted' });
+                      setResponse('accepted');
+                      setIsResponded(true);
+  
+                      // Decline all other requests for the same donation
+                      await declineOtherRequests(request.id, request.donationId);
+                  }
+              }
+          ]
       );
-    };
+  };
+  
+  const declineOtherRequests = async (acceptedRequestId, donationId) => {
+      const q = query(collection(db, "donationRequests"), where("donationId", "==", donationId), where("id", "!=", acceptedRequestId));
+      const querySnapshot = await getDocs(q);
+      const batch = writeBatch(db);
+      querySnapshot.forEach((docSnapshot) => {
+          const requestRef = doc(db, 'donationRequests', docSnapshot.id);
+          batch.update(requestRef, { status: 'declined' });
+      });
+  
+      await batch.commit();
+      // Refresh the UI to reflect these changes
+      fetchDonationRequests(); // Assuming this is a function that fetches the latest requests and updates state
+  };
     
     const handleDecline = async () => {
       Alert.alert(
@@ -465,18 +479,6 @@ const DonationManagement = ({ navigation }) => {
           }
         ]
       );
-    };
-    
-    const declineOtherRequests = async (acceptedRequestId, donationId) => {
-      const q = query(collection(db, "donationRequests"), where("donationId", "==", donationId), where("id", "!=", acceptedRequestId));
-      const querySnapshot = await getDocs(q);
-      const batch = writeBatch(db);
-      querySnapshot.forEach((docSnapshot) => {
-        const requestRef = doc(db, 'donationRequests', docSnapshot.id);
-        batch.update(requestRef, { status: 'declined' });
-      });
-
-      await batch.commit();
     };
 
     return (
