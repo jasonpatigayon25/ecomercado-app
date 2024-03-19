@@ -354,7 +354,7 @@ const DonationManagement = ({ navigation }) => {
     }
   };
 
-  const RequestItem = ({ request }) => {
+  const RequestItem = ({ request, donationDetails }) => {
 
     const renderInitialsImage = (fullName) => {
       const match = fullName.match(/\b(\w)/g) || [];
@@ -364,23 +364,42 @@ const DonationManagement = ({ navigation }) => {
   
     const requesterDetail = userDetails[request.requesterEmail] || {};
     const photoComponent = requesterDetail.photoUrl 
-      ? <Image source={{ uri: requesterDetail.photoUrl }} style={styles.productItemImage} />
+      ? <Image source={{ uri: requesterDetail.photoUrl }} style={styles.requesterPhoto} />
       : renderInitialsImage(requesterDetail.fullName || "");
   
+    const donationSection = donationDetails ? (
+      <View style={styles.donationDetailSection}>
+        <Text style={styles.requestingLabel}>Requesting:</Text>
+        <Image source={{ uri: donationDetails.photo }} style={styles.donationPhoto} />
+        <Text style={styles.donationName}>{donationDetails.name}</Text>
+      </View>
+    ) : null;
+
     return (
-      <View style={styles.productItemContainer}>
-        {photoComponent}
-        <View style={styles.productItemDetails}>
-          <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">
-            {requesterDetail.fullName} 
-          </Text>
-          <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">
-            <Icon name="map-marker" size={14} color="#666" /> {request.requesterAddress}
-          </Text>
-          <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">
-            {request.message}
-          </Text>
+      <View style={styles.requestItemContainer}>
+        <View style={styles.requesterDetailSection}>
+          {photoComponent}
+          <View style={styles.requesterInfo}>
+            <Text style={styles.requesterName} numberOfLines={1} ellipsizeMode="tail">
+              {requesterDetail.fullName}
+            </Text>
+            <Text style={styles.requesterLocation} numberOfLines={1} ellipsizeMode="tail">
+              <Icon name="map-marker" size={14} color="#666" /> {request.requesterAddress}
+            </Text>
+            <Text style={styles.requesterMessage} numberOfLines={1} ellipsizeMode="tail">
+              {request.message}
+            </Text>
+          </View>
         </View>
+        {donationSection && (
+          <View style={styles.donationDetailSection}>
+            <Text style={styles.requestingLabel}>Requesting:</Text>
+            <Image source={{ uri: donationDetails.photo }} style={styles.donationPhoto} />
+            <Text style={styles.donationName} numberOfLines={1} ellipsizeMode="tail">
+              {donationDetails.name}
+            </Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -594,7 +613,10 @@ const DonationManagement = ({ navigation }) => {
               <FlatList
               data={donationRequests}
               keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => <RequestItem request={item} />}
+              renderItem={({ item: request }) => {
+                const donationDetails = donations.find(donation => donation.id === request.donationId);
+                return <RequestItem request={request} donationDetails={donationDetails} />;
+              }}
               ListEmptyComponent={renderEmptyDonations}
             />
             )}
@@ -1115,6 +1137,95 @@ approvedText: {
     lineHeight: 60,
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  requestedDonationContainer: {
+    backgroundColor: '#eef', 
+    padding: 10,
+    marginVertical: 8,
+  },
+  donationPhoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  donationName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  requestItemContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
+    marginVertical: 8,
+    padding: 16,
+  },
+  requesterDetailSection: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eaeaea',
+    paddingBottom: 16,
+    marginBottom: 16,
+  },
+  requesterPhoto: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 10,
+    borderWidth: 2,
+    borderColor: '#dedede',
+  },
+  requesterName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#05652D',
+    flexShrink: 1,
+  },
+  requesterInfo: {
+    flex: 1,
+  },
+  requesterLocation: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    marginLeft: 10,
+    flexShrink: 1,
+  },
+  requesterMessage: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+    marginLeft: 10,
+    flexShrink: 1,
+  },
+  donationDetailSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+ requestingLabel: {
+    position: 'absolute', 
+    top: -30, 
+    left: 0, 
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#808080',
+    backgroundColor: '#fff',
+    paddingHorizontal: 4,
+  },
+  donationPhoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  donationName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
   },
 });
 
