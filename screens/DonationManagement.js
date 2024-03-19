@@ -547,6 +547,80 @@ const DonationManagement = ({ navigation }) => {
   
 };
 
+const SuccessfulItem = ({ request, donationDetails }) => {
+  const [response, setResponse] = useState('');
+
+  useEffect(() => {
+      if (request.status === 'successful') {
+          setResponse('successful');
+      }
+  }, [request.status]);
+
+  const getResponseStyle = () => ({
+    responseText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#4CAF50',
+      textAlign: 'center',
+      marginTop: 10,
+    },
+  });
+
+  const renderInitialsImage = (fullName) => {
+    const match = fullName.match(/\b(\w)/g) || [];
+    const initials = ((match.shift() || '') + (match.pop() || '')).toUpperCase();
+    return <Text style={styles.initials}>{initials}</Text>;
+  };
+
+  const requesterDetail = userDetails[request.requesterEmail] || {};
+  const photoComponent = requesterDetail.photoUrl 
+    ? <Image source={{ uri: requesterDetail.photoUrl }} style={styles.requesterPhoto} />
+    : renderInitialsImage(requesterDetail.fullName || "");
+
+  const donationSection = donationDetails ? (
+    <View style={styles.donationDetailSection}>
+      <Text style={styles.requestingLabel}>Requesting:</Text>
+      <Text style={styles.requestingLabel}>Requesting</Text>
+                  <Image source={{ uri: donationDetails.photo }} style={styles.donationPhoto} />
+                  <View style={styles.productItemDetails}>
+                      <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{donationDetails.name}</Text>
+                      <View style={styles.productItemMetaContainer}>
+                          <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">
+                              <Icon name="map-marker" size={14} color="#666" /> {donationDetails.location}
+                          </Text>
+                      </View>
+                      <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">
+                          {donationDetails.message}
+                      </Text>
+                  </View>
+    </View>
+  ) : null;
+
+  return (
+    <View style={styles.requestItemContainer}>
+        <View style={styles.requesterDetailSection}>
+            <Text style={styles.requestingLabel}>Requester</Text>
+            {photoComponent}
+            <View style={styles.requesterInfo}>
+                <Text style={styles.requesterName} numberOfLines={1} ellipsizeMode="tail">
+                    {requesterDetail.fullName}
+                </Text>
+                <Text style={styles.requesterLocation} numberOfLines={1} ellipsizeMode="tail">
+                    <Icon name="map-marker" size={14} color="#666" /> {request.requesterAddress}
+                </Text>
+                <Text style={styles.requesterMessage} numberOfLines={1} ellipsizeMode="tail">
+                    {request.message}
+                </Text>
+            </View>
+        </View>
+        {donationSection}
+        <Text style={getResponseStyle().responseText}>
+            {response === 'successful' ? 'Successful' : ''}
+        </Text>
+    </View>
+  );
+};
+
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
 
   const PhotoPickerModal = ({ isVisible, onCancel }) => (
@@ -764,12 +838,15 @@ const DonationManagement = ({ navigation }) => {
             />
             )}
             {tab === 'Successful' && (
-              <FlatList
-                data={getFilteredDonations('Successful')}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <DonationItem item={item} />}
-                ListEmptyComponent={renderEmptyDonations}
-              />
+                <FlatList
+                    data={donationRequests.filter(request => request.status === 'successful')}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item: request }) => {
+                        const donationDetails = donations.find(donation => donation.id === request.donationId);
+                        return <SuccessfulItem request={request} donationDetails={donationDetails} />;
+                    }}
+                    ListEmptyComponent={renderEmptyDonations}
+                />
             )}
             {tab === 'Acquired' && (
               <FlatList
