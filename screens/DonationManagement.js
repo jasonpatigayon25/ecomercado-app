@@ -267,10 +267,15 @@ const DonationManagement = ({ navigation }) => {
     setIsModalVisible(true);
   };
   
-  const DonationItem = ({ item }) => (
+  const DonationItem = ({ item, requestCount }) => (
     <TouchableOpacity onPress={() => handleViewDonation(item)}>
-    <View style={styles.productItemContainer}>
+     <View style={styles.productItemContainer}>
       <Image source={{ uri: item.photo }} style={styles.productItemImage} />
+      {item.publicationStatus === 'approved' && requestCount > 0 && (
+        <View style={styles.requestCounter}>
+          <Text style={styles.requestCountText}>{requestCount}</Text>
+        </View>
+      )}
       <View style={styles.productItemDetails}>
         <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
         <View style={styles.productItemMetaContainer}>
@@ -507,33 +512,38 @@ const DonationManagement = ({ navigation }) => {
       {['Posts', 'Requests', 'Successful', 'Acquired'].map((tab, index) => (
         <View key={index} style={{ width: windowWidth }}>
           {tab === 'Posts' && (
-            <View>
-              <View style={styles.subTabsContainer}>
-              <TouchableOpacity
-                style={[styles.subTab, selectedPostsTab === 'Approved' ? styles.activeSubTab : {}]}
-                onPress={() => setSelectedPostsTab('Approved')}
-              >
-                <Text style={[styles.subTabText, selectedPostsTab === 'Approved' ? styles.activeTabText : {}]}>
-                  Approved
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.subTab, selectedPostsTab === 'Pending' ? styles.activeSubTab : {}]}
-                onPress={() => setSelectedPostsTab('Pending')}
-              >
-                <Text style={[styles.subTabText, selectedPostsTab === 'Pending' ? styles.activeTabText : {}]}>
-                  Pending
-                </Text>
-              </TouchableOpacity>
-              </View>
-              <FlatList
-                data={getFilteredDonations('Posts')}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <DonationItem item={item} />}
-                ListEmptyComponent={renderEmptyDonations}
-              />
-            </View>
-            )}
+  <View>
+    <View style={styles.subTabsContainer}>
+      <TouchableOpacity
+        style={[styles.subTab, selectedPostsTab === 'Approved' ? styles.activeSubTab : {}]}
+        onPress={() => setSelectedPostsTab('Approved')}
+      >
+        <Text style={[styles.subTabText, selectedPostsTab === 'Approved' ? styles.activeTabText : {}]}>
+          Approved
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.subTab, selectedPostsTab === 'Pending' ? styles.activeSubTab : {}]}
+        onPress={() => setSelectedPostsTab('Pending')}
+      >
+        <Text style={[styles.subTabText, selectedPostsTab === 'Pending' ? styles.activeTabText : {}]}>
+          Pending
+        </Text>
+      </TouchableOpacity>
+    </View>
+    <FlatList
+      data={getFilteredDonations('Posts')}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={({ item }) => (
+        <DonationItem 
+          item={item} 
+          requestCount={selectedPostsTab === 'Approved' ? requestCounts[item.id] || 0 : 0}
+        />
+      )}
+      ListEmptyComponent={renderEmptyDonations}
+    />
+  </View>
+)}
             {tab === 'Requests' && (
               <FlatList
                 data={getFilteredDonations('Requests')}
@@ -1033,19 +1043,20 @@ approvedText: {
   },
 
   requestCounter: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    position: 'absolute',
+    left: 5, 
+    top: 0,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: '#05652D',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'absolute',
-    right: 10,
-    top: 20,
+    zIndex: 1, 
   },
   requestCountText: {
     color: '#FFFFFF',
-    fontSize: 25,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 
