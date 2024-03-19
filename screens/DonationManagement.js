@@ -15,7 +15,7 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getAuth } from 'firebase/auth';
-import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase'; 
 import { FlatList, TextInput } from 'react-native-gesture-handler';
 import * as ImagePicker from 'expo-image-picker';
@@ -370,9 +370,23 @@ const DonationManagement = ({ navigation }) => {
   };
 
   const RequestItem = ({ request, donationDetails }) => {
-    
-    const [response, setResponse] = useState(''); 
+    const [response, setResponse] = useState('');
     const [isResponded, setIsResponded] = useState(false);
+
+    useEffect(() => {
+        const fetchStatus = async () => {
+            const donationRequestRef = doc(db, 'donationRequests', request.id);
+            const docSnap = await getDoc(donationRequestRef);
+            if (docSnap.exists()) {
+                const { status } = docSnap.data();
+                setResponse(status);
+                setIsResponded(status === 'accepted' || status === 'declined');
+            }
+        };
+
+        fetchStatus();
+    }, [request.id]);
+
 
     const getResponseStyle = () => ({
       responseText: {
@@ -415,15 +429,10 @@ const DonationManagement = ({ navigation }) => {
           {
             text: "Accept",
             onPress: async () => {
-              // Firestore update operation to set the status of the accepted request
               const donationRequestRef = doc(db, 'donationRequests', request.id);
               await updateDoc(donationRequestRef, { status: 'accepted' });
-              
-              // Set local state to update UI
               setResponse('accepted');
               setIsResponded(true);
-    
-              // Function to decline other requests for the same donation item
               await declineOtherRequests(request.id, request.donationId);
               
               console.log("Request accepted");
@@ -445,11 +454,8 @@ const DonationManagement = ({ navigation }) => {
           {
             text: "Decline",
             onPress: async () => {
-              // Firestore update operation to set the status of the declined request
               const donationRequestRef = doc(db, 'donationRequests', request.id);
               await updateDoc(donationRequestRef, { status: 'declined' });
-              
-              // Set local state to update UI
               setResponse('declined');
               setIsResponded(true);
     
@@ -461,18 +467,14 @@ const DonationManagement = ({ navigation }) => {
     };
     
     const declineOtherRequests = async (acceptedRequestId, donationId) => {
-      // Fetch all other requests for the same donation item
       const q = query(collection(db, "donationRequests"), where("donationId", "==", donationId), where("id", "!=", acceptedRequestId));
       const querySnapshot = await getDocs(q);
-    
-      // Batch all the updates together
       const batch = writeBatch(db);
       querySnapshot.forEach((docSnapshot) => {
         const requestRef = doc(db, 'donationRequests', docSnapshot.id);
         batch.update(requestRef, { status: 'declined' });
       });
-    
-      // Commit the batch
+
       await batch.commit();
     };
 
@@ -508,27 +510,27 @@ const DonationManagement = ({ navigation }) => {
           </View>
         )}
         {!isResponded ? (
-          <View style={styles.actionButtonsContainer}>
-            <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
-              <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
-                <Text style={styles.buttonText}>Accept</Text>
-              </TouchableOpacity>
-            </Animated.View>
+                <View style={styles.actionButtonsContainer}>
+                    <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
+                        <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
+                            <Text style={styles.buttonText}>Accept</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
 
-            <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
-              <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
-                <Text style={styles.buttonText}>Decline</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
-        ) : (
-        <Text style={getResponseStyle().responseText}>
-        {response === 'accepted' ? 'Accepted (Pending to be Received)' : 'Declined'}
-        </Text>
-        )}
-      </View>
+                    <Animated.View style={[styles.buttonContainer, { transform: [{ scale }] }]}>
+                        <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
+                            <Text style={styles.buttonText}>Decline</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+                </View>
+            ) : (
+                <Text style={getResponseStyle().responseText}>
+                    {response === 'accepted' ? 'Accepted (Pending to be Received)' : 'Declined'}
+                </Text>
+            )}
+        </View>
     );
-  };
+};
 
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
 
