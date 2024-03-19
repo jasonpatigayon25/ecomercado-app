@@ -1272,11 +1272,11 @@ approvedText: {
     backgroundColor: 'green',
     paddingVertical: 5,
     paddingHorizontal: 10,
-    marginRight: 5, 
+    marginRight: 5,  
     borderRadius: 5,
   },
   declineButton: {
-    flex: 1,
+    flex: 1,  
     backgroundColor: 'red',
     paddingVertical: 5,
     paddingHorizontal: 10,
@@ -1285,7 +1285,6 @@ approvedText: {
   buttonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
     textAlign: 'center', 
   },
 });
