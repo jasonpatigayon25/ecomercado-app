@@ -272,9 +272,12 @@ const DonationManagement = ({ navigation }) => {
      <View style={styles.productItemContainer}>
       <Image source={{ uri: item.photo }} style={styles.productItemImage} />
       {item.publicationStatus === 'approved' && requestCount > 0 && (
-        <View style={styles.requestCounter}>
+        <TouchableOpacity
+          style={styles.requestCounter}
+          onPress={() => setSelectedTab('Requests')}
+        >
           <Text style={styles.requestCountText}>{requestCount}</Text>
-        </View>
+        </TouchableOpacity>
       )}
       <View style={styles.productItemDetails}>
         <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
