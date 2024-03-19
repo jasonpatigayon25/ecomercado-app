@@ -37,7 +37,8 @@ const DonationManagement = ({ navigation }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
-
+  const [donationRequests, setDonationRequests] = useState([]);
+  const [userDetails, setUserDetails] = useState({});
   const [selectedTab, setSelectedTab] = useState('Posts');
   const scrollRef = useRef();
   const windowWidth = Dimensions.get('window').width;
@@ -259,6 +260,41 @@ const DonationManagement = ({ navigation }) => {
     }
   };
 
+  useEffect(() => {
+    const fetchDonationRequests = async () => {
+      if (!userEmail) return; 
+  
+      const q = query(collection(db, "donationRequests"), where("donorEmail", "==", userEmail));
+      const querySnapshot = await getDocs(q);
+      const requests = [];
+      querySnapshot.forEach((doc) => {
+        requests.push({ id: doc.id, ...doc.data() });
+      });
+      setDonationRequests(requests);
+    };
+  
+    if (userEmail) {
+      fetchDonationRequests();
+    }
+  }, [userEmail]);
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const usersSnapshot = await getDocs(collection(db, "users"));
+      const userDetailsMap = {};
+      usersSnapshot.forEach((doc) => {
+        const userData = doc.data();
+        userDetailsMap[userData.email] = {
+          fullName: `${userData.firstName} ${userData.lastName}`,
+          photoUrl: userData.photoUrl,
+        };
+      });
+      setUserDetails(userDetailsMap);
+    };
+  
+    fetchUserDetails();
+  }, []);
+
   const showOptions = (item, event) => {
     const { pageX, pageY } = event.nativeEvent;
     const dropdownY = pageY > window.height / 2 ? pageY - 150 : pageY;
@@ -318,29 +354,36 @@ const DonationManagement = ({ navigation }) => {
     }
   };
 
-  const RequestItem = ({ item, requestCount }) => (
-    <TouchableOpacity onPress={() => handleViewDonation(item)}>
+  const RequestItem = ({ request }) => {
+
+    const renderInitialsImage = (fullName) => {
+      const match = fullName.match(/\b(\w)/g) || [];
+      const initials = ((match.shift() || '') + (match.pop() || '')).toUpperCase();
+      return <Text style={styles.initials}>{initials}</Text>;
+    };
+  
+    const requesterDetail = userDetails[request.requesterEmail] || {};
+    const photoComponent = requesterDetail.photoUrl 
+      ? <Image source={{ uri: requesterDetail.photoUrl }} style={styles.productItemImage} />
+      : renderInitialsImage(requesterDetail.fullName || "");
+  
+    return (
       <View style={styles.productItemContainer}>
-        <Image source={{ uri: item.photo }} style={styles.productItemImage} />
+        {photoComponent}
         <View style={styles.productItemDetails}>
-          <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
-          <View style={styles.productItemMetaContainer}>
-            <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">
-              <Icon name="map-marker" size={14} color="#666" /> {item.location}
-            </Text>
-          </View>
-          <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">{item.message}</Text>
+          <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">
+            {requesterDetail.fullName} 
+          </Text>
+          <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">
+            <Icon name="map-marker" size={14} color="#666" /> {request.requesterAddress}
+          </Text>
+          <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">
+            {request.message}
+          </Text>
         </View>
-        {requestCount > 0 ? (
-          <View style={styles.requestCounter}>
-            <Text style={styles.requestCountText}>{requestCount}</Text>
-          </View>
-        ) : (
-          <Icon name="hourglass-half" size={40} color="orange" />
-        )}
       </View>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
 
@@ -515,45 +558,45 @@ const DonationManagement = ({ navigation }) => {
       {['Posts', 'Requests', 'Successful', 'Acquired'].map((tab, index) => (
         <View key={index} style={{ width: windowWidth }}>
           {tab === 'Posts' && (
-  <View>
-    <View style={styles.subTabsContainer}>
-      <TouchableOpacity
-        style={[styles.subTab, selectedPostsTab === 'Approved' ? styles.activeSubTab : {}]}
-        onPress={() => setSelectedPostsTab('Approved')}
-      >
-        <Text style={[styles.subTabText, selectedPostsTab === 'Approved' ? styles.activeTabText : {}]}>
-          Approved
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.subTab, selectedPostsTab === 'Pending' ? styles.activeSubTab : {}]}
-        onPress={() => setSelectedPostsTab('Pending')}
-      >
-        <Text style={[styles.subTabText, selectedPostsTab === 'Pending' ? styles.activeTabText : {}]}>
-          Pending
-        </Text>
-      </TouchableOpacity>
-    </View>
-    <FlatList
-      data={getFilteredDonations('Posts')}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => (
-        <DonationItem 
-          item={item} 
-          requestCount={selectedPostsTab === 'Approved' ? requestCounts[item.id] || 0 : 0}
-        />
-      )}
-      ListEmptyComponent={renderEmptyDonations}
-    />
-  </View>
-)}
-            {tab === 'Requests' && (
+            <View>
+              <View style={styles.subTabsContainer}>
+                <TouchableOpacity
+                  style={[styles.subTab, selectedPostsTab === 'Approved' ? styles.activeSubTab : {}]}
+                  onPress={() => setSelectedPostsTab('Approved')}
+                >
+                  <Text style={[styles.subTabText, selectedPostsTab === 'Approved' ? styles.activeTabText : {}]}>
+                    Approved
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.subTab, selectedPostsTab === 'Pending' ? styles.activeSubTab : {}]}
+                  onPress={() => setSelectedPostsTab('Pending')}
+                >
+                  <Text style={[styles.subTabText, selectedPostsTab === 'Pending' ? styles.activeTabText : {}]}>
+                    Pending
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <FlatList
-                data={getFilteredDonations('Requests')}
+                data={getFilteredDonations('Posts')}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <RequestItem item={item} requestCount={requestCounts[item.id]} />}
+                renderItem={({ item }) => (
+                  <DonationItem 
+                    item={item} 
+                    requestCount={selectedPostsTab === 'Approved' ? requestCounts[item.id] || 0 : 0}
+                  />
+                )}
                 ListEmptyComponent={renderEmptyDonations}
               />
+            </View>
+          )}
+            {tab === 'Requests' && (
+              <FlatList
+              data={donationRequests}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => <RequestItem request={item} />}
+              ListEmptyComponent={renderEmptyDonations}
+            />
             )}
             {tab === 'Successful' && (
               <FlatList
@@ -1062,7 +1105,17 @@ approvedText: {
     fontSize: 16,
     fontWeight: 'bold',
   },
-
+  initials: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#cccccc',
+    color: '#ffffff',
+    textAlign: 'center',
+    lineHeight: 60,
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
 });
 
 export default DonationManagement;
