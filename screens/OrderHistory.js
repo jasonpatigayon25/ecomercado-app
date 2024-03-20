@@ -15,8 +15,6 @@ import { collection, getDocs, query, where, updateDoc, doc, orderBy } from 'fire
 import { db } from '../config/firebase';
 import OrderTab from '../navbars/OrderTab';
 
-
-
 const OrderHistory = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
