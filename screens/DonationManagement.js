@@ -57,6 +57,8 @@ const DonationManagement = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState('Posts');
   const scrollRef = useRef();
   const windowWidth = Dimensions.get('window').width;
+  const [viewRequestsModalVisible, setViewRequestsModalVisible] = useState(false);
+  const [selectedRequestForView, setSelectedRequestForView] = useState(null);
 
   useEffect(() => {
     const tabIndex = ['Posts', 'Requests','Successful', 'Acquired'].indexOf(selectedTab);
@@ -518,7 +520,7 @@ const DonationManagement = ({ navigation }) => {
     };
 
     return (
-      <View style={styles.requestItemContainer}>
+      <TouchableOpacity style={styles.requestItemContainer} onPress={() => handleViewRequest(request)}>
           <View style={styles.requesterDetailSection}>
               <Text style={styles.requestingLabel}>Requester</Text>
               {photoComponent}
@@ -571,7 +573,7 @@ const DonationManagement = ({ navigation }) => {
                   {response === 'accepted' || response === 'successful' ? 'Accepted (Received)' : 'Declined'}
               </Text>
           )}
-      </View>
+      </TouchableOpacity >
   );
   
 };
@@ -770,6 +772,12 @@ const SuccessfulItem = ({ request, donationDetails }) => {
     setViewModalVisible(true);
   };
 
+const handleViewRequest = (request) => {
+  const donation = donations.find(donation => donation.id === request.donationId);
+  setSelectedRequestForView({ ...request, donation });
+  setViewRequestsModalVisible(true);
+};
+
   const ViewDonationModal = ({ isVisible, donation, onClose }) => {
     return (
       <Modal
@@ -804,6 +812,36 @@ const SuccessfulItem = ({ request, donationDetails }) => {
     );
   };
   
+  const ViewRequestsModal = ({ isVisible, donation, requester, onClose }) => {
+    return (
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isVisible}
+            onRequestClose={onClose}
+        >
+            <View style={styles.modalOverlay}>
+                <ScrollView style={styles.editModalContainer}>
+                <Text style={styles.editModalTitle}>Requester:</Text>
+                    <Text style={styles.label}>Name</Text>
+                    <Text style={styles.readOnlyInput}>{requester?.fullName}</Text>
+                    <Text style={styles.label}>Location</Text>
+                    <Text style={styles.readOnlyInput}>{requester?.requesterAddress}</Text>
+                    <Text style={styles.label}>Message</Text>
+                    <Text style={styles.readOnlyInput}>{requester?.message}</Text>
+                    <Text style={styles.editModalTitle}>Requesting:</Text>
+                    <Image source={{ uri: donation?.photo }} style={styles.modalImage} />
+                    <Text style={styles.label}>Donation Name</Text>
+                    <Text style={styles.readOnlyInput}>{donation?.name}</Text>
+                    <Text style={styles.label}>Donation Location</Text>
+                    <Text style={styles.readOnlyInput}>{donation?.location}</Text>
+                    <Text style={styles.label}>Donation Message</Text>
+                    <Text style={styles.readOnlyInput}>{donation?.message}</Text>
+                </ScrollView>
+            </View>
+        </Modal>
+    );
+};
 
   const EditDonationModal = ({ isVisible, donation, onSave, onCancel }) => {
     const [tempDonation, setTempDonation] = useState(donation);
@@ -1010,6 +1048,14 @@ const SuccessfulItem = ({ request, donationDetails }) => {
         donation={selectedDonationForView}
         onClose={() => setViewModalVisible(false)}
       />
+      {selectedRequestForView && (
+        <ViewRequestsModal
+          isVisible={viewRequestsModalVisible}
+          donation={selectedRequestForView.donation}
+          requester={selectedRequestForView}
+          onClose={() => setViewRequestsModalVisible(false)}
+        />
+      )}
     </View>
   );
 };
@@ -1119,7 +1165,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#05652D',
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 20,
   },
   editModalInput: {
@@ -1586,7 +1632,24 @@ approvedText: {
     fontSize: 16,
     fontWeight: 'bold',
   },
-
+ modalImage: {
+        width: 100,
+        height: 100,
+        marginBottom: 20,
+        borderRadius: 15,
+    },
+    closeButton: {
+        alignSelf: 'flex-end',
+        marginTop: 10,
+        marginRight: 10,
+    },
+  viewRequestButtonText: {
+    fontSize: 14,
+    color: '#05652D',
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+    marginTop: 10,
+  },
 });
 
 export default DonationManagement;
