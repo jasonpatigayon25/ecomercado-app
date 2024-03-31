@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+/* import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Alert } from 'react-native';
@@ -188,9 +188,24 @@ const Account = ({ navigation }) => {
         <View style={styles.divider} />
         <Text style={styles.settingTitle}>Settings</Text>
         <View style={styles.settingsContainer}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('AboutUs')}>
+            <Icon name="info-circle" size={25} color="#05652D" style={styles.settingIcon} />
+            <Text style={styles.settingLabel}>About Us</Text>
+            <Icon name="angle-right" size={25} color="#05652D" style={styles.settingArrowIcon} />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('HelpCenter')}>
             <Icon name="question-circle" size={25} color="#05652D" style={styles.settingIcon} />
             <Text style={styles.settingLabel}>Help Center</Text>
+            <Icon name="angle-right" size={25} color="#05652D" style={styles.settingArrowIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('ContactUs')}>
+            <Icon name="envelope" size={25} color="#05652D" style={styles.settingIcon} />
+            <Text style={styles.settingLabel}>Contact Us</Text>
+            <Icon name="angle-right" size={25} color="#05652D" style={styles.settingArrowIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('NotificationSettings')}>
+            <Icon name="bell" size={25} color="#05652D" style={styles.settingIcon} />
+            <Text style={styles.settingLabel}>Notification Settings</Text>
             <Icon name="angle-right" size={25} color="#05652D" style={styles.settingArrowIcon} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('ChangePassword')}>
@@ -418,3 +433,4 @@ const styles = StyleSheet.create({
 });
 
 export default Account;
+ */
