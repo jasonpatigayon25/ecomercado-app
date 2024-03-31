@@ -2,29 +2,30 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 const SellerManagement = ({ navigation }) => {
     const animation = useRef(new Animated.Value(0)).current;
     const [isSeller, setIsSeller] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const auth = getAuth();
+    const user = auth.currentUser;
 
     useEffect(() => {
-        const checkSellerStatus = async () => {
-            setIsLoading(true);
-            const auth = getAuth();
-            const user = auth.currentUser;
-            if (user) {
-                const sellerQuery = query(collection(db, 'registeredSeller'), where('email', '==', user.email));
-                const querySnapshot = await getDocs(sellerQuery);
+        setIsLoading(true);
+        if (user) {
+            const sellerQuery = query(collection(db, 'registeredSeller'), where('email', '==', user.email));
+            const unsubscribe = onSnapshot(sellerQuery, (querySnapshot) => {
                 setIsSeller(!querySnapshot.empty);
-            }
-            setIsLoading(false);
-        };
+                setIsLoading(false);
+            });
 
-        checkSellerStatus();
+            return () => unsubscribe();
+        }
+    }, [user]);
 
+    useEffect(() => {
         Animated.loop(
             Animated.sequence([
                 Animated.timing(animation, {
