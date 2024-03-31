@@ -154,36 +154,36 @@ const Account = ({ navigation }) => {
         <Text style={styles.settingTitle}>My Transactions</Text>
         <View style={styles.optionsContainer}>
         <View style={styles.transactionsRow}>
-  <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleSellerManagement}>
-    <View style={styles.optionIconContainer}>
-      <Image source={marketIcon} style={styles.transactionsIcon} />
-    </View>
-    <Text style={styles.optionLabel}>Seller Management</Text>
-  </TouchableOpacity>
+          <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleSellerManagement}>
+            <View style={styles.optionIconContainer}>
+              <Image source={marketIcon} style={styles.transactionsIcon} />
+            </View>
+            <Text style={styles.optionLabel}>Seller Management</Text>
+          </TouchableOpacity>
 
-  <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleDonationManagement}>
-    <View style={styles.optionIconContainer}>
-      <Image source={donationIcon} style={styles.transactionsIcon} />
-    </View>
-    <Text style={styles.optionLabel}>Donation Management</Text>
-  </TouchableOpacity>
-</View>
+          <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleDonationManagement}>
+            <View style={styles.optionIconContainer}>
+              <Image source={donationIcon} style={styles.transactionsIcon} />
+            </View>
+            <Text style={styles.optionLabel}>Donation Management</Text>
+          </TouchableOpacity>
+        </View>
 
-<View style={styles.transactionsRow}>
-  <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleOrderHistory}>
-    <View style={styles.optionIconContainer}>
-      <Icon name="history" size={25} color="#05652D" style={styles.transactionsIcon} />
-    </View>
-    <Text style={styles.optionLabel}>Order History</Text>
-  </TouchableOpacity>
+        <View style={styles.transactionsRow}>
+          <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleOrderHistory}>
+            <View style={styles.optionIconContainer}>
+              <Icon name="history" size={25} color="#05652D" style={styles.transactionsIcon} />
+            </View>
+            <Text style={styles.optionLabel}>Order History</Text>
+          </TouchableOpacity>
 
-  <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleRequestApproval}>
-    <View style={styles.optionIconContainer}>
-      <Icon name="check-circle" size={25} color="#05652D" style={styles.transactionsIcon} />
-    </View>
-    <Text style={styles.optionLabel}>Donation Requests Approval</Text>
-  </TouchableOpacity>
-</View>
+          <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleRequestApproval}>
+            <View style={styles.optionIconContainer}>
+              <Icon name="check-circle" size={25} color="#05652D" style={styles.transactionsIcon} />
+            </View>
+            <Text style={styles.optionLabel}>Donation Requests Approval</Text>
+          </TouchableOpacity>
+        </View>
         </View>
         <View style={styles.divider} />
         <Text style={styles.settingTitle}>Settings</Text>
