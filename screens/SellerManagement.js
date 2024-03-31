@@ -131,6 +131,11 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         paddingLeft: 20,
     },
+    noteText: {
+      fontSize: 18,
+      textAlign: 'center',
+      paddingVertical: 15,
+  },
     scrollView: {
         flex: 1,
     },

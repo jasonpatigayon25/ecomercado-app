@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { RadioButton } from 'react-native-paper';
 import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
@@ -43,11 +43,11 @@ const SellerRegistration = ({ navigation }) => {
         email,
       };
       await addDoc(collection(db, 'registeredSeller'), sellerData);
-      alert('Seller registered successfully');
+      Alert.alert('Seller registered successfully');
       navigation.goBack();
     } catch (error) {
       console.error('Error registering seller:', error);
-      alert('Error registering seller');
+      Alert.alert('Error registering seller');
     }
   };
 
