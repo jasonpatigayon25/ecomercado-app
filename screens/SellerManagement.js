@@ -74,7 +74,7 @@ const SellerManagement = ({ navigation }) => {
                             <Text style={styles.optionLabel}>My Product Posts</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={() => navigation.navigate('AddProduct')}>
+                        <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={() => navigation.navigate('Sell')}>
                             <Icon name="plus-circle" size={24} color="#05652D" />
                             <Text style={styles.optionLabel}>Add Product</Text>
                         </TouchableOpacity>
