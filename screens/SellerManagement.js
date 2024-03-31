@@ -1,13 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { getAuth } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const SellerManagement = ({ navigation }) => {
     const animation = useRef(new Animated.Value(0)).current;
-    const animation2 = useRef(new Animated.Value(0)).current;
-    const [isSeller, setIsSeller] = useState(false); 
+    const [isSeller, setIsSeller] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        const checkSellerStatus = async () => {
+            setIsLoading(true);
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if (user) {
+                const sellerQuery = query(collection(db, 'registeredSeller'), where('email', '==', user.email));
+                const querySnapshot = await getDocs(sellerQuery);
+                setIsSeller(!querySnapshot.empty);
+            }
+            setIsLoading(false);
+        };
+
+        checkSellerStatus();
+
         Animated.loop(
             Animated.sequence([
                 Animated.timing(animation, {
@@ -22,8 +39,6 @@ const SellerManagement = ({ navigation }) => {
                 })
             ])
         ).start();
-
-        setIsSeller(false);
     }, []);
 
     const scale = animation.interpolate({
@@ -35,45 +50,22 @@ const SellerManagement = ({ navigation }) => {
         transform: [{ scale }]
     };
 
-    useEffect(() => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(animation2, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: false 
-          }),
-          Animated.timing(animation2, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: false 
-          })
-        ])
-      ).start();
-    }, []);
-  
-    const backgroundColor = animation2.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['green', 'yellow'] 
-    });
-  
-    const animatedStyle2 = {
-      backgroundColor
-    };
+    if (isLoading) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color="#05652D" />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Icon name="arrow-left" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <Text style={styles.title}>Seller Management</Text>
-            <Animated.View style={[styles.addProductButton, animatedStyle2]}>
-            <TouchableOpacity onPress={() => navigation.navigate('Sell')}>
-              <Icon name="plus" size={24} color="#ffffff" />
-            </TouchableOpacity>
-          </Animated.View>
-          </View>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Icon name="arrow-left" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+                <Text style={styles.title}>Seller Management</Text>
+            </View>
             <ScrollView style={styles.scrollView}>
                 {isSeller ? (
                     <View style={styles.transactionsRow}>
@@ -119,18 +111,24 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#E3FCE9',
     },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#E3FCE9',
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#05652D',
         paddingVertical: 15,
         paddingHorizontal: 20,
-        justifyContent: 'space-between',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         color: '#FFFFFF',
+        paddingLeft: 20,
     },
     scrollView: {
         flex: 1,
@@ -138,7 +136,7 @@ const styles = StyleSheet.create({
     transactionsRow: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-between',
+        justifyContent: 'space-around',
         padding: 20,
     },
     optionItemCube: {
@@ -156,9 +154,6 @@ const styles = StyleSheet.create({
         width: '48%',
         marginBottom: 10,
     },
-    icon: {
-        marginBottom: 5,
-    },
     optionLabel: {
         fontSize: 14,
         textAlign: 'center',
@@ -170,30 +165,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
     },
-    noteText: {
-        fontSize: 18,
-        color: '#05652D',
-        marginBottom: 20,
-        textAlign: 'center',
-    },
     registerButton: {
         backgroundColor: 'green',
         padding: 20,
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
+        transform: [{ scale: 1 }] 
     },
     registerButtonText: {
         color: '#FFFFFF',
         fontSize: 20,
         fontWeight: 'bold',
-    },
-    addProductButton: {
-      width: 30,
-      height: 30,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 25,
     },
 });
 
