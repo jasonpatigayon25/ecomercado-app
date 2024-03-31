@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { RadioButton } from 'react-native-paper';
 import { getAuth } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
@@ -32,8 +32,23 @@ const SellerRegistration = ({ navigation }) => {
     fetchUserData();
   }, []);
 
-  const handleRegistration = () => {
+  const handleRegistration = async () => {
     console.log('Registering seller:', sellerName, pickupAddress, email);
+    try {
+      const sellerData = {
+        sellerName,
+        registeredName,
+        type,
+        pickupAddress,
+        email,
+      };
+      await addDoc(collection(db, 'registeredSeller'), sellerData);
+      alert('Seller registered successfully');
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error registering seller:', error);
+      alert('Error registering seller');
+    }
   };
 
   return (
