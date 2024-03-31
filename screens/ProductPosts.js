@@ -10,7 +10,7 @@ import {
   Dimensions,
   TextInput,
   ScrollView,
-  Animated
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
