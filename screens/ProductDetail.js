@@ -496,17 +496,23 @@ const ProductDetail = ({ navigation, route }) => {
         </View>
         <View style={styles.ratingCard}>
   <Text style={styles.ratingLabel}>Rating</Text>
-  <Rating
-    type="star"
-    ratingCount={5}
-    imageSize={30}
-    readonly
-    startingValue={averageRating}
-    style={styles.rating}
-  />
+  <View style={styles.ratingContainer}>
+    <Rating
+      type="star"
+      ratingCount={5}
+      imageSize={30}
+      readonly
+      startingValue={averageRating}
+      style={styles.rating}
+    />
+    <Text
+      onPress={() => navigation.navigate('RatingReview', { prodId: product.id })}
+      style={styles.viewReviewText}>
+      View Reviews 
+    </Text>
+  </View>
   <Text style={styles.ratingNumber}>{averageRating.toFixed(2)} ({totalRatings} {totalRatings === 1 ? 'rating' : 'ratings'})</Text>
 </View>
-
       </ScrollView>
       <View style={styles.navbar}>
         <TouchableOpacity onPress={handleChatWithSeller}>
@@ -889,7 +895,23 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 8,
   },
-
+  viewReviewButton: {
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  
+  viewReviewText: {
+    color: '#05652D',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 
