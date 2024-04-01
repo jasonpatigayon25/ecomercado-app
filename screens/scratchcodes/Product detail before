@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+/* import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, TextInput, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
@@ -10,9 +10,6 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProductDetail = ({ navigation, route }) => {
-
-  const [averageRating, setAverageRating] = useState(0);
-  const [totalRatings, setTotalRatings] = useState(0);
 
   const [sellerName, setSellerName] = useState('');
   const [product, setProduct] = useState(route.params.product);
@@ -55,28 +52,6 @@ const ProductDetail = ({ navigation, route }) => {
   const handleBackPress = () => {
     navigation.goBack();
   };
-
-  useEffect(() => {
-    const fetchRatings = async () => {
-      if (product && product.id) {
-        const ratingsRef = collection(db, 'rateItems');
-        const q = query(ratingsRef, where('prodId', '==', product.id));
-    
-        const querySnapshot = await getDocs(q);
-        let totalRating = 0;
-        querySnapshot.forEach((doc) => {
-          const ratingValue = doc.data().rating;
-          totalRating += ratingValue;
-        });
-    
-        const avgRating = querySnapshot.size > 0 ? (totalRating / querySnapshot.size) : 0;
-        setAverageRating(avgRating);
-        setTotalRatings(querySnapshot.size);
-      }
-    };
-  
-    fetchRatings();
-  }, [product.id]);
 
   const incrementProductHit = async (productId) => {
     const auth = getAuth();
@@ -453,6 +428,10 @@ const ProductDetail = ({ navigation, route }) => {
           <TouchableOpacity onPress={() => setModalVisible(true)}>
             <Image source={{ uri: product.photo }} style={styles.productImage} />
           </TouchableOpacity>
+          <TouchableOpacity onPress={handleRateUserOpen} style={styles.rateSellerButton}>
+            <Icon name="star" size={20} style={styles.rateIcon} />
+            <Text style={styles.rateSellerButtonText}>Rate Seller</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.infoContainer}>
           <View style={styles.infoItem}>
@@ -494,19 +473,6 @@ const ProductDetail = ({ navigation, route }) => {
             {product.description}
           </Text>
         </View>
-        <View style={styles.ratingCard}>
-  <Text style={styles.ratingLabel}>Rating</Text>
-  <Rating
-    type="star"
-    ratingCount={5}
-    imageSize={30}
-    readonly
-    startingValue={averageRating}
-    style={styles.rating}
-  />
-  <Text style={styles.ratingNumber}>{averageRating.toFixed(2)} ({totalRatings} {totalRatings === 1 ? 'rating' : 'ratings'})</Text>
-</View>
-
       </ScrollView>
       <View style={styles.navbar}>
         <TouchableOpacity onPress={handleChatWithSeller}>
@@ -865,32 +831,7 @@ const styles = StyleSheet.create({
     color: 'red',
     fontWeight: 'bold',
   },
-  ratingCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
-    marginVertical: 16,
-  },
-  ratingLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  rating: {
-    alignSelf: 'flex-start',
-  },
-  ratingNumber: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 8,
-  },
-
 });
 
 
-export default ProductDetail;
+export default ProductDetail; */
