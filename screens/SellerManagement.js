@@ -1,63 +1,73 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const SellerManagement = ({ navigation }) => {
-  const animation = useRef(new Animated.Value(0)).current;
-  const [isSeller, setIsSeller] = useState(false);
-  const [sellerInfo, setSellerInfo] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const auth = getAuth();
-  const user = auth.currentUser;
-
-  useEffect(() => {
-    if (user) {
-        setIsLoading(true);
-        const unsubscribeSellerInfo = onSnapshot(
-            query(collection(db, 'registeredSeller'), where('email', '==', user.email)),
-            (querySnapshot) => {
-                const sellerData = querySnapshot.docs.map(doc => doc.data())[0]; 
-                if (sellerData) {
-                    setSellerInfo(sellerData);
-                    setIsSeller(true);
-                } else {
-                    setIsSeller(false);
-                }
-                setIsLoading(false);
-            }
-        );
-        return () => unsubscribeSellerInfo();
-    }
-}, [user]);
+    const [isSeller, setIsSeller] = useState(false);
+    const [sellerInfo, setSellerInfo] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const auth = getAuth();
+    const user = auth.currentUser;
 
     useEffect(() => {
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(animation, {
-                    toValue: 1,
-                    duration: 1000,
-                    useNativeDriver: true
-                }),
-                Animated.timing(animation, {
-                    toValue: 0,
-                    duration: 1000,
-                    useNativeDriver: true
-                })
-            ])
-        ).start();
-    }, []);
+        if (user) {
+            setIsLoading(true);
+            const unsubscribeSellerInfo = onSnapshot(
+                query(collection(db, 'registeredSeller'), where('email', '==', user.email)),
+                (querySnapshot) => {
+                    const sellerData = querySnapshot.docs.map(doc => doc.data())[0];
+                    if (sellerData) {
+                        setSellerInfo(sellerData);
+                        setIsSeller(true);
+                    } else {
+                        setIsSeller(false);
+                    }
+                    setIsLoading(false);
+                }
+            );
+            return () => unsubscribeSellerInfo();
+        }
+    }, [user]);
 
-    const scale = animation.interpolate({
-        inputRange: [0, 1],
-        outputRange: [1, 1.1]
-    });
+    const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-    const animatedStyle = {
-        transform: [{ scale }]
+    const OptionItemCube = ({ onPress, icon, label }) => {
+        const scale = useRef(new Animated.Value(1)).current;
+
+        const handlePressIn = () => {
+            Animated.spring(scale, {
+                toValue: 1.1,
+                friction: 4,
+                useNativeDriver: true,
+            }).start();
+        };
+
+        const handlePressOut = () => {
+            Animated.spring(scale, {
+                toValue: 1,
+                friction: 4,
+                useNativeDriver: true,
+            }).start();
+        };
+
+        return (
+            <AnimatedTouchable
+                onPress={onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                style={[
+                    styles.optionItemCube,
+                    { transform: [{ scale }] },
+                ]}
+            >
+                <Icon name={icon} size={24} color="#FFFFFF" />
+                <Text style={styles.optionLabel}>{label}</Text>
+            </AnimatedTouchable>
+        );
     };
 
     if (isLoading) {
@@ -69,22 +79,21 @@ const SellerManagement = ({ navigation }) => {
     }
 
     const SellerInfoView = () => (
-      sellerInfo && (
-          <View style={styles.sellerInfoContainer}>
-              <Text style={styles.sellerName}>{sellerInfo.sellerName}</Text>
-              <Text style={styles.fullName}>{sellerInfo.registeredName}</Text>
-              <View style={styles.infoRow}>
-                  <MaterialIcons name="email" size={20} color="#05652D" />
-                  <Text style={styles.subText}>{sellerInfo.email}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                  <MaterialIcons name="place" size={20} color="#05652D" />
-                  <Text style={styles.miniSubText}>{sellerInfo.pickupAddress}</Text>
-              </View>
-          </View>
-      )
-  );
-
+        sellerInfo && (
+            <View style={styles.sellerInfoContainer}>
+                <Text style={styles.sellerName}>{sellerInfo.sellerName}</Text>
+                <Text style={styles.fullName}>{sellerInfo.registeredName}</Text>
+                <View style={styles.infoRow}>
+                    <MaterialIcons name="email" size={20} color="#05652D" />
+                    <Text style={styles.subText}>{sellerInfo.email}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <MaterialIcons name="place" size={20} color="#05652D" />
+                    <Text style={styles.miniSubText}>{sellerInfo.pickupAddress}</Text>
+                </View>
+            </View>
+        )
+    );
 
     return (
         <View style={styles.container}>
@@ -98,36 +107,17 @@ const SellerManagement = ({ navigation }) => {
             <ScrollView style={styles.scrollView}>
                 {isSeller ? (
                     <View style={styles.transactionsRow}>
-                        <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={() => navigation.navigate('ProductPosts')}>
-                            <Icon name="th-list" size={24} color="#05652D" />
-                            <Text style={styles.optionLabel}>My Product Posts</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={() => navigation.navigate('SellAddProduct')}>
-                            <Icon name="plus-circle" size={24} color="#05652D" />
-                            <Text style={styles.optionLabel}>Add Product</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={() => navigation.navigate('MyOrders')}>
-                            <Icon name="shopping-cart" size={24} color="#05652D" />
-                            <Text style={styles.optionLabel}>My Orders</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={() => navigation.navigate('SuspendedProducts')}>
-                            <Icon name="ban" size={24} color="#05652D" />
-                            <Text style={styles.optionLabel}>Suspended Products</Text>
-                        </TouchableOpacity>
+                        <OptionItemCube onPress={() => navigation.navigate('ProductPosts')} icon="th-list" label="My Product Posts" />
+                        <OptionItemCube onPress={() => navigation.navigate('SellAddProduct')} icon="plus-circle" label="Add Product" />
+                        <OptionItemCube onPress={() => navigation.navigate('MyOrders')} icon="shopping-cart" label="My Orders" />
+                        <OptionItemCube onPress={() => navigation.navigate('SuspendedProducts')} icon="ban" label="Suspended Products" />
                     </View>
                 ) : (
                     <View style={styles.nonSellerView}>
-                        <Text style={styles.noteText}>
-                            Register as a seller to access these features.
-                        </Text>
-                        <Animated.View style={[styles.registerButton, animatedStyle]}>
-                            <TouchableOpacity onPress={() => navigation.navigate('SellerRegistration')}>
-                                <Text style={styles.registerButtonText}>Register as a Seller</Text>
-                            </TouchableOpacity>
-                        </Animated.View>
+                        <Text style={styles.noteText}>Register as a seller to access these features.</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('SellerRegistration')} style={styles.registerButton}>
+                            <Text style={styles.registerButtonText}>Register as a Seller</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
             </ScrollView>
@@ -138,7 +128,7 @@ const SellerManagement = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#E3FCE9',
+        backgroundColor: '#FFFFFF',
     },
     centered: {
         flex: 1,
@@ -159,11 +149,6 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         paddingLeft: 20,
     },
-    noteText: {
-      fontSize: 18,
-      textAlign: 'center',
-      paddingVertical: 15,
-  },
     scrollView: {
         flex: 1,
     },
@@ -174,7 +159,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     optionItemCube: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#05652D',
         borderRadius: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -191,7 +176,7 @@ const styles = StyleSheet.create({
     optionLabel: {
         fontSize: 14,
         textAlign: 'center',
-        color: '#05652D',
+        color: '#FFFFFF',
     },
     nonSellerView: {
         flex: 1,
@@ -205,7 +190,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        transform: [{ scale: 1 }] 
+        marginTop: 20,
     },
     registerButtonText: {
         color: '#FFFFFF',
@@ -213,42 +198,38 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     sellerInfoContainer: {
-      backgroundColor: '#FFFFFF',
-      paddingVertical: 20,
-      paddingHorizontal: 15,
-      borderRadius: 10,
-      margin: 20,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.22,
-      shadowRadius: 2.22,
-      elevation: 3,
+        paddingVertical: 20,
+        paddingHorizontal: 15,
+        borderRadius: 10,
+        margin: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.22,
+        shadowRadius: 2.22,
+        elevation: 3,
     },
     sellerName: {
-      fontSize: 22,
-      fontWeight: 'bold',
-      color: '#05652D',
-      marginBottom: 4,
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#05652D',
+        marginBottom: 4,
     },
     fullName: {
-      fontSize: 18,
-      color: '#05652D',
-      marginBottom: 4,
+        fontSize: 18,
+        marginBottom: 4,
     },
     infoRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 5,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 5,
     },
     subText: {
-      fontSize: 16,
-      color: '#05652D',
-      marginLeft: 8,
+        fontSize: 16,
+        marginLeft: 8,
     },
     miniSubText: {
-      fontSize: 14,
-      color: '#05652D',
-      marginLeft: 8,
+        fontSize: 14,
+        marginLeft: 8,
     },
 });
 
