@@ -915,7 +915,7 @@ const handleViewRequest = (request) => {
         </TouchableOpacity>
         <Text style={styles.title}>Donation Management</Text>
         <Animated.View style={[styles.addDonationButton, animatedStyle]}>
-          <TouchableOpacity onPress={() => navigation.navigate('Donate')}>
+          <TouchableOpacity onPress={() => navigation.navigate('DonateAddDonation')}>
             <Icon name="plus" size={24} color="#ffffff" />
           </TouchableOpacity>
         </Animated.View>
