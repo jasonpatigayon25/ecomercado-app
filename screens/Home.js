@@ -21,6 +21,7 @@ const Home = ({ navigation }) => {
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [categorySearchText, setCategorySearchText] = useState('');
+  const [cartCount, setCartCount] = useState(0);
 
   const [isLocationLoading, setIsLocationLoading] = useState(false);
 
@@ -59,6 +60,7 @@ const Home = ({ navigation }) => {
 
   useFocusEffect(
     React.useCallback(() => {
+      fetchCartCount();
       const onBackPress = () => {
         Alert.alert("Exit App", "Do you want to close the app?", [
           {
@@ -206,6 +208,35 @@ const Home = ({ navigation }) => {
     setIsModalVisible(!isModalVisible);
   };
 
+  const fetchCartCount = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+  
+      if (user && user.email) {
+        const cartRef = doc(db, 'carts', user.email);
+        const cartSnapshot = await getDoc(cartRef);
+  
+        if (cartSnapshot.exists()) {
+          const cartData = cartSnapshot.data();
+          const cartItems = cartData.cartItems; 
+  
+          setCartCount(Object.keys(cartItems).length);
+        } else {
+          console.log('No cart found for the current user.');
+        }
+      } else {
+        console.log('No user is logged in or email is not available.');
+      }
+    } catch (error) {
+      console.error("Error fetching cart count: ", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCartCount();
+  }, []);
+
   useEffect(() => {
     const fetchDonations = async () => {
       const auth = getAuth();
@@ -319,8 +350,16 @@ const Home = ({ navigation }) => {
               <Icon name="comments" size={24} color="#05652D" style={styles.icon} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
+            <View style={{ position: 'relative' }}>
               <Icon name="shopping-cart" size={24} color="#05652D" style={styles.icon} />
-            </TouchableOpacity>
+              {cartCount > 0 && (
+                <View style={styles.cartCountContainer}>
+                  <Text style={styles.cartCountText}>{cartCount}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+
           </View>
         </View>
       </View>
@@ -837,7 +876,22 @@ searchSuggestions: {
     marginTop: 10,
     fontSize: 16,
   }, 
-  
+  cartCountContainer: {
+    position: 'absolute',
+    right: -6,
+    top: -3,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  cartCountText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold'
+  }
 });
 
 
