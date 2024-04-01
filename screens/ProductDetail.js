@@ -495,24 +495,24 @@ const ProductDetail = ({ navigation, route }) => {
           </Text>
         </View>
         <View style={styles.ratingCard}>
-  <Text style={styles.ratingLabel}>Rating</Text>
-  <View style={styles.ratingContainer}>
-    <Rating
-      type="star"
-      ratingCount={5}
-      imageSize={30}
-      readonly
-      startingValue={averageRating}
-      style={styles.rating}
-    />
-    <Text
-      onPress={() => navigation.navigate('RatingReview', { prodId: product.id })}
-      style={styles.viewReviewText}>
-      View Reviews 
-    </Text>
-  </View>
-  <Text style={styles.ratingNumber}>{averageRating.toFixed(2)} ({totalRatings} {totalRatings === 1 ? 'rating' : 'ratings'})</Text>
-</View>
+          <Text style={styles.ratingLabel}>Rating</Text>
+          <View style={styles.ratingContainer}>
+            <Rating
+              type="star"
+              ratingCount={5}
+              imageSize={30}
+              readonly
+              startingValue={averageRating}
+              style={styles.rating}
+            />
+            <Text
+              onPress={() => navigation.navigate('RatingReview', { prodId: product.id })}
+              style={styles.viewReviewText}>
+              View Reviews 
+            </Text>
+          </View>
+          <Text style={styles.ratingNumber}>{averageRating.toFixed(2)} ({totalRatings} {totalRatings === 1 ? 'rating' : 'ratings'})</Text>
+        </View>
       </ScrollView>
       <View style={styles.navbar}>
         <TouchableOpacity onPress={handleChatWithSeller}>

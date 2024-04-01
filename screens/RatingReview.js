@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Rating } from 'react-native-ratings';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const RatingReview = ({ route }) => {
   const { prodId } = route.params;
@@ -16,7 +17,19 @@ const RatingReview = ({ route }) => {
       const querySnapshot = await getDocs(q);
       const fetchedReviews = [];
       querySnapshot.forEach((doc) => {
-        fetchedReviews.push(doc.data());
+        let data = doc.data();
+        let ratedAtFormatted = data.ratedAt ? data.ratedAt.toDate().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }) : 'N/A'; // Format the date as needed
+        fetchedReviews.push({
+          ...data,
+          id: doc.id,
+          ratedAt: ratedAtFormatted,
+        });
       });
       setReviews(fetchedReviews);
     };
@@ -26,17 +39,25 @@ const RatingReview = ({ route }) => {
 
   const renderItem = ({ item }) => (
     <View style={styles.reviewCard}>
-      <Text style={styles.fullName}>{item.fullName}</Text>
-      <Text style={styles.ratedByText}>{item.ratedBy}</Text>
+      <View style={styles.reviewHeader}>
+        <Icon name="user-circle" size={24} color="#CCCCCC" style={styles.userIcon} />
+        <View style={styles.reviewHeaderDetails}>
+          <Text style={styles.fullName}>{item.fullName}</Text>
+          <Text style={styles.date}>{item.ratedAt}</Text>
+        </View>
+      </View>
       <Rating
         type="star"
         ratingCount={5}
         imageSize={20}
         readonly
-        startingValue={item.rating}
+        startingValue={Number(item.rating)}
         style={styles.rating}
       />
       <Text style={styles.comment}>{item.comment}</Text>
+      {item.helpfulCount && (
+        <Text style={styles.helpfulCount}>Helpful ({item.helpfulCount})</Text>
+      )}
     </View>
   );
 
@@ -44,16 +65,25 @@ const RatingReview = ({ route }) => {
     <FlatList
       data={reviews}
       renderItem={renderItem}
-      keyExtractor={(item, index) => index.toString()}
+      keyExtractor={(item) => item.id}
     />
   );
 };
+
 
 const styles = StyleSheet.create({
   reviewCard: {
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e1e1e1',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  reviewHeaderDetails: {
+    marginLeft: 8,
   },
   fullName: {
     fontWeight: 'bold',
@@ -71,6 +101,18 @@ const styles = StyleSheet.create({
   comment: {
     fontSize: 14,
     color: 'grey',
+  },
+  userIcon: {
+
+  },
+  date: {
+    fontSize: 14,
+    color: 'grey',
+  },
+  helpfulCount: {
+    fontSize: 14,
+    color: '#05652D',
+    marginTop: 4,
   },
 });
 

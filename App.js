@@ -267,7 +267,7 @@ const App = () => {
               <Stack.Screen name="Wishlist" component={WishlistScreen} />
               <Stack.Screen name="Chat" component={Chat} />
               <Stack.Screen name="ProductDetail" component={ProductDetail} />
-              <Stack.Screen name="RatingReview" component={RatingReview} />
+              <Stack.Screen name="RatingReview" component={RatingReview}  options={{ presentation: 'modal' }}/>
               <Stack.Screen name="HelpCenter" component={HelpCenter} />
               <Stack.Screen name="ContactUs" component={ContactUs} />
               <Stack.Screen name="AboutUs" component={AboutUs} />
