@@ -531,7 +531,7 @@ const ProductPosts = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.title}>My Product Posts</Text>
         <Animated.View style={[styles.addProductButton, animatedStyle]}>
-        <TouchableOpacity onPress={() => navigation.navigate('Sell')}>
+        <TouchableOpacity onPress={() => navigation.navigate('SellAddProduct')}>
           <Icon name="plus" size={24} color="#ffffff" />
         </TouchableOpacity>
       </Animated.View>
