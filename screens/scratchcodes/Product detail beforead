@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+/* import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, TextInput, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
@@ -457,9 +457,6 @@ const ProductDetail = ({ navigation, route }) => {
         <Icon name="map-marker" size={16} color="#05652D" />
         <Text style={styles.sellerCardAddress}>{sellerDetails.sellerAddress}</Text>
       </View>
-      <TouchableOpacity style={styles.visitButton} onPress={handleVisitSeller}>
-        <Text style={styles.visitButtonText}>Visit</Text>
-      </TouchableOpacity>
     </View>
   );
 
@@ -517,7 +514,7 @@ const ProductDetail = ({ navigation, route }) => {
               <Text style={styles.soldOutText}>SOLD OUT</Text>
             )}
           </View>
-          {/* <View style={styles.infoItem}>
+          <View style={styles.infoItem}>
             <Icon name="user" size={20} color="#05652D" style={styles.infoIcon} />
             <TouchableOpacity onPress={handleVisitSeller}>
               <Text style={styles.infoTextSeller} numberOfLines={1} ellipsizeMode="tail">{sellerName}</Text>
@@ -526,7 +523,7 @@ const ProductDetail = ({ navigation, route }) => {
           <View style={styles.infoItem}>
             <Icon name="map-marker" size={20} color="#05652D" style={styles.infoIcon} />
             <Text style={styles.infoText}>{product.location}</Text>
-          </View> */}
+          </View>
           <View style={styles.divider} />
           <View style={styles.infoItem}>
             <Icon name="info-circle" size={20} color="#05652D" style={styles.infoIcon} />
@@ -985,26 +982,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 8,
   },
-  visitButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#05652D',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3,
-  },
-  visitButtonText: {
-    color: '#05652D',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
 });
 
 
-export default ProductDetail;
+export default ProductDetail; */
