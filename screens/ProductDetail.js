@@ -964,7 +964,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 3,
-    marginVertical: 16,
   },
   sellerCardHeader: {
     fontSize: 20,
