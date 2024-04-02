@@ -13,7 +13,11 @@ const SearchDonationScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchRandomDonations = async () => {
       const donationsRef = collection(db, "donation");
-      const q = query(donationsRef, limit(20)); 
+      const q = query(
+        donationsRef, 
+        where("publicationStatus", "not-in", ["decline", "pending"]),
+        limit(20)
+      ); 
       const querySnapshot = await getDocs(q);
       const donations = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
@@ -39,7 +43,8 @@ const SearchDonationScreen = ({ navigation }) => {
         collection(db, "donation"),
         where("name", ">=", trimmedSearchText),
         where("name", "<=", trimmedSearchText + '\uf8ff'),
-        where("isDisabled", "==", false) 
+        where("isDisabled", "==", false),
+        where("publicationStatus", "not-in", ["decline", "pending"])
       );
   
       const querySnapshot = await getDocs(donationQuery);
@@ -54,7 +59,7 @@ const SearchDonationScreen = ({ navigation }) => {
   
     setLoading(false);
   };
-
+  
   useEffect(() => {
     if (searchText.trim().length > 0) {
       handleSearch();

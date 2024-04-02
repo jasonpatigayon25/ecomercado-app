@@ -6,7 +6,14 @@ import { getAuth } from 'firebase/auth';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const SearchScreen = ({ navigation }) => {
+const SearchScreen = ({ navigation, route }) => {
+  
+  useEffect(() => {
+    if (route.params?.searchQuery) {
+      setSearchText(route.params.searchQuery);
+      handleSearch(route.params.searchQuery);
+    }
+  }, [route.params?.searchQuery]);
   const [searchText, setSearchText] = useState('');
   const [productSuggestions, setProductSuggestions] = useState([]);
   const [randomProducts, setRandomProducts] = useState([]);
@@ -64,15 +71,19 @@ const SearchScreen = ({ navigation }) => {
       if (!suggestions) {
         return;
       }
-  
+    
       const randomProductsRef = collection(db, "products");
-      const randomProductsQuery = query(randomProductsRef, limit(10));
+      const randomProductsQuery = query(
+        randomProductsRef,
+        where("publicationStatus", "not-in", ["decline", "pending"]),
+        limit(10)
+      );
       const randomProductsSnapshot = await getDocs(randomProductsQuery);
       const randomProducts = randomProductsSnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(product => !suggestions.some(suggestion => suggestion.id === product.id))
         .slice(0, 5);
-  
+    
       setRandomProducts(randomProducts);
     };
   
@@ -149,12 +160,15 @@ const SearchScreen = ({ navigation }) => {
     navigation.navigate('ProductDetail', { product });
   };
 
-  const handleSearchPress = async () => {
-    if (searchText.trim() !== '') {
-      await saveSearchQuery(searchText);
-      await fetchRecentSearches();
-      navigation.navigate('SearchResults', { searchQuery: searchText });
+  const handleSearchPress = () => {
+    const trimmedSearchText = searchText.trim();
+  
+    if (trimmedSearchText === '') {
+      return;
     }
+  
+    // Navigate to SearchScreen with the searchQuery parameter
+    navigation.navigate('SearchResults', { searchQuery: trimmedSearchText });
   };
 
   const handleSearch = async () => {
@@ -168,31 +182,37 @@ const SearchScreen = ({ navigation }) => {
   
     setLoading(true);
   
-    const nameQuery = query(
-      collection(db, "products"),
-      where("name", ">=", searchText),
-      where("name", "<=", searchText + '\uf8ff')
-    );
-  
-    const categoryQuery = query(
-      collection(db, "products"),
-      where("category", ">=", searchText),
-      where("category", "<=", searchText + '\uf8ff')
-    );
+    const productRef = collection(db, "products");
   
     try {
+      const nameQuery = query(
+        productRef,
+        where("name", ">=", searchText),
+        where("name", "<=", searchText + '\uf8ff')
+      );
       const nameQuerySnapshot = await getDocs(nameQuery);
-      const categoryQuerySnapshot = await getDocs(categoryQuery);
   
       const combinedResults = {};
       nameQuerySnapshot.forEach((doc) => {
-        combinedResults[doc.id] = { id: doc.id, ...doc.data() };
+        const data = doc.data();
+        if (data.publicationStatus !== "decline" && data.publicationStatus !== "pending") {
+          combinedResults[doc.id] = { id: doc.id, ...data };
+        }
       });
+
+      const categoryQuery = query(
+        productRef,
+        where("category", ">=", searchText),
+        where("category", "<=", searchText + '\uf8ff')
+      );
+      const categoryQuerySnapshot = await getDocs(categoryQuery);
       categoryQuerySnapshot.forEach((doc) => {
-        combinedResults[doc.id] = { id: doc.id, ...doc.data() };
+        const data = doc.data();
+        if (data.publicationStatus !== "decline" && data.publicationStatus !== "pending" && !combinedResults[doc.id]) {
+          combinedResults[doc.id] = { id: doc.id, ...data };
+        }
       });
   
-
       setSearchResults(Object.values(combinedResults));
     } catch (error) {
       console.error("Error searching products:", error);
@@ -201,6 +221,7 @@ const SearchScreen = ({ navigation }) => {
   
     setLoading(false);
   };
+  
 
   useEffect(() => {
     if (searchText.trim().length > 0) {
