@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, SafeAreaView
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
-import { collection, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, updateDoc, getDocs, where, query } from 'firebase/firestore';
 import CartModal from './CartModal';
 
 const Cart = ({ navigation }) => {
@@ -14,6 +14,14 @@ const Cart = ({ navigation }) => {
   const auth = getAuth();
   const user = auth.currentUser;
   const [productListeners, setProductListeners] = useState([]);
+  const [sellerName, setSellerName] = useState('');
+
+  const fetchSellerName = async (userEmail) => {
+    const sellerRef = collection(db, 'registeredSeller');
+    const querySnapshot = await getDocs(query(sellerRef, where("email", "==", userEmail)));
+    const sellerData = querySnapshot.docs.map(doc => doc.data());
+    return sellerData.length > 0 ? sellerData[0].sellerName : '';
+  };
 
   useEffect(() => {
     if (user) {
@@ -23,6 +31,9 @@ const Cart = ({ navigation }) => {
           const cartData = docSnapshot.data().cartItems || [];
           setCartItems(cartData);
           setupProductListeners(cartData);
+          fetchSellerName(user.email).then(sellerName => {
+            setSellerName(sellerName);
+          });
         } else {
           setCartItems([]);
           productListeners.forEach(unsubscribe => unsubscribe());
@@ -172,6 +183,7 @@ const Cart = ({ navigation }) => {
         >
           {item.description}
         </Text>
+        <Text style={styles.cartDescription}>Seller: {sellerName}</Text> 
       </View>
     </View>
   );
