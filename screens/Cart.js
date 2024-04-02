@@ -16,9 +16,10 @@ const Cart = ({ navigation }) => {
   const [productListeners, setProductListeners] = useState([]);
   const [sellerName, setSellerName] = useState('');
 
-  const fetchSellerName = async (userEmail) => {
+  const fetchSellerName = async (sellerEmail) => {
     const sellerRef = collection(db, 'registeredSeller');
-    const querySnapshot = await getDocs(query(sellerRef, where("email", "==", userEmail)));
+    const q = query(sellerRef, where("email", "==", sellerEmail));
+    const querySnapshot = await getDocs(q);
     const sellerData = querySnapshot.docs.map(doc => doc.data());
     return sellerData.length > 0 ? sellerData[0].sellerName : '';
   };
@@ -49,28 +50,28 @@ const Cart = ({ navigation }) => {
   }, [user]);
 
   const setupProductListeners = (cartData) => {
-    productListeners.forEach(unsubscribe => unsubscribe()); 
-  
+    productListeners.forEach(unsubscribe => unsubscribe());
     const newListeners = cartData.map((cartItem) => {
       const productRef = doc(db, 'products', cartItem.productId);
-      return onSnapshot(productRef, (docSnapshot) => {
+      const unsubscribe = onSnapshot(productRef, async (docSnapshot) => {
         if (docSnapshot.exists()) {
           const updatedProduct = docSnapshot.data();
+          const sellerName = await fetchSellerName(cartItem.seller_email); 
           setCartItems((currentItems) =>
             currentItems.map((item) =>
               item.productId === cartItem.productId
-                ? { 
-                    ...item, 
-                    availableQuantity: updatedProduct.quantity, 
-                    userQuantity: item.userQuantity || 1 
+                ? {
+                    ...item,
+                    availableQuantity: updatedProduct.quantity,
+                    sellerName: sellerName, 
                   }
                 : item
             )
           );
         }
       });
+      return unsubscribe;
     });
-  
     setProductListeners(newListeners);
   };
   
@@ -94,7 +95,6 @@ const Cart = ({ navigation }) => {
     );
   };
 
-  
 
   const handleSelectItem = (productId) => {
     const newSelectedItems = new Set(selectedItems);
@@ -183,7 +183,7 @@ const Cart = ({ navigation }) => {
         >
           {item.description}
         </Text>
-        <Text style={styles.cartDescription}>Seller: {sellerName}</Text> 
+        <Text style={styles.cartDescription}>Seller: {item.sellerName}</Text>
       </View>
     </View>
   );
