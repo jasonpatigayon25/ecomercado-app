@@ -11,6 +11,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProductDetail = ({ navigation, route }) => {
 
+  const [sellerDetails, setSellerDetails] = useState({
+    sellerName: '',
+    sellerEmail: '',
+    sellerAddress: '',
+  });
+
   const [averageRating, setAverageRating] = useState(0);
   const [totalRatings, setTotalRatings] = useState(0);
 
@@ -45,6 +51,28 @@ const ProductDetail = ({ navigation, route }) => {
       console.log('Error fetching seller name:', error);
     }
   };
+
+  useEffect(() => {
+    if (product && product.seller_email) {
+      fetchSellerName(product.seller_email); 
+
+      const fetchSellerDetails = async (email) => {
+        const sellersRef = collection(db, 'registeredSeller');
+        const q = query(sellersRef, where('email', '==', email));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const sellerData = doc.data();
+          setSellerDetails({
+            sellerName: sellerData.sellerName,
+            sellerEmail: sellerData.email,
+            sellerAddress: sellerData.sellerAddress,
+          });
+        });
+      };
+
+      fetchSellerDetails(product.seller_email);
+    }
+  }, [product]);
 
   useEffect(() => {
     if (product && product.seller_email) {
@@ -421,6 +449,17 @@ const ProductDetail = ({ navigation, route }) => {
     });
   };
 
+  const SellerDetailsCard = () => (
+    <View style={styles.sellerCard}>
+      <Text style={styles.sellerCardHeader}>{sellerDetails.sellerName}</Text>
+      <Text style={styles.sellerCardSubtext}>{sellerDetails.sellerEmail}</Text>
+      <View style={styles.sellerCardRow}>
+        <Icon name="map-marker" size={16} color="#05652D" />
+        <Text style={styles.sellerCardAddress}>{sellerDetails.sellerAddress}</Text>
+      </View>
+    </View>
+  );
+
   const handleRateUserOpen = () => {
     if (user && product.seller_email === user.email) {
       Alert.alert("Error", "You cannot rate your own product.");
@@ -513,6 +552,7 @@ const ProductDetail = ({ navigation, route }) => {
           </View>
           <Text style={styles.ratingNumber}>{averageRating.toFixed(2)} ({totalRatings} {totalRatings === 1 ? 'rating' : 'ratings'})</Text>
         </View>
+        <SellerDetailsCard />
       </ScrollView>
       <View style={styles.navbar}>
         <TouchableOpacity onPress={handleChatWithSeller}>
@@ -911,6 +951,36 @@ const styles = StyleSheet.create({
     color: '#05652D',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  sellerCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+    marginVertical: 16,
+  },
+  sellerCardHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  sellerCardSubtext: {
+    fontSize: 16,
+    color: '#666',
+  },
+  sellerCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  sellerCardAddress: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
   },
 });
 
