@@ -50,26 +50,35 @@ const Cart = ({ navigation }) => {
   }, [user]);
 
   const setupProductListeners = (cartData) => {
+    // Remove existing listeners before setting up new ones
     productListeners.forEach(unsubscribe => unsubscribe());
     const newListeners = cartData.map((cartItem) => {
+      // Ensure userQuantity is initialized
+      const initializedCartItem = {
+        ...cartItem,
+        userQuantity: cartItem.userQuantity || 1,
+      };
+  
       const productRef = doc(db, 'products', cartItem.productId);
       const unsubscribe = onSnapshot(productRef, async (docSnapshot) => {
         if (docSnapshot.exists()) {
           const updatedProduct = docSnapshot.data();
-          const sellerName = await fetchSellerName(cartItem.seller_email); 
+          const sellerName = await fetchSellerName(cartItem.seller_email);
           setCartItems((currentItems) =>
             currentItems.map((item) =>
               item.productId === cartItem.productId
                 ? {
                     ...item,
                     availableQuantity: updatedProduct.quantity,
-                    sellerName: sellerName, 
+                    sellerName: sellerName,
+                    userQuantity: item.userQuantity || 1, // Make sure userQuantity is respected
                   }
                 : item
             )
           );
         }
       });
+  
       return unsubscribe;
     });
     setProductListeners(newListeners);
@@ -84,7 +93,7 @@ const Cart = ({ navigation }) => {
       )
     );
   };
-
+  
   const decrementQuantity = (productId) => {
     setCartItems((currentItems) =>
       currentItems.map((item) =>
