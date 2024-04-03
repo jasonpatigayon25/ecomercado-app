@@ -149,6 +149,12 @@ const Cart = ({ navigation }) => {
     <View style={styles.cartItemContainer}>
       <View style={styles.sellerHeader}>
         <Text style={styles.sellerName}>{item.sellerName}</Text>
+        <TouchableOpacity 
+        style={styles.visitButton} 
+        onPress={() => navigation.navigate('UserVisit', { sellerEmail: item.seller_email })}
+      >
+        <Text style={styles.visitButtonText}>Visit</Text>
+      </TouchableOpacity>
       </View>
       <View style={styles.cartItem}>
         <View style={styles.itemLeftSection}>
@@ -284,10 +290,10 @@ const styles = StyleSheet.create({
   cartItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingTop: 30, // Padding to prevent overlap by the header
+    paddingTop: 30,
     paddingBottom: 15,
     paddingHorizontal: 15,
-    marginTop: 10, // Margin to give space for the header
+    marginTop: 10, 
   },
   itemLeftSection: {
     flexDirection: 'row',
@@ -297,17 +303,17 @@ const styles = StyleSheet.create({
   sellerHeader: {
     backgroundColor: '#E8F5E9', 
     padding: 8,
-    position: 'absolute', // Position absolutely to overlap the cart item
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 1, // Make sure it stacks on top
+    zIndex: 1,
   },
   sellerName: {
     fontWeight: 'bold',
     color: '#333',
     fontSize: 16,
-    textAlign: 'center', // Center the seller name
+    textAlign: 'center',
   },
   itemLeftSection: {
     flexDirection: 'row',
@@ -487,7 +493,21 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
-
+  visitButton: {
+    position: 'absolute',
+    right: 8,
+    top: 6,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#05652D',
+  },
+  visitButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
 });
 
 export default Cart;
