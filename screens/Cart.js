@@ -146,9 +146,12 @@ const Cart = ({ navigation }) => {
   );
 
   const renderItem = ({ item }) => (
-    <View style={styles.cartItem}>
-      <View style={styles.itemLeftSection}>
-        <View style={styles.imageCheckboxContainer}>
+    <View style={styles.cartItemContainer}>
+      <View style={styles.sellerHeader}>
+        <Text style={styles.sellerName}>{item.sellerName}</Text>
+      </View>
+      <View style={styles.cartItem}>
+        <View style={styles.itemLeftSection}>
           <TouchableOpacity onPress={() => handleSelectItem(item.productId)}>
             <Icon
               name={selectedItems.has(item.productId) ? 'check-square' : 'square'}
@@ -158,32 +161,21 @@ const Cart = ({ navigation }) => {
           </TouchableOpacity>
           <Image source={{ uri: item.photo }} style={styles.cartImage} />
         </View>
-        <View style={styles.quantityControl}>
-          <TouchableOpacity onPress={() => decrementQuantity(item.productId)}>
-            <Icon name="minus" size={20} color="#05652D" />
-          </TouchableOpacity>
-          <Text style={styles.cartQuantity}>{item.userQuantity}</Text>
-          <TouchableOpacity onPress={() => incrementQuantity(item.productId)}>
-            <Icon name="plus" size={20} color="#05652D" />
-          </TouchableOpacity>
+        <View style={styles.cartDetails}>
+          <Text style={styles.cartName}>{item.name}</Text>
+          <Text style={styles.cartPrice}>₱{parseFloat(item.price).toFixed(2)}</Text>
+          <Text style={styles.cartCategory}>{item.category}</Text>
+          <Text style={styles.cartDescription}>{item.description}</Text>
+          <View style={styles.quantityControl}>
+            <TouchableOpacity onPress={() => decrementQuantity(item.productId)}>
+              <Icon name="minus" size={20} color="#05652D" />
+            </TouchableOpacity>
+            <Text style={styles.cartQuantity}>{item.userQuantity}</Text>
+            <TouchableOpacity onPress={() => incrementQuantity(item.productId)}>
+              <Icon name="plus" size={20} color="#05652D" />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-      <View style={styles.cartDetails}>
-        <Text style={styles.cartName}>{item.name}</Text>
-        <Text style={styles.cartPrice}>₱{parseFloat(item.price).toFixed(2)}</Text>
-        <Text style={styles.cartCategory}>{item.category}</Text>
-        <View style={styles.cartMetaContainer}>
-        <Text style={styles.cartQty}>Available Quantity: {item.availableQuantity}</Text>
-        </View>
-        <Text style={styles.cartDescription}>Location: {item.location}</Text>
-        <Text 
-          style={styles.cartDescription}
-          numberOfLines={1}
-          ellipsizeMode='tail'
-        >
-          {item.description}
-        </Text>
-        <Text style={styles.cartDescription}>Seller: {item.sellerName}</Text>
       </View>
     </View>
   );
@@ -292,48 +284,53 @@ const styles = StyleSheet.create({
   cartItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 15,
-    marginVertical: 5,
-    marginHorizontal: 10,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    paddingTop: 30, // Padding to prevent overlap by the header
+    paddingBottom: 15,
+    paddingHorizontal: 15,
+    marginTop: 10, // Margin to give space for the header
   },
   itemLeftSection: {
-    flexDirection: 'column',
-    marginRight: 15,
-    alignItems: 'center',
-  },
-  imageCheckboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 15,
+  },
+  sellerHeader: {
+    backgroundColor: '#E8F5E9', 
+    padding: 8,
+    position: 'absolute', // Position absolutely to overlap the cart item
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1, // Make sure it stacks on top
+  },
+  sellerName: {
+    fontWeight: 'bold',
+    color: '#333',
+    fontSize: 16,
+    textAlign: 'center', // Center the seller name
+  },
+  itemLeftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
   },
   cartImage: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    marginLeft: 10,
   },
   cartDetails: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'flex-start',
-    marginHorizontal: 10,
     paddingRight: 20, 
   },
   cartName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
   },
   cartPrice: {
-    fontSize: 14,
     color: '#05652D',
-    marginTop: 4,
+    marginVertical: 5,
   },
   cartCategory: {
     fontSize: 12,
@@ -342,10 +339,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
+    marginVertical: 5,
   },
   cartDescription: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#787878',
+    marginVertical: 5,
+  },
+  cartQty: {
+    fontSize: 12,
+    color: '#666',
+  },
+  cartMetaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  quantityControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E8F5E9',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    marginTop: 10, 
+  },
+  cartQuantity: {
+    marginHorizontal: 10,
+    fontSize: 16,
   },
   actionBar: {
     flexDirection: 'row',
@@ -431,16 +453,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
   },
-  quantityControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 15, 
-    backgroundColor: '#E8F5E9',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 5,
-  },
   cartQty: {
     fontSize: 12,
     color: '#666',
@@ -449,8 +461,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 4,
   },
+  quantityControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E8F5E9',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    margin: 10,
+  },
+  cartQuantity: {
+    marginHorizontal: 10,
+    fontSize: 16,
+  },
+  cartItemContainer: {
+    marginBottom: 10,
+    borderRadius: 10,
+    backgroundColor: '#f9f9f9',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+
 });
 
 export default Cart;
