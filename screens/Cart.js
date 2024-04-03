@@ -313,7 +313,10 @@ const styles = StyleSheet.create({
     paddingTop: 30,
     paddingBottom: 15,
     paddingHorizontal: 15,
-    marginTop: 10, 
+    marginTop: 10,
+    borderBottomWidth: 1,  
+    borderBottomColor: '#ccc',
+    backgroundColor: '#FFF',  
   },
   itemLeftSection: {
     flexDirection: 'row',
@@ -323,11 +326,11 @@ const styles = StyleSheet.create({
   sellerHeader: {
     backgroundColor: '#E8F5E9', 
     padding: 8,
-    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     zIndex: 1,
+    marginTop: 10,
   },
   sellerName: {
     fontWeight: 'bold',
