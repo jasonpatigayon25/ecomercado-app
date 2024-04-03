@@ -84,7 +84,11 @@ const SearchResults = ({ route, navigation }) => {
   );
 
   const fetchCategoryProducts = async (category) => {
-    const q = query(collection(db, "products"), where("category", "==", category));
+    const q = query(
+      collection(db, "products"),
+      where("category", "==", category),
+      where("publicationStatus", "==", "approved")
+    );
     const snapshot = await getDocs(q);
     const categoryProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     setRelatedProducts(categoryProducts);
@@ -92,11 +96,14 @@ const SearchResults = ({ route, navigation }) => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const q = query(collection(db, "products"));
+      const q = query(
+        collection(db, "products"),
+        where("publicationStatus", "==", "approved")
+      );
       const querySnapshot = await getDocs(q);
       const searchedProducts = [];
       let matchedCategory = null;
-  
+    
       querySnapshot.forEach((doc) => {
         const product = { id: doc.id, ...doc.data() };
         if (product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -109,11 +116,11 @@ const SearchResults = ({ route, navigation }) => {
           matchedCategory = product.category;
         }
       });
-  
+    
       setProducts(searchedProducts);
       setLoading(false);
       setCategoryMatch(matchedCategory);
-  
+    
       if (matchedCategory) {
         fetchCategoryProducts(matchedCategory);
       }
