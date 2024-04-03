@@ -21,7 +21,11 @@ const CategoryResults = () => {
 
     const fetchProducts = async () => {
       try {
-        const q = query(collection(db, 'products'), where('category', '==', categoryName));
+        const q = query(
+          collection(db, 'products'),
+          where('category', '==', categoryName),
+          where('publicationStatus', '==', 'approved')
+        );
         const querySnapshot = await getDocs(q);
         const fetchedProducts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setProducts(fetchedProducts);
