@@ -50,10 +50,8 @@ const Cart = ({ navigation }) => {
   }, [user]);
 
   const setupProductListeners = (cartData) => {
-    // Remove existing listeners before setting up new ones
     productListeners.forEach(unsubscribe => unsubscribe());
     const newListeners = cartData.map((cartItem) => {
-      // Ensure userQuantity is initialized
       const initializedCartItem = {
         ...cartItem,
         userQuantity: cartItem.userQuantity || 1,
@@ -71,7 +69,7 @@ const Cart = ({ navigation }) => {
                     ...item,
                     availableQuantity: updatedProduct.quantity,
                     sellerName: sellerName,
-                    userQuantity: item.userQuantity || 1, // Make sure userQuantity is respected
+                    userQuantity: item.userQuantity || 1,
                   }
                 : item
             )
@@ -160,7 +158,7 @@ const Cart = ({ navigation }) => {
         <Text style={styles.sellerName}>{item.sellerName}</Text>
         <TouchableOpacity 
         style={styles.visitButton} 
-        onPress={() => navigation.navigate('UserVisit', { sellerEmail: item.seller_email })}
+        onPress={() => navigation.navigate('UserVisit', { email: item.seller_email })}
       >
         <Text style={styles.visitButtonText}>Visit</Text>
       </TouchableOpacity>
