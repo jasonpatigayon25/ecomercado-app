@@ -206,11 +206,25 @@ const Cart = ({ navigation }) => {
     );
   };
 
-  const renderSectionHeader = ({ section: { title } }) => (
-    <View style={styles.sellerHeader}>
-      <Text style={styles.sellerName}>{title}</Text>
-    </View>
-  );
+  const navigateToUserVisit = (sellerEmail) => {
+    navigation.navigate('UserVisit', { email: sellerEmail });
+  };
+
+  const renderSectionHeader = ({ section: { title, data } }) => {
+    const sellerEmail = data[0]?.seller_email;
+  
+    return (
+      <View style={styles.sellerHeader}>
+        <Text style={styles.sellerName}>{title}</Text>
+        <TouchableOpacity
+          style={styles.visitButton}
+          onPress={() => navigateToUserVisit(sellerEmail)}
+        >
+          <Text style={styles.visitButtonText}>Visit</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const handleRemoveSelected = () => {
     if (selectedItems.size === 0) {
