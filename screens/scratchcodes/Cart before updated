@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, SafeAreaView, Alert, SectionList } from 'react-native';
+/* import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, SafeAreaView, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
@@ -102,6 +102,7 @@ const Cart = ({ navigation }) => {
     );
   };
 
+
   const handleSelectItem = (productId) => {
     const newSelectedItems = new Set(selectedItems);
     if (selectedItems.has(productId)) {
@@ -151,64 +152,44 @@ const Cart = ({ navigation }) => {
     </View>
   );
 
-  const groupedCartItems = useMemo(() => {
-    const groups = {};
-    cartItems.forEach(item => {
-      groups[item.sellerName] = groups[item.sellerName] || [];
-      groups[item.sellerName].push(item);
-    });
-    return groups;
-  }, [cartItems]);
-
   const renderItem = ({ item }) => (
-    <View style={styles.cartItem}>
-      <View style={styles.itemLeftSection}>
-        <TouchableOpacity onPress={() => handleSelectItem(item.productId)}>
-          <Icon
-            name={selectedItems.has(item.productId) ? 'check-square' : 'square'}
-            size={24}
-            color="#05652D"
-          />
-        </TouchableOpacity>
-        <Image source={{ uri: item.photo }} style={styles.cartImage} />
+    <View style={styles.cartItemContainer}>
+      <View style={styles.sellerHeader}>
+        <Text style={styles.sellerName}>{item.sellerName}</Text>
+        <TouchableOpacity 
+        style={styles.visitButton} 
+        onPress={() => navigation.navigate('UserVisit', { email: item.seller_email })}
+      >
+        <Text style={styles.visitButtonText}>Visit</Text>
+      </TouchableOpacity>
       </View>
-      <View style={styles.cartDetails}>
-        <Text style={styles.cartName}>{item.name}</Text>
-        <Text style={styles.cartPrice}>₱{parseFloat(item.price).toFixed(2)}</Text>
-        <Text style={styles.cartCategory}>{item.category}</Text>
-        <Text style={styles.cartDescription}>{item.description}</Text>
-        <View style={styles.quantityControl}>
-          <TouchableOpacity onPress={() => decrementQuantity(item.productId)}>
-            <Icon name="minus" size={20} color="#05652D" />
+      <View style={styles.cartItem}>
+        <View style={styles.itemLeftSection}>
+          <TouchableOpacity onPress={() => handleSelectItem(item.productId)}>
+            <Icon
+              name={selectedItems.has(item.productId) ? 'check-square' : 'square'}
+              size={24}
+              color="#05652D"
+            />
           </TouchableOpacity>
-          <Text style={styles.cartQuantity}>{item.userQuantity}</Text>
-          <TouchableOpacity onPress={() => incrementQuantity(item.productId)}>
-            <Icon name="plus" size={20} color="#05652D" />
-          </TouchableOpacity>
+          <Image source={{ uri: item.photo }} style={styles.cartImage} />
+        </View>
+        <View style={styles.cartDetails}>
+          <Text style={styles.cartName}>{item.name}</Text>
+          <Text style={styles.cartPrice}>₱{parseFloat(item.price).toFixed(2)}</Text>
+          <Text style={styles.cartCategory}>{item.category}</Text>
+          <Text style={styles.cartDescription}>{item.description}</Text>
+          <View style={styles.quantityControl}>
+            <TouchableOpacity onPress={() => decrementQuantity(item.productId)}>
+              <Icon name="minus" size={20} color="#05652D" />
+            </TouchableOpacity>
+            <Text style={styles.cartQuantity}>{item.userQuantity}</Text>
+            <TouchableOpacity onPress={() => incrementQuantity(item.productId)}>
+              <Icon name="plus" size={20} color="#05652D" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  );
-
-  const renderSectionList = () => {
-    const sections = Object.keys(groupedCartItems).map(key => ({
-      title: key,
-      data: groupedCartItems[key]
-    }));
-  
-    return (
-      <SectionList
-        sections={sections}
-        keyExtractor={(item, index) => item.productId + index}
-        renderItem={renderItem}
-        renderSectionHeader={renderSectionHeader}
-      />
-    );
-  };
-
-  const renderSectionHeader = ({ section: { title } }) => (
-    <View style={styles.sellerHeader}>
-      <Text style={styles.sellerName}>{title}</Text>
     </View>
   );
 
@@ -258,7 +239,13 @@ const Cart = ({ navigation }) => {
           />
         </TouchableOpacity>
       </View>
-      {cartItems.length === 0 ? renderEmptyCart() : renderSectionList()}
+      {cartItems.length === 0 && renderEmptyCart()}
+      <FlatList
+        data={cartItems}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => `${item.productId}_${index}`}
+        ListFooterComponent={<View style={{ height: 80 }} />}
+      />
       <View style={styles.actionBar}>
         <TouchableOpacity style={styles.selectAllButton}
         onPress={handleSelectAll}>
@@ -530,4 +517,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Cart;
+export default Cart; */
