@@ -40,17 +40,22 @@
       return acc;
     }, {});
 
-    const renderProductItem = ({ item }) => (
-      <View style={styles.productInfoContainer}>
-        <Image source={{ uri: item.photo }} style={styles.productImage} />
-        <View style={styles.productDetails}>
-          <Text style={styles.productName}>{item.name}</Text>
-          <Text style={styles.productCategory}>{item.category}</Text>
-          <Text style={styles.productPrice}>₱{item.price.toFixed(2)}</Text>
-          <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
+    const renderProductItem = ({ item }) => {
+      const totalItemPrice = item.price * item.orderedQuantity;
+    
+      return (
+        <View style={styles.productInfoContainer}>
+          <Image source={{ uri: item.photo }} style={styles.productImage} />
+          <View style={styles.productDetails}>
+            <Text style={styles.productName}>{item.name}</Text>
+            <Text style={styles.productCategory}>{item.category}</Text>
+            <Text style={styles.productPrice}>₱{totalItemPrice.toFixed(2)}</Text>
+            <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
+          </View>
+
         </View>
-      </View>
-    );
+      );
+    };
   
 
     useEffect(() => {
@@ -277,6 +282,7 @@
       padding: 10,
       borderBottomWidth: 1, 
       borderBottomColor: '#ccc', 
+      justifyContent: 'space-between',
     },
     productImage: {
       width: 100,
@@ -299,6 +305,8 @@
     productQuantity: {
       fontSize: 14,
       color: '#888',
+      fontWeight: 'bold',
+      textAlign: 'right',
     },
     infoContainer: {
       marginBottom: 20,
