@@ -11,10 +11,18 @@ const Cart = ({ navigation }) => {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [modalVisible, setModalVisible] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
+  const [totalPrice, setTotalPrice] = useState(0);
   const auth = getAuth();
   const user = auth.currentUser;
   const [productListeners, setProductListeners] = useState([]);
   const [sellerName, setSellerName] = useState('');
+
+  useEffect(() => {
+    const newTotalPrice = cartItems.reduce((acc, item) => {
+      return selectedItems.has(item.productId) ? acc + (item.price * item.userQuantity) : acc;
+    }, 0);
+    setTotalPrice(newTotalPrice);
+  }, [cartItems, selectedItems]);
 
   const fetchSellerName = async (sellerEmail) => {
     const sellerRef = collection(db, 'registeredSeller');
@@ -222,11 +230,34 @@ const Cart = ({ navigation }) => {
     navigation.navigate('UserVisit', { email: sellerEmail });
   };
 
+  const handleSelectSellerItems = (sellerEmail) => {
+    const newSelectedItems = new Set(selectedItems);
+    cartItems.forEach((item) => {
+      if (item.seller_email === sellerEmail) {
+        if (newSelectedItems.has(item.productId)) {
+          newSelectedItems.delete(item.productId);
+        } else {
+          newSelectedItems.add(item.productId);
+        }
+      }
+    });
+    setSelectedItems(newSelectedItems);
+  };
+  
   const renderSectionHeader = ({ section: { title, data } }) => {
     const sellerEmail = data[0]?.seller_email;
+    const isAllSelected = data.every(item => selectedItems.has(item.productId));
   
     return (
       <View style={styles.sellerHeader}>
+        <TouchableOpacity onPress={() => handleSelectSellerItems(sellerEmail)} style={styles.sectionSelectAllButton}>
+          <Icon
+            name={isAllSelected ? 'check-square' : 'square'}
+            size={24}
+            color="#05652D"
+          />
+        </TouchableOpacity>
+        <Icon name="store" size={20} color="#808080" style={styles.shopIcon} />
         <Text style={styles.sellerName}>{title}</Text>
         <TouchableOpacity
           style={styles.visitButton}
@@ -277,36 +308,28 @@ const Cart = ({ navigation }) => {
           <Icon name="arrow-left" size={20} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Cart</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Wish')} style={styles.wishlistButton}>
-          <Image
-            source={require('../assets/wishlist.png')}
-            style={styles.wishlistIcon}
-          />
+        <TouchableOpacity onPress={() => navigation.navigate('SearchScreen')} style={styles.wishlistButton}>
+         <Icon name="search" size={24} color="#FFFFFF" style={styles.icon} />
         </TouchableOpacity>
       </View>
       {cartItems.length === 0 ? renderEmptyCart() : renderSectionList()}
       <View style={styles.actionBar}>
-        <TouchableOpacity style={styles.selectAllButton}
-        onPress={handleSelectAll}>
-          <Text style={styles.selectAllText}>Select All</Text>
+        <TouchableOpacity style={styles.selectAllButton} onPress={handleSelectAll}>
+          <Icon name={selectedItems.size === cartItems.length ? "check-square" : "square"} size={24} color="#05652D" />
+          <Text style={styles.selectAllText}> All</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-            style={styles.removeButton}
-            onPress={handleRemoveSelected}
-          >
-            <Text style={styles.removeButtonText}>Remove</Text>
-          </TouchableOpacity>
-        <TouchableOpacity onPress={handleCheckout}>
-          <View style={styles.checkoutButton}>
-            <Text style={styles.checkoutButtonText}>Check Out</Text>
-          </View>
+        <TouchableOpacity style={styles.removeButton} onPress={handleRemoveSelected}>
+          <Icon name="trash" size={20} color="#D32F2F" />
+          <Text style={styles.removeButtonText}> Remove</Text>
         </TouchableOpacity>
+        <TouchableOpacity onPress={handleCheckout} style={styles.checkoutButton}>
+  <View>
+    <Text style={styles.checkoutButtonText}>Check Out ({selectedItems.size})</Text>
+    <Text style={styles.totalPriceText}>Total: ₱{totalPrice.toFixed(2)}</Text>
+  </View>
+</TouchableOpacity>
       </View>
-      <CartModal
-        item={currentItem}
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-      />
+      <CartModal item={currentItem} visible={modalVisible} onClose={() => setModalVisible(false)} />
     </SafeAreaView>
   );
 };
@@ -350,19 +373,23 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
   sellerHeader: {
-    backgroundColor: '#E8F5E9', 
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E8F5E9',
     padding: 8,
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1,
     marginTop: 10,
+  },
+  sectionSelectAllButton: {
+    marginRight: 10,
   },
   sellerName: {
     fontWeight: 'bold',
     color: '#333',
     fontSize: 16,
-    textAlign: 'center',
+    flex: 1,
+    textAlign: 'left', 
+    marginLeft: 10,
   },
   itemLeftSection: {
     flexDirection: 'row',
@@ -432,12 +459,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#ddd',
   },
   selectAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff', 
     padding: 10,
     borderRadius: 20,
-    marginHorizontal: 10,
-    borderWidth: 3,
-    borderColor: '#05652D',
+/*     borderWidth: 3,
+    borderColor: '#05652D', */
   },
   selectAllText: {
     color: '#05652D',
@@ -448,14 +476,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#05652D',
     padding: 10,
     borderRadius: 20,
-    padding: 10,
     marginHorizontal: 10,
     borderWidth: 3,
-    borderColor: '#05652D' ,
+    borderColor: '#05652D',
+    alignItems: 'center',
   },
   checkoutButtonText: {
     color: '#FFF',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  totalPriceText: {
+    color: '#FFD700', 
+    fontSize: 14, 
   },
   emptyCartContainer: {
     flex: 1,
@@ -496,12 +529,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   removeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff', 
     padding: 10,
     borderRadius: 20,
-    marginHorizontal: 10,
-    borderWidth: 3,
-    borderColor: '#D32F2F' ,
+/*     borderWidth: 3,
+    borderColor: '#D32F2F', */
   },
   removeButtonText: {
     color: '#D32F2F',
@@ -557,6 +591,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  shopIcon: {
+    marginLeft: 10,
+},
 });
 
 export default Cart;
