@@ -161,7 +161,19 @@ const Cart = ({ navigation }) => {
   }, [cartItems]);
 
   const renderItem = ({ item }) => (
-    <View style={styles.cartItem}>
+    <TouchableOpacity
+    onPress={async () => {
+      const productRef = doc(db, 'products', item.productId);
+      const docSnap = await getDoc(productRef);
+      if (docSnap.exists()) {
+        const productData = docSnap.data();
+        navigation.navigate('ProductDetail', { product: { id: item.productId, ...productData } });
+      } else {
+        console.log('No such product!');
+      }
+    }}
+    style={styles.cartItem}
+  >
       <View style={styles.itemLeftSection}>
         <TouchableOpacity onPress={() => handleSelectItem(item.productId)}>
           <Icon
@@ -187,7 +199,7 @@ const Cart = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderSectionList = () => {
