@@ -26,9 +26,18 @@
     const [locationSearchResults, setLocationSearchResults] = useState([]);
 
     useEffect(() => {
-      const total = selectedProducts.reduce((sum, product) => sum + (product.orderedPrice || 0), 0);
+      const total = selectedProducts.reduce((sum, product) => sum + product.orderedPrice, 0);
       setTotalPrice(total);
     }, [selectedProducts]);
+
+    const groupedProducts = selectedProducts.reduce((acc, product) => {
+      const key = product.sellerName;
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(product);
+      return acc;
+    }, {});
 
     const renderProductItem = ({ item }) => (
       <View style={styles.productInfoContainer}>
@@ -41,6 +50,7 @@
         </View>
       </View>
     );
+  
 
     useEffect(() => {
       const fetchUserAddress = async () => {
@@ -134,12 +144,12 @@
         </View>
 
         <ScrollView style={styles.content}>
-        {selectedProducts.map((product, index) => (
-            <View key={index}>
-              <Text style={styles.sellerName}>{product.sellerName}</Text>
-              {renderProductItem({ item: product })}
-            </View>
-          ))}
+        {Object.keys(groupedProducts).map((seller, index) => (
+          <View key={index}>
+            <Text style={styles.sellerName}>{seller}</Text>
+            {groupedProducts[seller].map((item, itemIndex) => renderProductItem({ item, key: `product-${index}-${itemIndex}` }))}
+          </View>
+        ))}
           
           <View style={styles.divider} />
 
