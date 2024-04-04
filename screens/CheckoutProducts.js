@@ -1,6 +1,7 @@
   import React, { useState, useEffect } from 'react';
   import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, Alert } from 'react-native';
   import Icon from 'react-native-vector-icons/FontAwesome';
+  import Icon5 from 'react-native-vector-icons/FontAwesome5';
   import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
   import axios from 'axios';
   import { Dimensions } from 'react-native';
@@ -145,8 +146,11 @@
 
         <ScrollView style={styles.content}>
         {Object.keys(groupedProducts).map((seller, index) => (
-          <View key={index}>
-            <Text style={styles.sellerName}>{seller}</Text>
+          <View style={styles.itemDisplay} key={index}>
+            <View key={index} style={styles.sellerHeader}>
+              <Icon5 name="store" size={20} color="#05652D" style={styles.storeIcon} />
+              <Text style={styles.sellerName}>{seller}</Text>
+            </View>
             {groupedProducts[seller].map((item, itemIndex) => renderProductItem({ item, key: `product-${index}-${itemIndex}` }))}
           </View>
         ))}
@@ -270,14 +274,9 @@
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: '#f9f9f9',
-      borderRadius: 10,
       padding: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
-      marginBottom: 10,
+      borderBottomWidth: 1, 
+      borderBottomColor: '#ccc', 
     },
     productImage: {
       width: 100,
@@ -690,10 +689,24 @@
       fontWeight: 'bold',
       color: '#05652D',
     },
+    sellerHeader: {
+      backgroundColor: '#E8F5E9', 
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      borderRadius: 5, 
+
+    },
     sellerName: {
       fontSize: 16,
       fontWeight: 'bold',
-      marginVertical: 10,
+      marginLeft: 10, 
+    },
+    storeIcon: {
+      color: '#05652D', 
+    },
+    itemDisplay: {
+      marginBottom: 10,
     },
   });
 
