@@ -488,7 +488,8 @@ const styles = StyleSheet.create({
   },
   totalPriceText: {
     color: '#FFD700', 
-    fontSize: 14, 
+    fontSize: 12, 
+    textAlign: 'center',
   },
   emptyCartContainer: {
     flex: 1,
