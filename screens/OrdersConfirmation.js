@@ -72,53 +72,57 @@ const OrdersConfirmation = ({ route, navigation }) => {
     }
   
     setOrderPlaced(true);
-  
-    try {
-      for (const product of productDetails) { 
-        if (!product.productId || !product.name || product.orderedQuantity === undefined) {
-          console.error("Invalid product data:", product);
-          alert(`Invalid data for product ${product.name || "unknown"}.`);
-          setOrderPlaced(false);
-          return;
-        }
-  
-        const productRef = doc(db, 'products', product.productId);
-        const productSnapshot = await getDoc(productRef);
-  
-        if (!productSnapshot.exists()) {
-          alert(`Product ${product.name} not found.`);
-          setOrderPlaced(false);
-          return;
-        }
-  
-        const currentQuantity = productSnapshot.data().quantity;
-        if (currentQuantity < product.orderedQuantity) {
-          alert(`Not enough stock available for ${product.name}.`);
-          setOrderPlaced(false);
-          return;
-        }
-  
-        await updateDoc(productRef, {
-          quantity: currentQuantity - product.orderedQuantity
-        });
 
-        await incrementUserRecommendHit(product.productId);
-      }  
+    try {
+      for (const product of productDetails) {
+          if (!product.productId || !product.name || product.orderedQuantity === undefined) {
+              console.error("Invalid product data:", product);
+              Alert.alert('Invalid Data', `Invalid data for product ${product.name || "unknown"}.`);
+              setOrderPlaced(false);
+              return;
+          }
+
+          const productRef = doc(db, 'products', product.productId);
+          const productSnapshot = await getDoc(productRef);
+
+          if (!productSnapshot.exists()) {
+              Alert.alert('Product Not Found', `Product ${product.name} not found.`);
+              setOrderPlaced(false);
+              return;
+          }
+
+          const currentQuantity = productSnapshot.data().quantity;
+
+          if (currentQuantity < product.orderedQuantity) {
+              Alert.alert('Insufficient Stock', `Not enough stock available for ${product.name}.`);
+              setOrderPlaced(false);
+              return;
+          }
+
+          await incrementUserRecommendHit(product.productId);
+      }
+
     
-      const orderDocRef = await addDoc(collection(db, 'orders'), {
-        buyer: {
-          uid: user.uid,
-          email: user.email,
-        },
-        address,
-        paymentMethod,
-        productDetails,
-        totalPrice,
-        status: 'Pending',
+      const orderData = {
+        deliveryAddress: address,
+        buyerEmail: user.email,
+        buyerId: user.uid,
         dateOrdered: new Date(),
-      });
-  
-      const orderId = orderDocRef.id;
+        paymentMethod: paymentMethod,
+        productDetails: productDetails.map(product => ({
+            productId: product.productId,
+            // You can include more product details here if necessary
+        })),
+        status: 'Pending',
+        totalItems: totalOrderCount,
+        subtotal: merchandiseSubtotal,
+        shippingFee: shippingFee,
+        totalPrice: totalPrice
+    };
+
+    const orderDocRef = await addDoc(collection(db, 'orders'), orderData);
+    const orderId = orderDocRef.id;
+
       const buyerNotificationMessage = `Your order: ${orderId} has been placed.`;
   
       const buyerNotification = {
