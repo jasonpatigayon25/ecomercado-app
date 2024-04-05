@@ -322,8 +322,8 @@ const CheckoutProducts = ({ navigation, route }) => {
             </View>
             <View style={styles.divider} />
             <View style={styles.cardItem}>
-              <Text style={styles.productDetail}>Total Payment</Text>
-              <Text style={styles.priceTextGreen}>₱{totalPrice.toFixed(2)}</Text>
+              <Text style={styles.productDetail2}>Total Payment</Text>
+              <Text style={styles.priceTextGreen2}>₱{totalPrice.toFixed(2)}</Text>
             </View>
           </View>
       </ScrollView>
@@ -589,6 +589,12 @@ const styles = StyleSheet.create({
     color: '#05652D',
   },
   priceTextGreen: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#05652D',
+    textAlign: 'right',
+  },
+  priceTextGreen2: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#05652D',
@@ -787,12 +793,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
   },
   productDetail: {
+    fontSize: 14,
+    color: 'gray',
+    textAlign: 'left',
+  },
+  productDetail2: {
     fontSize: 16,
     color: 'gray',
     textAlign: 'left',
