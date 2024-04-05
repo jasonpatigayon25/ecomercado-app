@@ -22,6 +22,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
   const user = auth.currentUser;
   
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
 
   useEffect(() => {
     registerIndieID(user.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
@@ -72,6 +73,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
     }
   
     setOrderPlaced(true);
+    setConfirmModalVisible(false);
 
     try {
       for (const product of productDetails) {
@@ -153,8 +155,9 @@ const OrdersConfirmation = ({ route, navigation }) => {
         sendPushNotification(product.seller_email, 'New Order Received', sellerNotificationMessage);
       }
   
-      Alert.alert('Order placed successfully!');
-      navigation.navigate('Home');
+      // Alert.alert('Order placed successfully!');
+      // navigation.navigate('Home');
+      setSuccessModalVisible(true);
     } catch (error) {
       console.error('Error placing order: ', error);
       alert('Error placing order. Please try again.');
@@ -204,8 +207,14 @@ const OrdersConfirmation = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackPress}>
-          <Icon name="arrow-left" size={24} color="#05652D" style={styles.backIcon} />
+      <TouchableOpacity onPress={() => {
+          if (orderPlaced) {
+            navigation.navigate('Home');
+          } else {
+            handleBackPress();
+          }
+        }}>
+          <Icon name={orderPlaced ? "home" : "arrow-left"} size={24} color="#05652D" style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={styles.title}>Order Confirmation</Text>
       </View>
@@ -283,7 +292,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
           <View style={styles.modalView}>
             <Text style={styles.modalText}>Confirm your order?</Text>
             <TouchableOpacity
-              style={{ ...styles.openButton, backgroundColor: "#fff" }}
+              style={{ ...styles.openButton2, backgroundColor: "#fff" }}
               onPress={() => {
                 setConfirmModalVisible(!confirmModalVisible);
                 handleProceed();
@@ -292,11 +301,46 @@ const OrdersConfirmation = ({ route, navigation }) => {
               <Text style={styles.textStyle1}>Yes</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={{ ...styles.openButton, backgroundColor: "#05652D", borderWidth: 1,borderColor: "white" }}
+              style={{ ...styles.openButton2, backgroundColor: "#05652D", borderWidth: 1,borderColor: "white" }}
               onPress={() => setConfirmModalVisible(!confirmModalVisible)}
             >
               <Text style={styles.textStyle}>Cancel</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={successModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setSuccessModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Order Has Been Placed!</Text>
+            <Icon name="check-circle" size={60} color="white" />
+            <Text style={styles.pendingText}>Pending Payment</Text>
+            <Text style={styles.subtext}>Go to Order Transaction for more info.</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonHome]}
+                onPress={() => {
+                  setSuccessModalVisible(false);
+                  navigation.navigate('Home');
+                }}
+              >
+                <Text style={styles.homeButton}>Home</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonOrder]}
+                onPress={() => {
+                  setSuccessModalVisible(false);
+                  navigation.navigate('OrderHistory');
+                }}
+              >
+                <Text style={styles.textButton}>My Order Transactions</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -497,22 +541,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 22
+    marginTop: 22,
+    // backgroundColor: 'rgba(0, 0, 0, 0.6)',
+
   },
   modalView: {
-    width: '80%',
     margin: 20,
     backgroundColor: '#05652D',
-    paddingTop: 20, 
-    paddingBottom: 20, 
-    paddingHorizontal: 20, 
+
+    padding: 35,
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
+    shadowOpacity: 0.25,
     elevation: 5,
   },
   modalText: {
@@ -531,6 +573,52 @@ const styles = StyleSheet.create({
     elevation: 2,
     marginTop: 15
   },
+  pendingIcon: {
+    textAlign: 'center',
+  },
+  pendingText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  subtext: {
+    fontSize: 14,
+    marginBottom: 20,
+    color: "#ffffff",
+    textAlign: 'center',
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    borderRadius: 20,
+    padding: 10,
+    marginHorizontal: 10,
+    width: '50%',
+  },
+  modalButtonHome: {
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  modalButtonOrder: {
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  textButton: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  homeButton: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+
   textStyle1: {
     color: "#05652D",
     fontWeight: "bold",
@@ -540,6 +628,16 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     textAlign: "center"
+  },
+  openButton2: {
+    backgroundColor: "#F194FF",
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20, 
+    elevation: 2,
+    marginTop: 15,
+    minWidth: 100, 
+    justifyContent: 'center' 
   },
 });
 
