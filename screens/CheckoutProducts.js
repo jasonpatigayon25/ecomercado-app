@@ -53,6 +53,7 @@ const CheckoutProducts = ({ navigation, route }) => {
   const { selectedProducts } = route.params || [];
   const [totalPrice, setTotalPrice] = useState(0);
   const [shippingFee, setShippingFee] = useState(0);
+  const [totalItemCount, setTotalItemCount] = useState(0);
 
   const [address, setAddress] = useState('Search Location');
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
@@ -137,6 +138,23 @@ const CheckoutProducts = ({ navigation, route }) => {
     calculateShipping();
   }, [selectedProducts]);
 
+  useEffect(() => {
+    const calculateTotals = () => {
+      let total = 0;
+      let itemCount = 0;
+
+      selectedProducts.forEach(product => {
+        total += product.price * product.orderedQuantity;
+        itemCount += product.orderedQuantity;
+      });
+
+      setTotalPrice(total);
+      setTotalItemCount(itemCount);
+    };
+
+    calculateTotals();
+  }, [selectedProducts]);
+
   const renderProductItem = ({ item }) => {
     const totalItemPrice = item.price * item.orderedQuantity;
   
@@ -200,21 +218,30 @@ const CheckoutProducts = ({ navigation, route }) => {
   };
 
   const handlePlaceOrder = () => {
-
     if (address === 'Search Location') {
-      Alert.alert("Missing Information", "Please input your address.");
-      return;
+        Alert.alert("Missing Information", "Please input your address.");
+        return;
     }
 
+    const merchandiseSubtotal = selectedProducts.reduce((sum, product) => {
+        return sum + (product.price * product.orderedQuantity);
+    }, 0);
+
+    const totalOrderCount = selectedProducts.reduce((sum, product) => {
+        return sum + product.orderedQuantity;
+    }, 0);
+
     const orderInfo = {
-      address,
-      paymentMethod,
-      quantity,
-      totalPrice,
-      productDetails: selectedProducts,
+        address,
+        paymentMethod,
+        productDetails: selectedProducts,
+        shippingFee,
+        totalPrice: merchandiseSubtotal + shippingFee,
+        merchandiseSubtotal,
+        totalOrderCount
     };
     navigation.navigate('OrdersConfirmation', orderInfo);
-  };
+};
 
   const handleLocationSearch = async (query) => {
     setLocationSearchQuery(query);
@@ -289,7 +316,7 @@ const CheckoutProducts = ({ navigation, route }) => {
       </View>
         <View style={styles.divider} />
         <View style={styles.infoItem}>
-          <Text style={styles.labelText}>Order Total {`(${totalCount} item/s):`}</Text>
+         <Text style={styles.labelText}>Order Total ({totalItemCount} item/s):</Text>
           <Text style={styles.productsubText}>{` ₱${subtotalPrice.toFixed(2)}`}</Text>
         </View>
         <View style={styles.divider} />

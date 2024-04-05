@@ -10,11 +10,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OrdersConfirmation = ({ route, navigation }) => {
-  const { address, paymentMethod, productDetails = [] } = route.params; 
-  const totalPrice = (Array.isArray(productDetails) ? productDetails : []).reduce(
-    (total, product) => total + (product.price || 0) * (product.orderedQuantity || 0),
-    0
-  );
+  const { address, paymentMethod, productDetails = [], shippingFee, totalPrice, totalOrderCount, merchandiseSubtotal } = route.params;
 
   const handleBackPress = () => {
     navigation.goBack();
@@ -219,6 +215,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
               <Text style={styles.productName}>{product.name}</Text>
               <Text style={styles.productPrice}>₱{product.price.toFixed(2)}</Text>
               <Text style={styles.productCategory}>{product.category}</Text>
+              <Text style={styles.productCategory}> Qty: {product.orderedQuantity}</Text>
             </View>
           </View>
         </View>
@@ -228,39 +225,35 @@ const OrdersConfirmation = ({ route, navigation }) => {
 
       <View style={styles.buyerInformation}>
         <Text style={styles.labelText}>Buyer Address:</Text>
-        <Text style={styles.infoText}>{address}</Text>
+        <Text style={styles.addressText}>{address}</Text>
         <View style={styles.divider} />
         <Text style={styles.labelText}>Payment Method:</Text>
         <Text style={styles.infoText}>{paymentMethod}</Text>
         <View style={styles.divider} />
       </View>
-
       <View style={styles.orderDetails}>
-        <Text style={styles.labelText}>Quantity:</Text>
-        {productDetails.map((product, index) => (
-          <View key={index} style={styles.productItem}>
-            <Text style={styles.infoText}>{product.name}</Text>
-            <Text style={styles.infoText}>{product.orderedQuantity}</Text>
-          </View>
-        ))}
-      </View>
+          <Text style={styles.labelText}>Total Items:</Text>
+          <Text style={styles.infoText}>{totalOrderCount} items</Text>
+        </View>
+        <View style={styles.divider} />
+        <View style={styles.orderDetails}>
+          <Text style={styles.labelText}>Merchandise Total:</Text>
+          <Text style={styles.infoText}>₱{merchandiseSubtotal?.toFixed(2)}</Text>
+        </View>
+
       <View style={styles.divider} />
 
-      <View style={styles.orderDetails}>
-        <Text style={styles.labelText}>Order/s Amount:</Text>
-        {productDetails.map((product, index) => (
-          <View key={index} style={styles.productItem}>
-            <Text style={styles.infoText}>{product.name}</Text>
-            <Text style={styles.infoText}>₱{(product.price * product.orderedQuantity).toFixed(2)}</Text>
-          </View>
-        ))}
-      </View>
-      <View style={styles.divider} />
+        <View style={styles.orderDetails}>
+          <Text style={styles.labelText}>Shipping Fee:</Text>
+          <Text style={styles.infoText}>₱{shippingFee?.toFixed(2) ?? '0.00'}</Text>
+        </View>
 
-      <View style={styles.infoItem}>
-        <Text style={styles.labelText}>Total Payment:</Text>
-        <Text style={styles.totalAmount}>₱{totalPrice.toFixed(2)}</Text>
-      </View>
+        <View style={styles.divider} />
+
+        <View style={styles.orderDetails}>
+          <Text style={styles.labelText}>Total Payment:</Text>
+          <Text style={styles.totalAmount}>₱{totalPrice?.toFixed(2) ?? '0.00'}</Text>
+        </View>
       </ScrollView>
       <View style={styles.navbar}>
         <View style={styles.totalPaymentButton}>
@@ -477,10 +470,17 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 16,
     color: '#000',
+    textAlign: 'right',
+  },
+  addressText: {
+    fontSize: 16,
+    color: '#000',
+    marginLeft: 10,
   },
   totalAmount: {
     marginLeft: 'auto',
     fontSize: 20,
+    fontWeight: 'bold',
   },
   infoItem: {
     marginBottom: 10,
