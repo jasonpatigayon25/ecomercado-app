@@ -57,6 +57,17 @@
       );
     };
   
+    const calculateSubtotal = (products) => {
+      let totalCount = 0;
+      let subtotalPrice = 0;
+      products.forEach(product => {
+        totalCount += 1; 
+        subtotalPrice += product.price * product.orderedQuantity;
+      });
+      return { totalCount, subtotalPrice };
+    };
+    
+    const { totalCount, subtotalPrice } = calculateSubtotal(selectedProducts);
 
     useEffect(() => {
       const fetchUserAddress = async () => {
@@ -175,7 +186,11 @@
             </View>
           </View>
           <View style={styles.divider} />
-
+          <View style={styles.infoItem}>
+            <Text style={styles.labelText}>Order Total {`(${totalCount} item/s):`}</Text>
+            <Text style={styles.productsubText}>{` ₱${subtotalPrice.toFixed(2)}`}</Text>
+          </View>
+          <View style={styles.divider} />
             <View style={styles.infoItem}>
             <Text style={styles.labelText}>Payment Option:</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.paymentMethodContainer}>
@@ -427,6 +442,12 @@
     infoText: {
       fontSize: 16,
       color: '#666',
+    },
+    productsubText: {
+      fontSize: 16,
+      color: '#05652D',
+      fontWeight: 'bold',
+      textAlign: 'right',
     },
     infoAddress: {
       fontSize: 16,
