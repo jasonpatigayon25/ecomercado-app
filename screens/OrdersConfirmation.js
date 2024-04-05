@@ -215,7 +215,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
               <Text style={styles.productName}>{product.name}</Text>
               <Text style={styles.productPrice}>₱{product.price.toFixed(2)}</Text>
               <Text style={styles.productCategory}>{product.category}</Text>
-              <Text style={styles.productCategory}> Qty: {product.orderedQuantity}</Text>
+              <Text style={styles.productQty}> x{product.orderedQuantity}</Text>
             </View>
           </View>
         </View>
@@ -352,8 +352,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   productImage: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
     borderRadius: 10,
     marginRight: 20,
   },
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   productName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   productPrice: {
@@ -406,12 +406,16 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   productPrice: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#05652D',
     fontWeight: 'bold',
   },
   productCategory: {
-    fontSize: 16,
+    fontSize: 14,
+    color: '#888',
+  },
+  productQty: {
+    fontSize: 14,
     color: '#888',
   },
   navbar: {
