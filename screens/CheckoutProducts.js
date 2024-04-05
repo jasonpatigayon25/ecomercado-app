@@ -166,9 +166,9 @@
           <View style={styles.divider} />
           <View style={styles.infoContainer}>
             <View style={styles.infoItem}>
-              <Text style={styles.addresslabel}>Buyer Address:</Text>
+              <Text style={styles.addresslabel}>Delivery Address:</Text>
               <TouchableOpacity onPress={() => setLocationSearchModalVisible(true)} style={styles.addressContainer}>
-                <Icon name="map-marker" size={16} color="#05652D" style={styles.labelIcon} />
+                <Icon name="map-marker" size={30} color="#808080" style={styles.labelIcon} />
                 <Text style={styles.addressText}>{address}</Text>
                 <Icon name="pencil" size={16} color="#05652D" style={styles.editIcon} />
               </TouchableOpacity>
@@ -177,14 +177,14 @@
           <View style={styles.divider} />
 
             <View style={styles.infoItem}>
-            <Text style={styles.labelText}>Payment Method:</Text>
+            <Text style={styles.labelText}>Payment Option:</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.paymentMethodContainer}>
               <TouchableOpacity onPress={() => setPaymentMethod('Cash on Delivery')} style={styles.paymentOption}>
                 <Text style={styles.radioLabel}>Cash on Delivery</Text>
                 <Icon
                   name={paymentMethod === 'Cash on Delivery' ? 'dot-circle-o' : 'circle-o'}
                   size={24}
-                  color="#888"
+                  color="#05652D"
                   style={styles.radioIcon}
                 />
               </TouchableOpacity>
@@ -406,13 +406,13 @@
     divider: {
       height: 1,
       backgroundColor: '#e1e1e1',
-      marginVertical: 10,
+      marginVertical: 5,
     },
     infoContainer: {
-      marginBottom: 10,
+        //
     },
     infoItem: {
-      marginBottom: 10,
+      //
     },
     labelWithIcon: {
       flexDirection: 'row',
@@ -422,7 +422,7 @@
       fontSize: 16,
       fontWeight: 'bold',
       color: '#333',
-      marginLeft: 5,
+
     },
     infoText: {
       fontSize: 16,
@@ -579,12 +579,10 @@
       flexDirection: 'row',
       alignItems: 'center',
       padding: 10,
-      backgroundColor: '#E8F5E9',
       borderRadius: 10,
     },
     addresslabel: {
       fontSize: 16,
-      marginLeft: 8,
       color: '#000',
       flex: 1,
       marginBottom: 10,
@@ -593,7 +591,6 @@
     addressText: {
       fontSize: 16,
       marginLeft: 8,
-      color: '#05652D',
       flex: 1
     },
     editIcon: {
@@ -604,10 +601,7 @@
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: '#E8F5E9',
-      borderRadius: 20,
       paddingHorizontal: 15,
-      marginRight: 10,
       paddingVertical: 5,
       flex: 1,
     },
