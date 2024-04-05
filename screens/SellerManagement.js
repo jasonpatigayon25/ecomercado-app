@@ -121,7 +121,7 @@ const SellerManagement = ({ navigation }) => {
                 </View>
                 <View style={styles.infoRow}>
                     <MaterialIcons name="place" size={20} color="#05652D" />
-                    <Text style={styles.miniSubText}>{sellerInfo.pickupAddress}</Text>
+                    <Text style={styles.miniSubText}>{sellerInfo.sellerAddress}</Text>
                 </View>
             </View>
         )

@@ -151,17 +151,19 @@
 
         <ScrollView style={styles.content}>
         {Object.keys(groupedProducts).map((seller, index) => (
-          <View style={styles.itemDisplay} key={index}>
-            <View key={index} style={styles.sellerHeader}>
-              <Icon5 name="store" size={20} color="#05652D" style={styles.storeIcon} />
-              <Text style={styles.sellerName}>{seller}</Text>
+            <View style={styles.itemDisplay} key={seller + index}>
+              <View style={styles.sellerHeader}>
+                <Icon5 name="store" size={20} color="#05652D" style={styles.storeIcon} />
+                <Text style={styles.sellerName}>{seller}</Text>
+              </View>
+              {groupedProducts[seller].map((item, itemIndex) => (
+                <View key={`product-${seller}-${itemIndex}`}> 
+                  {renderProductItem({ item })}
+                </View>
+              ))}
             </View>
-            {groupedProducts[seller].map((item, itemIndex) => renderProductItem({ item, key: `product-${index}-${itemIndex}` }))}
-          </View>
-        ))}
-          
+          ))}
           <View style={styles.divider} />
-
           <View style={styles.infoContainer}>
             <View style={styles.infoItem}>
               <Text style={styles.addresslabel}>Buyer Address:</Text>

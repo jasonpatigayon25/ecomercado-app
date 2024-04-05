@@ -10,7 +10,7 @@ const SellerRegistration = ({ navigation }) => {
   const [sellerName, setSellerName] = useState('');
   const [registeredName, setRegisteredName] = useState('');
   const [type, setType] = useState('Individual');
-  const [pickupAddress, setPickupAddress] = useState('');
+  const [sellerAddress, setSellerAddress] = useState(''); 
   const [email, setEmail] = useState('');
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const SellerRegistration = ({ navigation }) => {
 
         setSellerName(`${userData.firstName}'s Surplus`);
         setRegisteredName(`${userData.firstName} ${userData.lastName}`);
-        setPickupAddress(userData.address);
+        setSellerAddress(userData.address); 
         setEmail(userData.email);
       }
     };
@@ -33,13 +33,13 @@ const SellerRegistration = ({ navigation }) => {
   }, []);
 
   const handleRegistration = async () => {
-    console.log('Registering seller:', sellerName, pickupAddress, email);
+    console.log('Registering seller:', sellerName, sellerAddress, email);
     try {
       const sellerData = {
         sellerName,
         registeredName,
         type,
-        pickupAddress,
+        sellerAddress, 
         email,
       };
       await addDoc(collection(db, 'registeredSeller'), sellerData);
@@ -82,11 +82,11 @@ const SellerRegistration = ({ navigation }) => {
           <RadioButton.Item label="Business" value="Business" />
         </RadioButton.Group>
 
-        <Text style={styles.label}>Pick Up Address:</Text>
+        <Text style={styles.label}>Your Address:</Text> 
         <TextInput
-          placeholder="Pickup Address"
-          value={pickupAddress}
-          onChangeText={setPickupAddress}
+          placeholder="Your Address"
+          value={sellerAddress}
+          onChangeText={setSellerAddress}
           style={styles.input}
         />
 
