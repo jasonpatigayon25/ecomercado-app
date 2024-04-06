@@ -121,7 +121,7 @@ const OrderHistory = ({ navigation }) => {
             })}
           </View>
         ))}
-        <Text style={styles.orderTotalPrice}>Total Price: ₱{order.orderTotalPrice.toFixed(2)}</Text>
+        <Text style={styles.orderTotalPrice}>Amount to Pay: ₱{order.orderTotalPrice.toFixed(2)}</Text>
       </View>
     );
   };
@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
   },
   orderItemContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
     padding: 10,
     marginBottom: 10,
     shadowColor: '#000',
@@ -181,13 +180,18 @@ const styles = StyleSheet.create({
   },
   productContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
+    alignItems: 'flex-start',
+    paddingTop: 30,
+    paddingBottom: 5,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,  
+    borderBottomColor: '#ccc',
+    backgroundColor: '#FFF',  
   },
   productImage: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: 10,
     marginRight: 10,
   },
   productInfo: {
