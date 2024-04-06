@@ -55,23 +55,31 @@ const OrderHistory = ({ navigation }) => {
       }
 
       const fetchSellerNames = async (sellerEmails) => {
-        const sellersQuery = query(
-          collection(db, 'registeredSeller'),
-          where('email', 'in', Array.from(sellerEmails))
-        );
-        const querySnapshot = await getDocs(sellersQuery);
-        const sellers = {};
-        querySnapshot.forEach((doc) => {
-          const sellerData = doc.data();
-          sellers[sellerData.email] = sellerData.sellerName;
-        });
-        return sellers;
+        try {
+          const sellersQuery = query(
+            collection(db, 'registeredSeller'),
+            where('email', 'in', Array.from(sellerEmails))
+          );
+          const querySnapshot = await getDocs(sellersQuery);
+          const sellers = {};
+          querySnapshot.forEach((doc) => {
+            const sellerData = doc.data();
+            sellers[sellerData.email] = sellerData.sellerName;
+          });
+          return sellers;
+        } catch (error) {
+          console.error("Error fetching seller names:", error);
+
+          return {};
+        }
       };
   
-      const sellerNames = await fetchSellerNames(sellerEmailsToFetch);
-      Object.values(fetchedProducts).forEach(product => {
-        product.sellerName = sellerNames[product.seller_email];
-      });
+      if (sellerEmailsToFetch.size > 0) {
+        const sellerNames = await fetchSellerNames(sellerEmailsToFetch);
+        Object.values(fetchedProducts).forEach(product => {
+          product.sellerName = sellerNames[product.seller_email] || 'Unknown Seller';
+        });
+      }
   
       setProducts(fetchedProducts);
       setLoading(false);
