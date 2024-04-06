@@ -15,26 +15,27 @@ const screenHeight = Dimensions.get('window').height;
 // const centralShippingLocation = 'Cabangcalan, Mandaue City, Cebu';
 
 const getDistanceAndCalculateFee = async (origin, destination) => {
-  const API_KEY = 'AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g'; 
+  const API_KEY = 'AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g';
   const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(destination)}&key=${API_KEY}`;
 
   try {
     const response = await axios.get(url);
     if (response.data.rows[0] && response.data.rows[0].elements[0].distance) {
       const distanceMeters = response.data.rows[0].elements[0].distance.value;
-      const distanceKm = distanceMeters / 1000;
+      const distanceKm = distanceMeters / 1000; 
 
       const baseFee = 15;
-      const feePerKm = 0.3; 
-      const totalFee = Math.round(baseFee + (distanceKm * feePerKm));
+      const additionalFeePerHalfKm = 5;
+      const additionalFee = Math.floor(distanceKm / 0.5) * additionalFeePerHalfKm;
+      const totalFee = baseFee + additionalFee;
       return totalFee;
     } else {
       console.error('No distance data available');
-      return 0; 
+      return 0;
     }
   } catch (error) {
     console.error('Error fetching distance:', error);
-    return 0; 
+    return 0;
   }
 };
 
@@ -48,12 +49,21 @@ const calculateTotalShippingFee = async (sellerAddresses, buyerAddress) => {
 
   return totalFee;
 };
+
+const calculateShippingFeePerSeller = async (sellerAddress, buyerAddress) => {
+  const fee = await getDistanceAndCalculateFee(sellerAddress, buyerAddress);
+  return fee;
+};
+
 ///////////////////////////////////////////////////////////
 const CheckoutProducts = ({ navigation, route }) => {
   const { selectedProducts } = route.params || [];
   const [totalPrice, setTotalPrice] = useState(0);
   const [shippingFee, setShippingFee] = useState(0);
+  const [shippingFees, setShippingFees] = useState({});
+  const [shippingSubtotal, setShippingSubtotal] = useState(0);
   const [totalItemCount, setTotalItemCount] = useState(0);
+  const [totalPerSeller, setTotalPerSeller] = useState({});
 
   const [address, setAddress] = useState('Search Location');
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
@@ -82,10 +92,58 @@ const CheckoutProducts = ({ navigation, route }) => {
   const getSellerAddresses = async () => {
     const sellersRef = collection(db, 'registeredSeller');
     const sellerDocsSnapshot = await getDocs(sellersRef);
-    const sellerAddresses = sellerDocsSnapshot.docs.map(doc => doc.data().sellerAddress);
+    const sellerAddresses = {};
+    sellerDocsSnapshot.docs.forEach(doc => {
+        const sellerData = doc.data();
+        sellerAddresses[sellerData.sellerName] = sellerData.sellerAddress;
+    });
     return sellerAddresses;
-  };
-  
+};
+
+useEffect(() => {
+  const calculateShippingAndTotals = async () => {
+      let overallTotal = 0;
+      const fees = {};
+      const totals = {};
+
+      const auth = getAuth();
+      const user = auth.currentUser;
+      const userEmail = user ? user.email : null;
+      if (!userEmail) {
+          console.error('User email is not available');
+          return;
+      }
+
+      const buyerAddress = await getBuyerAddressByEmail(userEmail);
+      if (!buyerAddress) {
+          console.error('Buyer address is not available');
+          return;
+      }
+
+      const sellerAddresses = await getSellerAddresses();
+
+      let shippingTotal = 0;
+      for (const [seller, products] of Object.entries(groupedProducts)) {
+          const sellerAddress = sellerAddresses[seller];
+          const shippingFee = await calculateShippingFeePerSeller(sellerAddress, buyerAddress);
+          fees[seller] = shippingFee;
+
+          shippingTotal += shippingFee;
+
+          const totalForSeller = products.reduce((sum, product) => sum + (product.price * product.orderedQuantity), 0);
+          totals[seller] = totalForSeller + shippingFee;
+          overallTotal += totalForSeller + shippingFee;
+      }
+
+      setShippingFees(fees);
+      setShippingSubtotal(shippingTotal);
+      setTotalPerSeller(totals);
+      setTotalPrice(overallTotal);
+    };
+
+    calculateShippingAndTotals();
+  }, [selectedProducts]);
+
   const getBuyerAddressByEmail = async (email) => {
     if (!email) {
       console.error('No email provided');
@@ -131,7 +189,7 @@ const CheckoutProducts = ({ navigation, route }) => {
         const total = subtotalPrice + shippingFee; 
         setTotalPrice(total);
       } catch (error) {
-        console.error('Failed to calculate shipping:', error);
+       // console.error('Failed to calculate shipping:', error);
       }
     };
   
@@ -223,23 +281,23 @@ const CheckoutProducts = ({ navigation, route }) => {
         return;
     }
 
-    const merchandiseSubtotal = selectedProducts.reduce((sum, product) => {
-        return sum + (product.price * product.orderedQuantity);
-    }, 0);
-
-    const totalOrderCount = selectedProducts.reduce((sum, product) => {
-        return sum + product.orderedQuantity;
-    }, 0);
+    const merchandiseSubtotal = selectedProducts.reduce((sum, product) => sum + (product.price * product.orderedQuantity), 0);
+    const totalOrderCount = selectedProducts.reduce((sum, product) => sum + product.orderedQuantity, 0);
 
     const orderInfo = {
         address,
         paymentMethod,
         productDetails: selectedProducts,
-        shippingFee,
-        totalPrice: merchandiseSubtotal + shippingFee,
+        shippingFees,
+        totalPerSeller,
+        totalPrice: merchandiseSubtotal + shippingSubtotal,
         merchandiseSubtotal,
-        totalOrderCount
+        totalOrderCount,
+        groupedProducts,
+        shippingSubtotal,
+        shippingFees,
     };
+
     navigation.navigate('OrdersConfirmation', orderInfo);
 };
 
@@ -285,20 +343,38 @@ const CheckoutProducts = ({ navigation, route }) => {
       </View>
 
       <ScrollView style={styles.content}>
-      {Object.keys(groupedProducts).map((seller, index) => (
-          <View style={styles.itemDisplay} key={seller + index}>
-            <View style={styles.sellerHeader}>
-              <Icon5 name="store" size={20} color="#05652D" style={styles.storeIcon} />
-              <Text style={styles.sellerName}>{seller}</Text>
-            </View>
-            {groupedProducts[seller].map((item, itemIndex) => (
-              <View key={`product-${seller}-${itemIndex}`}> 
-                {renderProductItem({ item })}
+      {Object.keys(groupedProducts).map((seller, index) => {
+          const sellerProducts = groupedProducts[seller];
+          const sellerSubtotal = sellerProducts.reduce((sum, product) => sum + (product.price * product.orderedQuantity), 0);
+          const sellerShippingFee = shippingFees[seller] || 0;
+          const sellerTotal = sellerSubtotal + sellerShippingFee;
+
+          return (
+            <View style={styles.itemDisplay} key={seller + index}>
+              <View style={styles.sellerHeader}>
+                <Icon5 name="store" size={20} color="#05652D" style={styles.storeIcon} />
+                <Text style={styles.sellerName}>{seller}</Text>
               </View>
-            ))}
-          </View>
-        ))}
-        <View style={styles.divider} />
+              {sellerProducts.map((item, itemIndex) => (
+                <View key={`product-${seller}-${itemIndex}`}>
+                  {renderProductItem({ item })}
+                </View>
+              ))}
+              <View style={styles.divider} />
+              <View style={styles.sellerInfo}>
+                <Text style={styles.labelText}>Shipping Fee:</Text>
+                <Text style={styles.productsubText}>₱{sellerShippingFee.toFixed(2)}</Text>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.sellerInfo}>
+                <Text style={styles.labelText}>Order Total ({sellerProducts.length} item/s):</Text>
+                <Text style={styles.productsubText}>₱{sellerTotal.toFixed(2)}</Text>
+              </View>
+              <View style={styles.divider} />
+            </View>
+          );
+        })}
+        {/* <View style={styles.divider} /> */}
         <View style={styles.infoContainer}>
           <View style={styles.infoItem}>
             <Text style={styles.addresslabel}>Delivery Address:</Text>
@@ -309,7 +385,7 @@ const CheckoutProducts = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.divider} />
+        {/* <View style={styles.divider} />
         <View style={styles.infoItem}>
         <Text style={styles.labelText}>Shipping Fee:</Text>
         <Text style={styles.productsubText}>{`₱${shippingFee.toFixed(2)}`}</Text>
@@ -318,7 +394,7 @@ const CheckoutProducts = ({ navigation, route }) => {
         <View style={styles.infoItem}>
          <Text style={styles.labelText}>Order Total ({totalItemCount} item/s):</Text>
           <Text style={styles.productsubText}>{` ₱${subtotalPrice.toFixed(2)}`}</Text>
-        </View>
+        </View> */}
         <View style={styles.divider} />
           <View style={styles.infoItem}>
           <Text style={styles.labelText}>Payment Option:</Text>
@@ -345,7 +421,7 @@ const CheckoutProducts = ({ navigation, route }) => {
 
             <View style={styles.cardItem}>
               <Text style={styles.productDetail}>Shipping Subtotal</Text>
-              <Text style={styles.priceTextGreen}>₱{shippingFee.toFixed(2)}</Text>
+              <Text style={styles.priceTextGreen}>₱{shippingSubtotal.toFixed(2)}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.cardItem}>

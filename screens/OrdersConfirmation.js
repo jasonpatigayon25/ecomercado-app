@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { collection, addDoc, doc, updateDoc, getDoc, runTransaction } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
@@ -10,10 +11,35 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OrdersConfirmation = ({ route, navigation }) => {
-  const { address, paymentMethod, productDetails = [], shippingFee, totalPrice, totalOrderCount, merchandiseSubtotal } = route.params;
+  const {
+    address,
+    paymentMethod,
+    shippingSubtotal,
+    productDetails = [],
+    shippingFee,
+    totalPrice,
+    totalOrderCount,
+    merchandiseSubtotal,
+    groupedProducts,
+    shippingFees
+  } = route.params;
 
   const handleBackPress = () => {
     navigation.goBack();
+  };
+
+  const renderProductItem = ({ item }) => {
+    return (
+      <View style={styles.productInfoContainer}>
+        <Image source={{ uri: item.photo }} style={styles.productImage} />
+        <View style={styles.productDetails}>
+          <Text style={styles.productName}>{item.name}</Text>
+          <Text style={styles.productCategory}>{item.category}</Text>
+          <Text style={styles.productPrice}>₱{(item.price * item.orderedQuantity).toFixed(2)}</Text>
+          <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
+        </View>
+      </View>
+    );
   };
 
   const [orderPlaced, setOrderPlaced] = useState(false);
@@ -68,102 +94,76 @@ const OrdersConfirmation = ({ route, navigation }) => {
 
   const handleProceed = async () => {
     if (orderPlaced) {
-      alert('Order has already been placed.');
-      return;
+        Alert.alert('Order already placed');
+        return;
     }
-  
+
     setOrderPlaced(true);
     setConfirmModalVisible(false);
 
     try {
-      for (const product of productDetails) {
-          if (!product.productId || !product.name || product.orderedQuantity === undefined) {
-              console.error("Invalid product data:", product);
-              Alert.alert('Invalid Data', `Invalid data for product ${product.name || "unknown"}.`);
-              setOrderPlaced(false);
-              return;
-          }
+        for (const [sellerName, products] of Object.entries(groupedProducts)) {
+            const sellerTotal = products.reduce((sum, product) => sum + product.price * product.orderedQuantity, 0);
+            const shippingFeeForSeller = shippingFees[sellerName] || 0;
+            const totalForSeller = sellerTotal + shippingFeeForSeller;
 
-          const productRef = doc(db, 'products', product.productId);
-          const productSnapshot = await getDoc(productRef);
+            const orderData = {
+                deliveryAddress: address,
+                buyerEmail: user.email,
+                buyerId: user.uid,
+                dateOrdered: new Date(),
+                paymentMethod: paymentMethod,
+                productDetails: products.map(product => ({
+                    productId: product.productId,
+                    orderedQuantity: product.orderedQuantity
+                })),
+                status: 'Pending',
+                shippingFee: shippingFeeForSeller,
+                orderTotalPrice: totalForSeller,
+            };
 
-          if (!productSnapshot.exists()) {
-              Alert.alert('Product Not Found', `Product ${product.name} not found.`);
-              setOrderPlaced(false);
-              return;
-          }
+            const orderDocRef = await addDoc(collection(db, 'orders'), orderData);
+            console.log(`Order placed with ID: ${orderDocRef.id} for seller: ${sellerName}`);
 
-          const currentQuantity = productSnapshot.data().quantity;
+            // Notification for the buyer
+            const buyerNotificationMessage = `Your order with ${sellerName} has been placed successfully.`;
+            const buyerNotificationData = {
+                email: user.email,
+                text: buyerNotificationMessage,
+                timestamp: new Date(),
+                type: 'order_placed',
+                orderId: orderDocRef.id
+            };
+            await addDoc(collection(db, 'notifications'), buyerNotificationData);
+            sendPushNotification(user.email, 'Order Placed', buyerNotificationMessage);
 
-          if (currentQuantity < product.orderedQuantity) {
-              Alert.alert('Insufficient Stock', `Not enough stock available for ${product.name}.`);
-              setOrderPlaced(false);
-              return;
-          }
+            // Notification for the seller
+            for (const product of products) {
+                const sellerNotificationMessage = `${user.email} has placed an order for ${product.name}.`;
+                const sellerNotificationData = {
+                    email: product.seller_email,
+                    text: sellerNotificationMessage,
+                    timestamp: new Date(),
+                    type: 'new_order_received',
+                    orderId: orderDocRef.id,
+                    productId: product.productId,
+                    productName: product.name
+                };
+                await addDoc(collection(db, 'notifications'), sellerNotificationData);
+                sendPushNotification(product.seller_email, 'New Order Received', sellerNotificationMessage);
 
-          await incrementUserRecommendHit(product.productId);
-      }
+                await incrementUserRecommendHit(product.productId);
+            }
+        }
 
-    
-      const orderData = {
-        deliveryAddress: address,
-        buyerEmail: user.email,
-        buyerId: user.uid,
-        dateOrdered: new Date(),
-        paymentMethod: paymentMethod,
-        productDetails: productDetails.map(product => ({
-            productId: product.productId,
-            // You can include more product details here if necessary
-        })),
-        status: 'Pending',
-        totalItems: totalOrderCount,
-        subtotal: merchandiseSubtotal,
-        shippingFee: shippingFee,
-        totalPrice: totalPrice
-    };
-
-    const orderDocRef = await addDoc(collection(db, 'orders'), orderData);
-    const orderId = orderDocRef.id;
-
-      const buyerNotificationMessage = `Your order: ${orderId} has been placed.`;
-  
-      const buyerNotification = {
-        email: user.email,
-        text: buyerNotificationMessage,
-        timestamp: new Date(),
-        type: 'buy_sell_order',
-        orderId: orderId 
-      };
-      await addDoc(collection(db, 'notifications'), buyerNotification);
-  
-      sendPushNotification(user.email, 'Order Placed', buyerNotificationMessage);
-  
-      for (const product of productDetails) {
-        const sellerNotificationMessage = `${user.email} has placed an order (ID: ${orderId}) for your product "${product.name}".`;
-  
-        const sellerNotification = {
-          email: product.seller_email,
-          text: sellerNotificationMessage,
-          timestamp: new Date(),
-          type: 'buy_sell_order',
-          orderId: orderId,
-          productId: product.productId,
-          productName: product.name,
-        };
-        await addDoc(collection(db, 'notifications'), sellerNotification);
-  
-        sendPushNotification(product.seller_email, 'New Order Received', sellerNotificationMessage);
-      }
-  
-      // Alert.alert('Order placed successfully!');
-      // navigation.navigate('Home');
-      setSuccessModalVisible(true);
+        setSuccessModalVisible(true);
+        // navigation.navigate('Home'); 
     } catch (error) {
-      console.error('Error placing order: ', error);
-      alert('Error placing order. Please try again.');
-      setOrderPlaced(false);
+        console.error('Error placing order:', error);
+        Alert.alert('Error placing order', 'Please try again.');
+        setOrderPlaced(false);
     }
-  };
+};
 
   const shouldSendNotification = async (email) => {
     try {
@@ -220,22 +220,38 @@ const OrdersConfirmation = ({ route, navigation }) => {
       </View>
       <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.orderItems}>
-      {productDetails.map((product, index) => (
-        <View key={index} style={styles.productInfoContainer}>
-          <View style={styles.productItem}>
-            <Image source={{ uri: product.photo }} style={styles.productImage} />
-            <View style={styles.productDetails}>
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productPrice}>₱{product.price.toFixed(2)}</Text>
-              <Text style={styles.productCategory}>{product.category}</Text>
-              <Text style={styles.productQty}> x{product.orderedQuantity}</Text>
-            </View>
-          </View>
-        </View>
-      ))}
-      </View>
-      <View style={styles.divider} />
+      {Object.keys(groupedProducts).map((seller, index) => {
+          const sellerProducts = groupedProducts[seller];
+          const sellerSubtotal = sellerProducts.reduce((sum, product) => sum + (product.price * product.orderedQuantity), 0);
+          const sellerShippingFee = shippingFees[seller] || 0;
+          const sellerTotal = sellerSubtotal + sellerShippingFee;
 
+          return (
+            <View style={styles.itemDisplay} key={seller + index}>
+              <View style={styles.sellerHeader}>
+                <Icon5 name="store" size={20} color="#05652D" />
+                <Text style={styles.sellerName}>{seller}</Text>
+              </View>
+              {sellerProducts.map((item, itemIndex) => (
+                <View key={`product-${seller}-${itemIndex}`}>
+                  {renderProductItem({ item })}
+                </View>
+              ))}
+              <View style={styles.divider} />
+              <View style={styles.sellerInfo}>
+                <Text style={styles.labelText}>Shipping Fee:</Text>
+                <Text style={styles.productsubText}>₱{sellerShippingFee.toFixed(2)}</Text>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.sellerInfo}>
+                <Text style={styles.labelText}>Order Total ({sellerProducts.length} item/s):</Text>
+                <Text style={styles.productsubText}>₱{sellerTotal.toFixed(2)}</Text>
+              </View>
+              <View style={styles.divider} />
+            </View>
+          );
+        })}
+      </View>
       <View style={styles.buyerInformation}>
         <Text style={styles.labelText}>Buyer Address:</Text>
         <Text style={styles.addressText}>{address}</Text>
@@ -257,8 +273,8 @@ const OrdersConfirmation = ({ route, navigation }) => {
       <View style={styles.divider} />
 
         <View style={styles.orderDetails}>
-          <Text style={styles.labelText}>Shipping Fee:</Text>
-          <Text style={styles.infoText}>₱{shippingFee?.toFixed(2) ?? '0.00'}</Text>
+          <Text style={styles.labelText}>Total Shipping Fee:</Text>
+          <Text style={styles.infoText}>₱{shippingSubtotal?.toFixed(2) ?? '0.00'}</Text>
         </View>
 
         <View style={styles.divider} />
@@ -385,8 +401,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   orderItems: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 5,
   },
   sectionTitle: {
     fontSize: 18,
@@ -638,6 +653,60 @@ const styles = StyleSheet.create({
     marginTop: 15,
     minWidth: 100, 
     justifyContent: 'center' 
+  },
+  productInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    padding: 10, 
+    justifyContent: 'space-between',
+  },
+  productImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginRight: 10,
+  },
+  productDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  productName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  productPrice: {
+    fontSize: 16,
+    color: '#666',
+  },
+  productQuantity: {
+    fontSize: 14,
+    color: '#888',
+    fontWeight: 'bold',
+    textAlign: 'right',
+  },
+  infoContainer: {
+    marginBottom: 20,
+  },
+  itemDisplay: {
+    marginBottom: 10,
+  },
+  sellerHeader: {
+    backgroundColor: '#E8F5E9', 
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 5, 
+  },
+  sellerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 10, 
+  },
+  productsubText: {
+    fontSize: 16,
+    color: '#000',
+    textAlign: 'right',
   },
 });
 
