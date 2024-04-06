@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, ActivityIndicator, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { getAuth } from 'firebase/auth';
 import { collection, getDocs, query, where, orderBy, getDoc, doc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import OrderTab from '../navbars/OrderTab';
+
+const windowWidth = Dimensions.get('window').width;
 
 const OrderHistory = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
@@ -14,6 +16,15 @@ const OrderHistory = ({ navigation }) => {
   const auth = getAuth();
   const user = auth.currentUser;
   const [selectedTab, setSelectedTab] = useState('To Pay');
+  const scrollRef = useRef(); 
+
+  
+  const handleScroll = (event) => {
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const tabIndex = Math.floor(scrollX / windowWidth);
+    const tabNames = ['To Pay', 'To Receive', 'Completed', 'Cancelled'];
+    setSelectedTab(tabNames[tabIndex]);
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -150,18 +161,34 @@ const OrderHistory = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.title}>Order Transactions</Text>
       </View>
+
       <OrderTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
 
-      <FlatList
-        data={orders}
-        keyExtractor={(item) => item.id}
-        renderItem={renderOrderItem}
-        ListEmptyComponent={
-          <View style={styles.emptyOrdersContainer}>
-            <Text style={styles.emptyOrdersText}>No Orders Yet</Text>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        ref={scrollRef}
+        style={styles.scrollView}
+      >
+        {['To Pay', 'To Receive', 'Completed', 'Cancelled'].map((tab, index) => (
+          <View key={index} style={{ width: windowWidth }}>
+            {tab === 'To Pay' && (
+              <FlatList
+                data={orders}
+                keyExtractor={(item) => item.id}
+                renderItem={renderOrderItem}
+                ListEmptyComponent={
+                  <View style={styles.emptyContainer}>
+                    <Text>No orders found for {tab}</Text>
+                  </View>
+                }
+              />
+            )}
           </View>
-        }
-      />
+        ))}
+      </ScrollView>
     </View>
   );
 };
