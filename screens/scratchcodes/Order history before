@@ -1,0 +1,412 @@
+/* import React, { useState, useEffect, useRef} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  Dimensions,
+  Image,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { getAuth } from 'firebase/auth';
+import { collection, getDocs, query, where, updateDoc, doc, orderBy } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import OrderTab from '../navbars/OrderTab';
+
+const OrderHistory = ({ navigation }) => {
+  const [orders, setOrders] = useState([]);
+  const scrollRef = useRef();
+  const windowWidth = Dimensions.get('window').width;
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const ordersQuery = query(
+          collection(db, 'orders'),
+          where('buyerEmail', '==', user.email),
+          orderBy('dateOrdered', 'desc')
+        );
+        const querySnapshot = await getDocs(ordersQuery);
+        const fetchedOrders = [];
+        querySnapshot.forEach((doc) => {
+          fetchedOrders.push({ id: doc.id, ...doc.data() });
+        });
+        setOrders(fetchedOrders);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  const renderOrderItem = (order) => {
+    return (
+      <View key={order.id} style={styles.orderItemContainer}>
+        {order.productDetails.map((product, index) => (
+          <View key={index} style={styles.productContainer}>
+            <Image source={{ uri: product.photo }} style={styles.productImage} />
+            <View style={styles.productInfo}>
+              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productCategory}>{product.category}</Text>
+              <Text style={styles.productQuantity}>Quantity: {product.orderedQuantity}</Text>
+            </View>
+          </View>
+        ))}
+        <View style={styles.orderTotalContainer}>
+          <Text style={styles.orderTotalText}>Total: ₱{order.totalPrice.toFixed(2)}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  const getFilteredOrders = (status) => {
+    return orders.filter(order => order.status === status);
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Icon name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.title}>My Order Transactions</Text>
+      </View>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        ref={scrollRef}
+      >
+        {['To Pay', 'To Receive', 'Completed', 'Cancelled'].map((tab, index) => (
+          <View key={index} style={{ width: windowWidth }}>
+            <ScrollView>
+              {getFilteredOrders(tab).length > 0 ? (
+                getFilteredOrders(tab).map(order => renderOrderItem(order))
+              ) : (
+                <View style={styles.emptyOrdersContainer}>
+                  <Text style={styles.emptyOrdersText}>No {tab} Orders</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F8F8', 
+  },
+  header: {
+    paddingTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#05652D',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    elevation: 4,
+  },
+  title: {
+    flex: 1,
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginLeft: 10,
+  },
+  orderContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+    marginHorizontal: 10,
+    borderRadius: 15,
+    elevation: 3,
+  },
+  orderInfoContainer: {
+    flex: 1,
+    paddingVertical: 5,
+  },
+  orderProductName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  orderPrice: {
+    fontSize: 16,
+    color: '#4C9A2A',
+    marginTop: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 25,
+    paddingHorizontal: 30,
+    width: '85%',
+    alignItems: 'center',
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#4C9A2A',
+  },
+  modalMessage: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#333333',
+  },
+  modalButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginHorizontal: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  cancelButton: {
+    backgroundColor: '#E3FCE9',
+  },
+  deleteButton: {
+    backgroundColor: '#FFCCCC',
+  },
+  buttonText: {
+    fontSize: 16,
+    color: '#4C9A2A',
+    fontWeight: 'bold',
+  },
+  viewModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    width: '90%',
+    alignItems: 'center',
+    elevation: 5,
+    maxHeight: '80%',
+  },
+  viewModalBody: {
+    width: '100%',
+  },
+  modalLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#4C9A2A',
+  },
+  viewModalText: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#333333',
+  },
+  viewModalCloseButton: {
+    backgroundColor: '#4C9A2A',
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginTop: 15,
+  },
+  viewModalCloseButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  productImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 15,
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 15,
+  },
+  viewButton: {
+    padding: 10,
+    backgroundColor: '#4C9A2A',
+    borderRadius: 8,
+  },
+  viewButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+  emptyOrdersContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  emptyOrdersText: {
+    fontSize: 18,
+    color: '#ccc',
+    marginTop: 10,
+  },
+  productTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4C9A2A',
+    marginBottom: 5,
+  },
+  productContainer: {
+    marginBottom: 15,
+  },
+  orderModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    marginHorizontal: 10,
+    marginTop: 20,
+  },
+  orderModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#05652D',
+    marginBottom: 20,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+  },
+  orderDetailContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+  },
+  orderDetailLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 4,
+  },
+  orderDetailValue: {
+    fontSize: 12,
+    color: '#333333',
+  },
+  productDetailContainer: {
+    padding: 10,
+    marginBottom: 8,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#05652D',
+    marginBottom: 5,
+  },
+  productDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  productLabel: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  productValue: {
+    fontSize: 12,
+    color: '#666666',
+    textAlign: 'right',
+  },
+  totalPaymentValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#05652D',
+    textAlign: 'right',
+    marginTop: 4,
+    textAlign: 'right',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#D3D3D3',
+    marginVertical: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 10,
+    width: '90%',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    height: '80%'
+  },
+  modalCloseIcon: {
+    alignSelf: 'flex-end',
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  orderItemContainer: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  productContainer: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  productImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+  productInfo: {
+    marginLeft: 10,
+    justifyContent: 'space-around',
+  },
+  productName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  productCategory: {
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  productQuantity: {
+    fontSize: 14,
+  },
+  orderTotalContainer: {
+    marginTop: 10,
+  },
+  orderTotalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'right',
+  },
+  emptyOrdersContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  emptyOrdersText: {
+    fontSize: 18,
+    color: '#ccc',
+  },
+});
+
+export default OrderHistory; */

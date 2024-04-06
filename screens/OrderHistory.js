@@ -1,263 +1,151 @@
-import React, { useState, useEffect, useRef} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Modal,
-  Dimensions,
-  Image,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, query, where, updateDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, getDoc, doc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import OrderTab from '../navbars/OrderTab';
 
 const OrderHistory = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [viewModalVisible, setViewModalVisible] = useState(false);
-  const [hideModalVisible, setHideModalVisible] = useState(false);
-
+  const [products, setProducts] = useState({});
+  const [loading, setLoading] = useState(true);
+  const auth = getAuth();
+  const user = auth.currentUser;
   const [selectedTab, setSelectedTab] = useState('To Pay');
-  const scrollRef = useRef();
-  const windowWidth = Dimensions.get('window').width; 
-
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const [orderDetails, setOrderDetails] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
-      try {
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (user) {
-          const ordersQuery = query(
-            collection(db, 'orders'),
-            where('buyer.uid', '==', user.uid),
-            orderBy('dateOrdered', 'desc')
-          );
-          const querySnapshot = await getDocs(ordersQuery);
-          const fetchedOrders = [];
-          querySnapshot.forEach((doc) => {
-            fetchedOrders.push({ id: doc.id, ...doc.data() });
-          });
-          setOrders(fetchedOrders);
-        }
-      } catch (error) {
-        console.error('Error fetching orders: ', error);
+      if (user) {
+        const ordersQuery = query(
+          collection(db, 'orders'),
+          where('buyerEmail', '==', user.email),
+          orderBy('dateOrdered', 'desc')
+        );
+        const querySnapshot = await getDocs(ordersQuery);
+        const fetchedOrders = [];
+        querySnapshot.forEach((doc) => {
+          fetchedOrders.push({ id: doc.id, ...doc.data() });
+        });
+        setOrders(fetchedOrders);
+        await fetchProductDetails(fetchedOrders);
       }
     };
 
-    fetchOrders();
-  }, []);
-
-  const handleViewOrder = (order) => {
-    setSelectedOrder(order);
-    setOrderDetails(order);
-    setViewModalVisible(true);
-};
-
-  const handleHideOrder = async () => {
-    try {
-      const orderRef = doc(db, 'orders', selectedOrder.id);
-      await updateDoc(orderRef, { hidden: true });
-
-      const updatedOrders = orders.filter((o) => o.id !== selectedOrder.id);
-      setOrders(updatedOrders);
-
-      setHideModalVisible(false);
-    } catch (error) {
-      console.error('Error hiding order: ', error);
-    }
-  };
-
-  const handleLongPressOrder = (order) => {
-    setSelectedOrder(order);
-    setHideModalVisible(true);
-  };
-
-  const getProductNames = (productDetails) => {
-    if (Array.isArray(productDetails)) {
-      return productDetails.map(product => product.name).join(', ');
-    }
-    return productDetails.name;
-  };
-
-  const handleScroll = (event) => {
-    const scrollX = event.nativeEvent.contentOffset.x;
-    const tabIndex = Math.floor(scrollX / windowWidth);
-    setSelectedTab(['To Pay', 'To Receive', 'Completed', 'Cancelled'][tabIndex]);
-  };
-
-  const getFilteredOrders = (status) => {
-    return orders.filter(order => order.status === status);
-  };
-
-  const renderOrderModalContent = () => {
-    if (!orderDetails) return null;
+    const fetchProductDetails = async (orders) => {
+      const productIds = new Set();
+      orders.forEach(order => {
+        order.productDetails.forEach(item => {
+          productIds.add(item.productId);
+        });
+      });
+      
+      const fetchedProducts = {};
+      const sellerEmailsToFetch = new Set();
   
-    const isSingleOrder = !Array.isArray(orderDetails.productDetails);
+      for (let productId of productIds) {
+        const productRef = doc(db, 'products', productId);
+        const productSnap = await getDoc(productRef);
+        if (productSnap.exists()) {
+          const productData = productSnap.data();
+          fetchedProducts[productId] = productData;
+          sellerEmailsToFetch.add(productData.seller_email); 
+        }
+      }
+
+      const fetchSellerNames = async (sellerEmails) => {
+        const sellersQuery = query(
+          collection(db, 'registeredSeller'),
+          where('email', 'in', Array.from(sellerEmails))
+        );
+        const querySnapshot = await getDocs(sellersQuery);
+        const sellers = {};
+        querySnapshot.forEach((doc) => {
+          const sellerData = doc.data();
+          sellers[sellerData.email] = sellerData.sellerName;
+        });
+        return sellers;
+      };
   
-    const renderProductDetails = (details) => {
-      const quantity = details.orderedQuantity !== undefined ? details.orderedQuantity : orderDetails.orderedQuantity;
-      const price = details.orderedPrice !== undefined ? details.orderedPrice : orderDetails.orderedPrice;
-    
-      return (
-        <View style={styles.productDetailContainer}>
-          <Text style={styles.productName}>{details.name}</Text>
-          <View style={styles.productDetailRow}>
-            <Text style={styles.productLabel}>Quantity:</Text>
-            <Text style={styles.productValue}>{quantity}</Text>
-          </View>
-          <View style={styles.productDetailRow}>
-            <Text style={styles.productLabel}>Price:</Text>
-            <Text style={styles.productValue}>
-              {price !== undefined ? `₱${price.toFixed(2)}` : 'N/A'}
-            </Text>
-          </View>
-        </View>
-      );
+      const sellerNames = await fetchSellerNames(sellerEmailsToFetch);
+      Object.values(fetchedProducts).forEach(product => {
+        product.sellerName = sellerNames[product.seller_email];
+      });
+  
+      setProducts(fetchedProducts);
+      setLoading(false);
     };
   
+    fetchOrders();
+  }, [user]);
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
+
+  const renderOrderItem = ({ item: order }) => {
+    const groupedBySeller = order.productDetails.reduce((acc, productDetail) => {
+      const sellerName = products[productDetail.productId].sellerName; 
+      if (!acc[sellerName]) {
+        acc[sellerName] = [];
+      }
+      acc[sellerName].push({
+        ...productDetail,
+        ...products[productDetail.productId]
+      });
+      return acc;
+    }, {});
+  
     return (
-      <ScrollView style={styles.orderModalScrollView}>
-        <View style={styles.orderModalContent}>
-          <Text style={styles.orderModalTitle}>Order</Text>
-          <View style={styles.orderDetailContainer}>
-            <Text style={styles.orderDetailLabel}>Order ID:</Text>
-            <Text style={styles.orderDetailValue}>{orderDetails.id}</Text>
+      <View style={styles.orderItemContainer}>
+        {Object.entries(groupedBySeller).map(([sellerName, productDetails]) => (
+          <View key={sellerName}>
+            <View style={styles.sellerHeader}>
+            <Icon5 name="store" size={20} color="#808080" style={styles.shopIcon} />
+            <Text style={styles.sellerName}>{sellerName}</Text>
+            </View>
+            {productDetails.map((item, index) => {
+              const product = products[item.productId];
+              return (
+                <View key={index} style={styles.productContainer}>
+                  <Image source={{ uri: product.photo }} style={styles.productImage} />
+                  <View style={styles.productInfo}>
+                    <Text style={styles.productName}>{product.name}</Text> 
+                    <Text style={styles.productCategory}>{product.category}</Text>   
+                    <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
+                    <Text style={styles.productPrice}>₱{product.price}</Text>
+                  </View>
+                </View>
+              );
+            })}
           </View>
-          <View style={styles.divider} /> 
-          <View style={styles.orderDetailContainer}>
-            <Text style={styles.orderDetailLabel}>Address:</Text>
-            <Text style={styles.orderDetailValue}>{orderDetails.address}</Text>
-          </View>
-          <View style={styles.divider} /> 
-          <View style={styles.orderDetailContainer}>
-            <Text style={styles.orderDetailLabel}>Payment Method:</Text>
-            <Text style={styles.orderDetailValue}>{orderDetails.paymentMethod}</Text>
-          </View>
-          <View style={styles.divider} /> 
-          {isSingleOrder ? (
-            renderProductDetails(orderDetails.productDetails)
-          ) : (
-            orderDetails.productDetails.map((product, index) => (
-              <React.Fragment key={index}>
-                {renderProductDetails(product)}
-              </React.Fragment>
-            ))
-          )}
-          <View style={styles.divider} /> 
-          <View style={styles.orderDetailContainer}>
-            <Text style={styles.orderDetailLabel}>Total Payment:</Text>
-            <Text style={styles.totalPaymentValue}>
-              {orderDetails.totalPrice !== undefined ? `₱${orderDetails.totalPrice.toFixed(2)}` : 'N/A'}
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
+        ))}
+        <Text style={styles.orderTotalPrice}>Total Price: ₱{order.orderTotalPrice.toFixed(2)}</Text>
+      </View>
     );
   };
-
-  const renderEmptyOrders = () => (
-    <View style={styles.emptyOrdersContainer}>
-      <Icon name="history" size={50} color="#ccc" />
-      <Text style={styles.emptyOrdersText}>No Orders Yet</Text>
-    </View>
-  );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#FFFFFF" style={styles.backButtonIcon} />
+          <Icon name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>Order History</Text>
+        <Text style={styles.title}>Order Transactions</Text>
       </View>
       <OrderTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
 
-      {orders.length > 0 ? (
-      <ScrollView
-      horizontal
-      pagingEnabled
-      showsHorizontalScrollIndicator={false}
-      onMomentumScrollEnd={handleScroll}
-      ref={scrollRef}
-    >
-      {['To Pay', 'To Receive', 'Completed', 'Cancelled'].map((tab, index) => (
-        <View key={index} style={{ width: windowWidth }}>
-          {getFilteredOrders(tab).length > 0 ? (
-            <ScrollView>
-              {getFilteredOrders(tab).map((order) => (
-                <TouchableOpacity
-                  key={order.id}
-                  onPress={() => handleViewOrder(order)}
-                  style={styles.orderContainer}
-                >
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          ) : (
-            <View style={styles.emptyOrdersContainer}>
-              <Text style={styles.emptyOrdersText}>No {tab} Orders</Text>
-            </View>
-          )}
-        </View>
-      ))}
-    </ScrollView>
-    ) : renderEmptyOrders()}
-
-      {viewModalVisible && selectedOrder && (
-        <Modal
-        animationType="slide"
-        transparent={true}
-        visible={viewModalVisible}
-        onRequestClose={() => setViewModalVisible(false)}
-         >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.modalCloseIcon} onPress={() => setViewModalVisible(false)}>
-              <Icon name="times" size={24} color="#05652D" />
-            </TouchableOpacity>
-            {renderOrderModalContent()}
+      <FlatList
+        data={orders}
+        keyExtractor={(item) => item.id}
+        renderItem={renderOrderItem}
+        ListEmptyComponent={
+          <View style={styles.emptyOrdersContainer}>
+            <Text style={styles.emptyOrdersText}>No Orders Yet</Text>
           </View>
-        </View>
-      </Modal>
-      )}
-
-      <Modal
-        animationType="fade"
-        transparent
-        visible={hideModalVisible}
-        onRequestClose={() => setHideModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Remove Order History</Text>
-            <Text style={styles.modalMessage}>
-              Are you sure you want to remove this order history?
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setHideModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton]}
-                onPress={handleHideOrder}
-              >
-                <Text style={styles.buttonText}>Hide</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        }
+      />
     </View>
   );
 };
@@ -265,264 +153,110 @@ const OrderHistory = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8', 
+    backgroundColor: '#F8F8F8',
   },
   header: {
-    paddingTop: 10,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#05652D',
     paddingVertical: 15,
-    paddingHorizontal: 20,
-    elevation: 4,
+    paddingHorizontal: 10,
   },
   title: {
-    flex: 1,
-    fontSize: 26,
+    color: '#FFF',
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginLeft: 10,
+    marginLeft: 20,
   },
-  orderContainer: {
+  orderItemContainer: {
     backgroundColor: '#FFFFFF',
-    padding: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 8,
-    marginHorizontal: 10,
-    borderRadius: 15,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
-  orderInfoContainer: {
-    flex: 1,
-    paddingVertical: 5,
-  },
-  orderProductName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333333',
-  },
-  orderPrice: {
-    fontSize: 16,
-    color: '#4C9A2A',
-    marginTop: 5,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  productContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 25,
-    paddingHorizontal: 30,
-    width: '85%',
-    alignItems: 'center',
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#4C9A2A',
-  },
-  modalMessage: {
-    fontSize: 16,
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#333333',
-  },
-  modalButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginHorizontal: 5,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  cancelButton: {
-    backgroundColor: '#E3FCE9',
-  },
-  deleteButton: {
-    backgroundColor: '#FFCCCC',
-  },
-  buttonText: {
-    fontSize: 16,
-    color: '#4C9A2A',
-    fontWeight: 'bold',
-  },
-  viewModalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    width: '90%',
-    alignItems: 'center',
-    elevation: 5,
-    maxHeight: '80%',
-  },
-  viewModalBody: {
-    width: '100%',
-  },
-  modalLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#4C9A2A',
-  },
-  viewModalText: {
-    fontSize: 16,
     marginBottom: 10,
-    color: '#333333',
-  },
-  viewModalCloseButton: {
-    backgroundColor: '#4C9A2A',
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    marginTop: 15,
-  },
-  viewModalCloseButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
   },
   productImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 15,
-    alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 15,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 10,
   },
-  viewButton: {
-    padding: 10,
-    backgroundColor: '#4C9A2A',
-    borderRadius: 8,
+  productInfo: {
+    flex: 1,
+    justifyContent: 'center',
   },
-  viewButtonText: {
-    color: '#FFF',
+  productName: {
+    fontSize: 16,
     fontWeight: 'bold',
+  },
+  productPrice: {
+    color: '#05652D',
+    fontSize: 14,
+    marginTop: 5,
+    textAlign: 'right',
+    fontWeight: 'bold',
+  },
+  productQuantity: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 5,
+    textAlign: 'right',
+  },
+  orderTotalPrice: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    color: '#05652D',
+    textAlign: 'right',
+    marginTop: 10,
   },
   emptyOrdersContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 50,
   },
   emptyOrdersText: {
-    fontSize: 18,
+    fontSize: 20,
     color: '#ccc',
+  },
+  sellerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E8F5E9',
+    padding: 8,
     marginTop: 10,
   },
-  productTitle: {
-    fontSize: 18,
+  sellerName: {
     fontWeight: 'bold',
-    color: '#4C9A2A',
-    marginBottom: 5,
-  },
-  productContainer: {
-    marginBottom: 15,
-  },
-  orderModalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    marginHorizontal: 10,
-    marginTop: 20,
-  },
-  orderModalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#05652D',
-    marginBottom: 20,
-    textAlign: 'center',
-    textDecorationLine: 'underline',
-  },
-  orderDetailContainer: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-  },
-  orderDetailLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333333',
-    marginBottom: 4,
-  },
-  orderDetailValue: {
-    fontSize: 12,
-    color: '#333333',
-  },
-  productDetailContainer: {
-    padding: 10,
-    marginBottom: 8,
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#05652D',
-    marginBottom: 5,
-  },
-  productDetailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  productLabel: {
-    fontSize: 14,
-    color: '#666666',
-  },
-  productValue: {
-    fontSize: 12,
-    color: '#666666',
-    textAlign: 'right',
-  },
-  totalPaymentValue: {
+    color: '#333',
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#05652D',
-    textAlign: 'right',
-    marginTop: 4,
-    textAlign: 'right',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#D3D3D3',
-    marginVertical: 5,
-  },
-  modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    textAlign: 'left', 
+    marginLeft: 10,
   },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
+  productCategory: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#ECECEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 10,
-    width: '90%',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-    height: '80%'
-  },
-  modalCloseIcon: {
-    alignSelf: 'flex-end',
-    marginBottom: 10,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    alignSelf: 'flex-start', 
+    overflow: 'hidden', 
+    marginVertical: 4, 
+    marginHorizontal: 2, 
+    textAlign: 'center',
   },
 });
 
-export default OrderHistory;
+  export default OrderHistory;
