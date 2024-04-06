@@ -120,9 +120,8 @@ const Account = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#05652D" style={styles.backButtonIcon} />
         </TouchableOpacity>
-        <Text style={styles.title}>My Account</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content2}>
         <View style={styles.accountInfoContainer}>
           <TouchableOpacity style={styles.editIconContainer} onPress={handleEditProfile}> 
             <Icon name="edit" size={20} color="#05652D" style={styles.editIcon} />
@@ -174,7 +173,7 @@ const Account = ({ navigation }) => {
             <View style={styles.optionIconContainer}>
               <Icon name="history" size={25} color="#05652D" style={styles.transactionsIcon} />
             </View>
-            <Text style={styles.optionLabel}>Order History</Text>
+            <Text style={styles.optionLabel}>My Order Transactions</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleRequestApproval}>
@@ -231,7 +230,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
+  content2: {
+    flexGrow: 1,
+  },
   content: {
+    flexGrow: 1,
+    padding: 20,
+  },
+  optionsContainer: {
     flexGrow: 1,
     padding: 20,
   },
@@ -246,7 +252,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 5,
-    marginBottom: 20,
+
   },
   profileImageContainer: {
     width: 100,
