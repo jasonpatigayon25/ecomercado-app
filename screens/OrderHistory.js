@@ -129,7 +129,15 @@ const OrderHistory = ({ navigation }) => {
             })}
           </View>
         ))}
-        <Text style={styles.orderTotalPrice}>Amount to Pay: ₱{order.orderTotalPrice.toFixed(2)}</Text>
+      <View style={styles.totalPriceContainer}>
+        <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
+        <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+      </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.pendingButton} disabled={true}>
+          <Text style={styles.pendingButtonText}>Pending</Text>
+        </TouchableOpacity>
+      </View>
       </View>
     );
   };
@@ -223,12 +231,24 @@ const styles = StyleSheet.create({
     marginTop: 5,
     textAlign: 'right',
   },
+  totalPriceContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,  
+    borderBottomColor: '#ccc',
+  },
+  orderTotalLabel: {
+    fontSize: 16,
+    color: '#000', 
+    marginBottom: 10,
+  },
   orderTotalPrice: {
     fontWeight: 'bold',
     fontSize: 18,
-    color: '#05652D',
-    textAlign: 'right',
-    marginTop: 10,
+    color: '#05652D', 
+    marginBottom: 10,
   },
   emptyOrdersContainer: {
     flex: 1,
@@ -267,6 +287,22 @@ const styles = StyleSheet.create({
     overflow: 'hidden', 
     marginVertical: 4, 
     marginHorizontal: 2, 
+    textAlign: 'center',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 10,
+  },
+  pendingButton: {
+    backgroundColor: '#ccc',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  pendingButtonText: {
+    color: '#fff',
+    fontSize: 16,
     textAlign: 'center',
   },
 });
