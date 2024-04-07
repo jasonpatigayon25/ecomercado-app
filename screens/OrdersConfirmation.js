@@ -106,11 +106,13 @@ const OrdersConfirmation = ({ route, navigation }) => {
             const sellerTotal = products.reduce((sum, product) => sum + product.price * product.orderedQuantity, 0);
             const shippingFeeForSeller = shippingFees[sellerName] || 0;
             const totalForSeller = sellerTotal + shippingFeeForSeller;
+            const sellerEmail = products[0]?.seller_email;
 
             const orderData = {
                 deliveryAddress: address,
                 buyerEmail: user.email,
                 buyerId: user.uid,
+                sellerEmail: sellerEmail,
                 dateOrdered: new Date(),
                 paymentMethod: paymentMethod,
                 productDetails: products.map(product => ({

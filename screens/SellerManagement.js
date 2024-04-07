@@ -141,7 +141,7 @@ const SellerManagement = ({ navigation }) => {
                     <View style={styles.transactionsRow}>
                         <OptionItemCube onPress={() => navigation.navigate('ProductPosts')} icon="th-list" label="My Product Posts" />
                         <OptionItemCube onPress={() => navigation.navigate('SellAddProduct')} icon="plus-circle" label="Add Product" />
-                        <OptionItemCube onPress={() => navigation.navigate('MyOrders')} icon="shopping-cart" label="My Orders" />
+                        <OptionItemCube onPress={() => navigation.navigate('SellerOrderManagement')} icon="shopping-cart" label="Orders Management" />
                         <OptionItemCube onPress={() => navigation.navigate('SuspendedProducts')} icon="ban" label="Suspended Products" />
                     </View>
                 ) : (
