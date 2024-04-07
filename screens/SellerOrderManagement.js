@@ -168,7 +168,7 @@ const SellerOrderManagement = ({ navigation }) => {
   };
 
   const renderEmptyListComponent = (tab) => {
-    let icon = 'inbox'; // Default icon
+    let icon = 'inbox';
     let message = `No ${tab} Orders yet.`;
 
     switch (tab) {

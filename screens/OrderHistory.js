@@ -18,7 +18,6 @@ const OrderHistory = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState('To Pay');
   const scrollRef = useRef(); 
 
-  
   const handleScroll = (event) => {
     const scrollX = event.nativeEvent.contentOffset.x;
     const tabIndex = Math.floor(scrollX / windowWidth);
@@ -99,8 +98,13 @@ const OrderHistory = ({ navigation }) => {
     fetchOrders();
   }, [user]);
 
-
   const renderOrderItem = ({ item: order }) => {
+    if ((selectedTab === 'To Pay' && order.status !== 'Pending') ||
+    (selectedTab === 'To Receive' && order.status !== 'Receiving') ||
+    (selectedTab === 'Completed' && order.status !== 'Receiving') ||
+    (selectedTab === 'Cancelled' && order.status !== 'Cancelled')) {
+    return null;
+}
     const groupedBySeller = order.productDetails.reduce((acc, productDetail) => {
       const product = products[productDetail.productId];
         const sellerName = product ? product.sellerName : 'Unknown Seller'; 
@@ -153,6 +157,33 @@ const OrderHistory = ({ navigation }) => {
     );
   };
 
+  const renderEmptyListComponent = (tab) => {
+    let icon = 'inbox'; 
+    let message = `No ${tab} Orders yet.`;
+
+    switch (tab) {
+        case 'To Pay':
+            icon = 'money';
+            break;
+        case 'To Receive':
+            icon = 'truck';
+            break;
+        case 'Completed':
+            icon = 'truck';
+            break;
+        case 'Cancelled':
+            icon = 'wrong-circle';
+            break;
+    }
+
+    return (
+        <View style={styles.emptyOrdersContainer}>
+            <Icon name={icon} size={50} color="#cccccc" />
+            <Text style={styles.emptyOrdersText}>{message}</Text>
+        </View>
+    );
+};
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -181,12 +212,7 @@ const OrderHistory = ({ navigation }) => {
                             data={orders}
                             keyExtractor={(item) => item.id}
                             renderItem={renderOrderItem}
-                            ListEmptyComponent={
-                                <View style={styles.emptyOrdersContainer}>
-                                    <Icon name="folder-open" size={24} color="#ccc" />
-                                    <Text style={styles.emptyOrdersText}>No {tab} orders yet.</Text>
-                                </View>
-                            }
+                            ListEmptyComponent={renderEmptyListComponent(selectedTab)}
                         />
                     )}
                 </View>
