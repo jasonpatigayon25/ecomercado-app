@@ -92,7 +92,9 @@ const SellerOrderManagement = ({ navigation }) => {
                 statusCriteria = ['Pending'];
             } else if (tab === 'To Ship') {
                 statusCriteria = ['Approved'];
-            }
+            } else if (tab === 'Shipped') {
+              statusCriteria = ['Receiving'];
+          }
 
             const ordersQuery = query(
                 collection(db, 'orders'),
@@ -142,10 +144,33 @@ const SellerOrderManagement = ({ navigation }) => {
     );
   };
 
+  const approveToShipOrder = async (orderId) => {
+    Alert.alert(
+      "Confirm Approval",
+      "Are you sure items are ready to ship?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Approve", onPress: async () => {
+            try {
+              const orderRef = doc(db, 'orders', orderId);
+              await updateDoc(orderRef, { status: 'Receiving' });
+              await fetchOrders(); 
+            } catch (error) {
+              console.error("Error updating document: ", error);
+              Alert.alert("Error", "There was a problem approving the order.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderOrderItem = ({ item: order }) => {
 
     if ((selectedTab === 'To Approve' && order.status !== 'Pending') ||
-    (selectedTab === 'To Ship' && order.status !== 'Approved')) {
+    (selectedTab === 'To Ship' && order.status !== 'Approved') ||
+    (selectedTab === 'Shipped' && order.status !== 'Receiving')) {
     return null;
 }
 
@@ -213,9 +238,22 @@ const SellerOrderManagement = ({ navigation }) => {
                                 </Text>
                                 <TouchableOpacity
                                     style={styles.shipButton}
-                                    onPress={() => markAsReadyToShip(order.id)}
+                                    onPress={() => approveToShipOrder(order.id)}
                                 >
                                     <Text style={styles.shipButtonText}>Ready to Ship</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+                        {selectedTab === 'Shipped' && (
+                            <>
+                                <Text style={styles.hintText}>
+                                    Waiting for buyer to approve if items are received.
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.pendingToReceiveButton}
+                                    // onPress={() => markAsReadyToShip(order.id)}
+                                >
+                                    <Text style={styles.shipButtonText}>Pending to Receive</Text>
                                 </TouchableOpacity>
                             </>
                         )}
@@ -447,6 +485,11 @@ const styles = StyleSheet.create({
   },
   shipButton: {
     backgroundColor: '#FFA500', 
+    padding: 10,
+    borderRadius: 5,
+  },
+  pendingToReceiveButton: {
+    backgroundColor: '#ccc', 
     padding: 10,
     borderRadius: 5,
   },
