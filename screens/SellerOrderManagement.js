@@ -23,8 +23,13 @@ const SellerOrderManagement = ({ navigation }) => {
     const scrollX = event.nativeEvent.contentOffset.x;
     const tabIndex = Math.floor(scrollX / windowWidth);
     const tabNames = ['To Approve', 'To Ship', 'Shipped', 'Completed'];
-    setSelectedTab(tabNames[tabIndex]);
-  };
+    const newSelectedTab = tabNames[tabIndex];
+
+    if (newSelectedTab !== selectedTab) {
+        setSelectedTab(newSelectedTab);
+        fetchOrders(newSelectedTab);  
+    }
+};
 
   const fetchProductDetails = async (orders) => {
     const productIds = new Set();
@@ -78,37 +83,42 @@ const SellerOrderManagement = ({ navigation }) => {
     setLoading(false);
   };
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (tab = selectedTab) => {
     if (user) {
-      setLoading(true);
-      try {
-        const ordersQuery = query(
-          collection(db, 'orders'),
-          where('sellerEmail', '==', user.email), 
-          orderBy('dateOrdered', 'desc')
-        );
-        const querySnapshot = await getDocs(ordersQuery);
-        const fetchedOrders = [];
-        querySnapshot.forEach((doc) => {
-          fetchedOrders.push({ id: doc.id, ...doc.data() });
-        });
-        setOrders(fetchedOrders);
-        await fetchProductDetails(fetchedOrders);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      } finally {
-        setLoading(false);
-      }
+        setLoading(true);
+        try {
+            let statusCriteria = [];
+            if (tab === 'To Approve') {
+                statusCriteria = ['Pending'];
+            } else if (tab === 'To Ship') {
+                statusCriteria = ['Approved'];
+            }
+
+            const ordersQuery = query(
+                collection(db, 'orders'),
+                where('sellerEmail', '==', user.email),
+                where('status', 'in', statusCriteria),
+                orderBy('dateOrdered', 'desc')
+            );
+
+            const querySnapshot = await getDocs(ordersQuery);
+            const fetchedOrders = [];
+            querySnapshot.forEach((doc) => {
+                fetchedOrders.push({ id: doc.id, ...doc.data() });
+            });
+            setOrders(fetchedOrders);
+            await fetchProductDetails(fetchedOrders);
+        } catch (error) {
+            console.error("Error fetching orders:", error);
+        } finally {
+            setLoading(false);
+        }
     }
-  }, [user]);
+}, [user, selectedTab]);
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
-
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
 
   const approveOrder = async (orderId) => {
     Alert.alert(
@@ -216,12 +226,6 @@ const SellerOrderManagement = ({ navigation }) => {
     );
 };
 
-  
-
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -234,30 +238,32 @@ const SellerOrderManagement = ({ navigation }) => {
       <OrderSellerTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
 
       <ScrollView
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScroll}
-        ref={scrollRef}
-        style={styles.scrollView}
-      >
-        {['To Approve', 'To Ship', 'Shipped', 'Completed'].map((tab, index) => (
-          <View key={index} style={{ width: windowWidth }}>
-            {tab === 'To Approve' && (
-              <FlatList
-                data={orders}
-                keyExtractor={(item) => item.id}
-                renderItem={renderOrderItem}
-                ListEmptyComponent={
-                  <View style={styles.emptyOrdersContainer}>
-                    <Text>No orders found</Text>
-                  </View>
-                }
-              />
-            )}
-          </View>
-        ))}
-      </ScrollView>
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={handleScroll}
+                ref={scrollRef}
+                style={styles.scrollView}
+            >
+                {['To Approve', 'To Ship', 'Shipped', 'Completed'].map((tab, index) => (
+                    <View key={index} style={{ width: windowWidth }}>
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />
+                        ) : (
+                            <FlatList
+                                data={orders}
+                                keyExtractor={(item) => item.id}
+                                renderItem={renderOrderItem}
+                                ListEmptyComponent={
+                                    <View style={styles.emptyOrdersContainer}>
+                                        <Text>No orders found</Text>
+                                    </View>
+                                }
+                            />
+                        )}
+                    </View>
+                ))}
+            </ScrollView>
     </View>
   );
 };
@@ -449,6 +455,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  scrollView: {
+    flex: 1,
+},
+loading: {
+    marginTop: 50,
+},
 });
 
   export default SellerOrderManagement;
