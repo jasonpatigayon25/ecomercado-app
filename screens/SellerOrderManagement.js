@@ -22,7 +22,7 @@ const SellerOrderManagement = ({ navigation }) => {
   const handleScroll = (event) => {
     const scrollX = event.nativeEvent.contentOffset.x;
     const tabIndex = Math.floor(scrollX / windowWidth);
-    const tabNames = ['To Approve', 'Approved', 'Dispatched', 'Completed'];
+    const tabNames = ['To Approve', 'To Ship', 'Shipped', 'Completed'];
     setSelectedTab(tabNames[tabIndex]);
   };
 
@@ -196,7 +196,7 @@ const SellerOrderManagement = ({ navigation }) => {
         ref={scrollRef}
         style={styles.scrollView}
       >
-        {['To Approve', 'Approved', 'Dispatched', 'Completed'].map((tab, index) => (
+        {['To Approve', 'To Ship', 'Shipped', 'Completed'].map((tab, index) => (
           <View key={index} style={{ width: windowWidth }}>
             {tab === 'To Approve' && (
               <FlatList

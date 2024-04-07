@@ -8,7 +8,7 @@ const OrderSellerTab = ({ selectedTab, setSelectedTab }) => {
     const indicatorAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-      const tabIndex = ['To Approve', 'Approved', 'Dispatched', 'Completed'].indexOf(selectedTab);
+      const tabIndex = ['To Approve', 'To Ship', 'Shipped', 'Completed'].indexOf(selectedTab);
       Animated.spring(indicatorAnim, {
         toValue: tabIndex * tabWidth, 
         useNativeDriver: true, 
@@ -32,7 +32,7 @@ const OrderSellerTab = ({ selectedTab, setSelectedTab }) => {
 
     return (
       <View style={styles.tabBar}>
-        {['To Approve', 'Approved', 'Dispatched', 'Completed'].map(tabName => renderTab(tabName))}
+        {['To Approve', 'To Ship', 'Shipped', 'Completed'].map(tabName => renderTab(tabName))}
         <Animated.View
           style={[
             styles.indicator,
