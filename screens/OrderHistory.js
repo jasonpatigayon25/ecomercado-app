@@ -99,21 +99,21 @@ const OrderHistory = ({ navigation }) => {
     fetchOrders();
   }, [user]);
 
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
 
   const renderOrderItem = ({ item: order }) => {
     const groupedBySeller = order.productDetails.reduce((acc, productDetail) => {
-      const sellerName = products[productDetail.productId].sellerName; 
-      if (!acc[sellerName]) {
-        acc[sellerName] = [];
-      }
-      acc[sellerName].push({
-        ...productDetail,
-        ...products[productDetail.productId]
-      });
-      return acc;
+      const product = products[productDetail.productId];
+        const sellerName = product ? product.sellerName : 'Unknown Seller'; 
+        if (!acc[sellerName]) {
+            acc[sellerName] = [];
+        }
+        if (product) {
+            acc[sellerName].push({
+                ...productDetail,
+                ...product
+            });
+        }
+        return acc;
     }, {});
   
     return (
@@ -165,30 +165,33 @@ const OrderHistory = ({ navigation }) => {
       <OrderTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
 
       <ScrollView
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScroll}
-        ref={scrollRef}
-        style={styles.scrollView}
-      >
-        {['To Pay', 'To Receive', 'Completed', 'Cancelled'].map((tab, index) => (
-          <View key={index} style={{ width: windowWidth }}>
-            {tab === 'To Pay' && (
-              <FlatList
-                data={orders}
-                keyExtractor={(item) => item.id}
-                renderItem={renderOrderItem}
-                ListEmptyComponent={
-                  <View style={styles.emptyContainer}>
-                    <Text>No orders found for {tab}</Text>
-                  </View>
-                }
-              />
-            )}
-          </View>
-        ))}
-      </ScrollView>
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={handleScroll}
+            ref={scrollRef}
+            style={styles.scrollView}
+        >
+            {['To Pay', 'To Receive', 'Completed', 'Cancelled'].map((tab, index) => (
+                <View key={index} style={{ width: windowWidth }}>
+                    {loading ? (
+                        <ActivityIndicator size="large" color="#0000ff" style={styles.loadingIndicator} />
+                    ) : (
+                        <FlatList
+                            data={orders}
+                            keyExtractor={(item) => item.id}
+                            renderItem={renderOrderItem}
+                            ListEmptyComponent={
+                                <View style={styles.emptyOrdersContainer}>
+                                    <Icon name="folder-open" size={24} color="#ccc" />
+                                    <Text style={styles.emptyOrdersText}>No {tab} orders yet.</Text>
+                                </View>
+                            }
+                        />
+                    )}
+                </View>
+            ))}
+        </ScrollView>
     </View>
   );
 };
@@ -332,6 +335,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
+  loadingIndicator: {
+    marginTop: 50,
+},
+emptyOrdersContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+},
+emptyOrdersText: {
+    fontSize: 16,
+    color: '#ccc',
+    textAlign: 'center',
+},
 });
 
   export default OrderHistory;
