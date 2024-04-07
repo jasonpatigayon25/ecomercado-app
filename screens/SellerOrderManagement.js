@@ -31,7 +31,7 @@ const SellerOrderManagement = ({ navigation }) => {
       if (user) {
         const ordersQuery = query(
           collection(db, 'orders'),
-          where('buyerEmail', '==', user.email),
+          where('sellerEmail', '==', user.email), 
           orderBy('dateOrdered', 'desc')
         );
         const querySnapshot = await getDocs(ordersQuery);
@@ -103,16 +103,29 @@ const SellerOrderManagement = ({ navigation }) => {
     return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
+  const approveOrder = async (orderId) => {
+    const orderRef = doc(db, 'orders', orderId);
+    await updateDoc(orderRef, {
+      status: 'Approved' 
+    });
+    fetchOrders();
+  };
+
   const renderOrderItem = ({ item: order }) => {
     const groupedBySeller = order.productDetails.reduce((acc, productDetail) => {
-      const sellerName = products[productDetail.productId].sellerName; 
+      const product = products[productDetail.productId];
+      const sellerName = product ? product.sellerName : 'Unknown Seller';
+  
       if (!acc[sellerName]) {
         acc[sellerName] = [];
       }
-      acc[sellerName].push({
-        ...productDetail,
-        ...products[productDetail.productId]
-      });
+  
+      if (product) {
+        acc[sellerName].push({
+          ...productDetail,
+          ...product
+        });
+      }
       return acc;
     }, {});
   
@@ -120,38 +133,49 @@ const SellerOrderManagement = ({ navigation }) => {
       <View style={styles.orderItemContainer}>
         {Object.entries(groupedBySeller).map(([sellerName, productDetails]) => (
           <View key={sellerName}>
-            <View style={styles.sellerHeader}>
-            <Icon5 name="store" size={20} color="#808080" style={styles.shopIcon} />
-            <Text style={styles.sellerName}>{sellerName}</Text>
-            </View>
+            <View style={styles.buyerHeader}>
+                            <Icon name="money" size={20} color="#808080" style={styles.shopIcon} />
+                            <Text style={styles.buyerName}>{order.buyerEmail}</Text>
+                            
+                        </View>
             {productDetails.map((item, index) => {
-              const product = products[item.productId];
               return (
                 <View key={index} style={styles.productContainer}>
-                  <Image source={{ uri: product.photo }} style={styles.productImage} />
+                  <Image source={{ uri: item.photo }} style={styles.productImage} />
                   <View style={styles.productInfo}>
-                    <Text style={styles.productName}>{product.name}</Text> 
-                    <Text style={styles.productCategory}>{product.category}</Text>   
+                  <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text>
+                    <Text style={styles.productName}>{item.name}</Text> 
+                    <Text style={styles.productCategory}>{item.category}</Text>   
                     <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
-                    <Text style={styles.productPrice}>₱{product.price}</Text>
+                    <Text style={styles.productPrice}>₱{item.price}</Text>
                   </View>
                 </View>
               );
             })}
           </View>
         ))}
-      <View style={styles.totalPriceContainer}>
-        <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
-        <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
-      </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.pendingButton} disabled={true}>
-          <Text style={styles.pendingButtonText}>Pending</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.totalPriceContainer}>
+          <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
+          <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+        </View>
+        <View style={styles.buttonContainer}>
+        <Text style={styles.approveHint}>
+                                Approve the order that it will be awaiting for Shipment.
+                            </Text>
+          <TouchableOpacity
+            style={styles.approveButton}
+            onPress={() => approveOrder(order.id)}
+          >
+            <Text style={styles.approveButtonText}>Approve Order</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
 
   return (
     <View style={styles.container}>
@@ -180,8 +204,8 @@ const SellerOrderManagement = ({ navigation }) => {
                 keyExtractor={(item) => item.id}
                 renderItem={renderOrderItem}
                 ListEmptyComponent={
-                  <View style={styles.emptyContainer}>
-                    <Text>No orders found for {tab}</Text>
+                  <View style={styles.emptyOrdersContainer}>
+                    <Text>No orders found</Text>
                   </View>
                 }
               />
@@ -212,7 +236,7 @@ const styles = StyleSheet.create({
     marginLeft: 20,
   },
   orderItemContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9F6EE',
     padding: 10,
     marginBottom: 10,
     shadowColor: '#000',
@@ -230,6 +254,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,  
     borderBottomColor: '#ccc',
     backgroundColor: '#FFF',  
+    
   },
   productImage: {
     width: 80,
@@ -287,15 +312,35 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#ccc',
   },
-  sellerHeader: {
+  buyerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#E8F5E9',
+    borderBottomColor: '#ccc',
+    borderBottomWidth: 1,
     padding: 8,
     marginTop: 10,
   },
   sellerName: {
+    fontWeight: 'bold',
+    color: '#333',
+    fontSize: 16,
+    flex: 1,
+  },
+  orderId: {
+    color: '#333',
+    fontSize: 12,
+    paddingHorizontal: 6,
+    borderRadius: 4,
+    textAlign: 'right',
+    top: -10,
+  },
+approveHint: {
+    marginLeft: 10,
+    fontStyle: 'italic',
+    fontSize: 12,
+},
+  buyerName: {
     fontWeight: 'bold',
     color: '#333',
     fontSize: 16,
@@ -318,8 +363,9 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     marginTop: 10,
+    alignItems: 'center',
   },
   pendingButton: {
     backgroundColor: '#ccc',
@@ -331,6 +377,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     textAlign: 'center',
+  },
+  approveButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+  },
+  approveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  approveHint: {
+    color: '#666',
+    fontSize: 12,
+    flex: 1,
+    paddingHorizontal: 10,
   },
 });
 

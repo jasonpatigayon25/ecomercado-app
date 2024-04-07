@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderBottomWidth: 1,  
     borderBottomColor: '#ccc',
-    backgroundColor: '#FFF',  
+    backgroundColor: '#FAF9F6',  
   },
   itemLeftSection: {
     flexDirection: 'row',

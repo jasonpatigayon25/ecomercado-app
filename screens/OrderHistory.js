@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     marginLeft: 20,
   },
   orderItemContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9F6EE',
     padding: 10,
     marginBottom: 10,
     shadowColor: '#000',
