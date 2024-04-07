@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, ActivityIndicator, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
@@ -18,85 +18,109 @@ const OrderHistory = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState('To Pay');
   const scrollRef = useRef(); 
 
+  const tabStatusMapping = {
+    'To Pay': 'Pending',
+    'To Receive': 'Receiving',
+    'Completed': 'Completed',
+    'Cancelled': 'Cancelled'
+};
+
   const handleScroll = (event) => {
     const scrollX = event.nativeEvent.contentOffset.x;
     const tabIndex = Math.floor(scrollX / windowWidth);
-    const tabNames = ['To Pay', 'To Receive', 'Completed', 'Cancelled'];
-    setSelectedTab(tabNames[tabIndex]);
-  };
+    const tabNames = Object.keys(tabStatusMapping);
+    const newSelectedTab = tabNames[tabIndex];
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      if (user) {
-        const ordersQuery = query(
+    if (newSelectedTab !== selectedTab) {
+        setSelectedTab(newSelectedTab);
+        setLoading(true);
+        fetchOrders(newSelectedTab);
+    }
+};
+
+const fetchOrders = useCallback(async (tab) => {
+  if (!user) return;
+
+  setLoading(true);
+  try {
+      const status = tabStatusMapping[tab];
+      const ordersQuery = query(
           collection(db, 'orders'),
           where('buyerEmail', '==', user.email),
+          where('status', '==', status),
           orderBy('dateOrdered', 'desc')
-        );
-        const querySnapshot = await getDocs(ordersQuery);
-        const fetchedOrders = [];
-        querySnapshot.forEach((doc) => {
+      );
+
+      const querySnapshot = await getDocs(ordersQuery);
+      const fetchedOrders = [];
+      querySnapshot.forEach((doc) => {
           fetchedOrders.push({ id: doc.id, ...doc.data() });
-        });
-        setOrders(fetchedOrders);
-        await fetchProductDetails(fetchedOrders);
-      }
-    };
-
-    const fetchProductDetails = async (orders) => {
-      const productIds = new Set();
-      orders.forEach(order => {
-        order.productDetails.forEach(item => {
-          productIds.add(item.productId);
-        });
       });
-      
-      const fetchedProducts = {};
-      const sellerEmailsToFetch = new Set();
-  
-      for (let productId of productIds) {
-        const productRef = doc(db, 'products', productId);
-        const productSnap = await getDoc(productRef);
-        if (productSnap.exists()) {
-          const productData = productSnap.data();
-          fetchedProducts[productId] = productData;
-          sellerEmailsToFetch.add(productData.seller_email); 
-        }
-      }
 
-      const fetchSellerNames = async (sellerEmails) => {
-        try {
-          const sellersQuery = query(
-            collection(db, 'registeredSeller'),
-            where('email', 'in', Array.from(sellerEmails))
-          );
-          const querySnapshot = await getDocs(sellersQuery);
-          const sellers = {};
-          querySnapshot.forEach((doc) => {
-            const sellerData = doc.data();
-            sellers[sellerData.email] = sellerData.sellerName;
-          });
-          return sellers;
-        } catch (error) {
-          console.error("Error fetching seller names:", error);
-
-          return {};
-        }
-      };
-  
-      if (sellerEmailsToFetch.size > 0) {
-        const sellerNames = await fetchSellerNames(sellerEmailsToFetch);
-        Object.values(fetchedProducts).forEach(product => {
-          product.sellerName = sellerNames[product.seller_email] || 'Unknown Seller';
-        });
-      }
-  
-      setProducts(fetchedProducts);
+      setOrders(fetchedOrders);
+      await fetchProductDetails(fetchedOrders);
+  } catch (error) {
+      console.error("Error fetching orders:", error);
+  } finally {
       setLoading(false);
-    };
+  }
+}, [user]);
+
+const fetchProductDetails = async (orders) => {
+  const productIds = new Set();
+  orders.forEach(order => {
+    order.productDetails.forEach(item => {
+      productIds.add(item.productId);
+    });
+  });
   
-    fetchOrders();
-  }, [user]);
+  const fetchedProducts = {};
+  const sellerEmailsToFetch = new Set();
+
+  for (let productId of productIds) {
+    const productRef = doc(db, 'products', productId);
+    const productSnap = await getDoc(productRef);
+    if (productSnap.exists()) {
+      const productData = productSnap.data();
+      fetchedProducts[productId] = productData;
+      sellerEmailsToFetch.add(productData.seller_email); 
+    }
+  }
+
+  const fetchSellerNames = async (sellerEmails) => {
+    try {
+      const sellersQuery = query(
+        collection(db, 'registeredSeller'),
+        where('email', 'in', Array.from(sellerEmails))
+      );
+      const querySnapshot = await getDocs(sellersQuery);
+      const sellers = {};
+      querySnapshot.forEach((doc) => {
+        const sellerData = doc.data();
+        sellers[sellerData.email] = sellerData.sellerName;
+      });
+      return sellers;
+    } catch (error) {
+      console.error("Error fetching seller names:", error);
+
+      return {};
+    }
+  };
+
+  if (sellerEmailsToFetch.size > 0) {
+    const sellerNames = await fetchSellerNames(sellerEmailsToFetch);
+    Object.values(fetchedProducts).forEach(product => {
+      product.sellerName = sellerNames[product.seller_email] || 'Unknown Seller';
+    });
+  }
+
+  setProducts(fetchedProducts);
+  setLoading(false);
+};
+
+useEffect(() => {
+  fetchOrders(selectedTab);
+}, [selectedTab, fetchOrders]);
 
   const renderOrderItem = ({ item: order }) => {
     if ((selectedTab === 'To Pay' && order.status !== 'Pending') ||
@@ -172,7 +196,7 @@ const OrderHistory = ({ navigation }) => {
             icon = 'truck';
             break;
         case 'Cancelled':
-            icon = 'wrong-circle';
+            icon = 'money';
             break;
     }
 
@@ -196,28 +220,28 @@ const OrderHistory = ({ navigation }) => {
       <OrderTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
 
       <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={handleScroll}
-            ref={scrollRef}
-            style={styles.scrollView}
-        >
-            {['To Pay', 'To Receive', 'Completed', 'Cancelled'].map((tab, index) => (
-                <View key={index} style={{ width: windowWidth }}>
-                    {loading ? (
-                        <ActivityIndicator size="large" color="#0000ff" style={styles.loadingIndicator} />
-                    ) : (
-                        <FlatList
-                            data={orders}
-                            keyExtractor={(item) => item.id}
-                            renderItem={renderOrderItem}
-                            ListEmptyComponent={renderEmptyListComponent(selectedTab)}
-                        />
-                    )}
-                </View>
-            ))}
-        </ScrollView>
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={handleScroll}
+                ref={scrollRef}
+                style={styles.scrollView}
+            >
+                {Object.keys(tabStatusMapping).map((tab, index) => (
+                    <View key={index} style={{ width: windowWidth }}>
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />
+                        ) : (
+                            <FlatList
+                                data={orders}
+                                keyExtractor={(item) => item.id}
+                                renderItem={renderOrderItem}
+                                ListEmptyComponent={renderEmptyListComponent(selectedTab)}
+                            />
+                        )}
+                    </View>
+                ))}
+            </ScrollView>
     </View>
   );
 };
