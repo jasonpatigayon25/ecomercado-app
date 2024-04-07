@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, ActivityIndicator, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback  } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, ActivityIndicator, Dimensions, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, query, where, orderBy, getDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, getDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import OrderSellerTab from '../navbars/OrderSellerTab';
 
@@ -26,9 +26,62 @@ const SellerOrderManagement = ({ navigation }) => {
     setSelectedTab(tabNames[tabIndex]);
   };
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      if (user) {
+  const fetchProductDetails = async (orders) => {
+    const productIds = new Set();
+    orders.forEach(order => {
+      order.productDetails.forEach(item => {
+        productIds.add(item.productId);
+      });
+    });
+    
+    const fetchedProducts = {};
+    const sellerEmailsToFetch = new Set();
+
+    for (let productId of productIds) {
+      const productRef = doc(db, 'products', productId);
+      const productSnap = await getDoc(productRef);
+      if (productSnap.exists()) {
+        const productData = productSnap.data();
+        fetchedProducts[productId] = productData;
+        sellerEmailsToFetch.add(productData.seller_email); 
+      }
+    }
+
+    const fetchSellerNames = async (sellerEmails) => {
+      try {
+        const sellersQuery = query(
+          collection(db, 'registeredSeller'),
+          where('email', 'in', Array.from(sellerEmails))
+        );
+        const querySnapshot = await getDocs(sellersQuery);
+        const sellers = {};
+        querySnapshot.forEach((doc) => {
+          const sellerData = doc.data();
+          sellers[sellerData.email] = sellerData.sellerName;
+        });
+        return sellers;
+      } catch (error) {
+        console.error("Error fetching seller names:", error);
+
+        return {};
+      }
+    };
+
+    if (sellerEmailsToFetch.size > 0) {
+      const sellerNames = await fetchSellerNames(sellerEmailsToFetch);
+      Object.values(fetchedProducts).forEach(product => {
+        product.sellerName = sellerNames[product.seller_email] || 'Unknown Seller';
+      });
+    }
+
+    setProducts(fetchedProducts);
+    setLoading(false);
+  };
+
+  const fetchOrders = useCallback(async () => {
+    if (user) {
+      setLoading(true);
+      try {
         const ordersQuery = query(
           collection(db, 'orders'),
           where('sellerEmail', '==', user.email), 
@@ -41,137 +94,129 @@ const SellerOrderManagement = ({ navigation }) => {
         });
         setOrders(fetchedOrders);
         await fetchProductDetails(fetchedOrders);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      } finally {
+        setLoading(false);
       }
-    };
-
-    const fetchProductDetails = async (orders) => {
-      const productIds = new Set();
-      orders.forEach(order => {
-        order.productDetails.forEach(item => {
-          productIds.add(item.productId);
-        });
-      });
-      
-      const fetchedProducts = {};
-      const sellerEmailsToFetch = new Set();
-  
-      for (let productId of productIds) {
-        const productRef = doc(db, 'products', productId);
-        const productSnap = await getDoc(productRef);
-        if (productSnap.exists()) {
-          const productData = productSnap.data();
-          fetchedProducts[productId] = productData;
-          sellerEmailsToFetch.add(productData.seller_email); 
-        }
-      }
-
-      const fetchSellerNames = async (sellerEmails) => {
-        try {
-          const sellersQuery = query(
-            collection(db, 'registeredSeller'),
-            where('email', 'in', Array.from(sellerEmails))
-          );
-          const querySnapshot = await getDocs(sellersQuery);
-          const sellers = {};
-          querySnapshot.forEach((doc) => {
-            const sellerData = doc.data();
-            sellers[sellerData.email] = sellerData.sellerName;
-          });
-          return sellers;
-        } catch (error) {
-          console.error("Error fetching seller names:", error);
-
-          return {};
-        }
-      };
-  
-      if (sellerEmailsToFetch.size > 0) {
-        const sellerNames = await fetchSellerNames(sellerEmailsToFetch);
-        Object.values(fetchedProducts).forEach(product => {
-          product.sellerName = sellerNames[product.seller_email] || 'Unknown Seller';
-        });
-      }
-  
-      setProducts(fetchedProducts);
-      setLoading(false);
-    };
-  
-    fetchOrders();
+    }
   }, [user]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
   const approveOrder = async (orderId) => {
-    const orderRef = doc(db, 'orders', orderId);
-    await updateDoc(orderRef, {
-      status: 'Approved' 
-    });
-    fetchOrders();
+    Alert.alert(
+      "Confirm Approval",
+      "Are you sure you want to approve this order?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Approve", onPress: async () => {
+            try {
+              const orderRef = doc(db, 'orders', orderId);
+              await updateDoc(orderRef, { status: 'Approved' });
+              await fetchOrders(); 
+            } catch (error) {
+              console.error("Error updating document: ", error);
+              Alert.alert("Error", "There was a problem approving the order.");
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderOrderItem = ({ item: order }) => {
+
+    if ((selectedTab === 'To Approve' && order.status !== 'Pending') ||
+    (selectedTab === 'To Ship' && order.status !== 'Approved')) {
+    return null;
+}
+
+
     const groupedBySeller = order.productDetails.reduce((acc, productDetail) => {
-      const product = products[productDetail.productId];
-      const sellerName = product ? product.sellerName : 'Unknown Seller';
-  
-      if (!acc[sellerName]) {
-        acc[sellerName] = [];
-      }
-  
-      if (product) {
-        acc[sellerName].push({
-          ...productDetail,
-          ...product
-        });
-      }
-      return acc;
+        const product = products[productDetail.productId];
+        const sellerName = product ? product.sellerName : 'Unknown Seller';
+
+        if (!acc[sellerName]) {
+            acc[sellerName] = [];
+        }
+
+        if (product) {
+            acc[sellerName].push({
+                ...productDetail,
+                ...product
+            });
+        }
+        return acc;
     }, {});
-  
+
     return (
-      <View style={styles.orderItemContainer}>
-        {Object.entries(groupedBySeller).map(([sellerName, productDetails]) => (
-          <View key={sellerName}>
-            <View style={styles.buyerHeader}>
-                            <Icon name="money" size={20} color="#808080" style={styles.shopIcon} />
-                            <Text style={styles.buyerName}>{order.buyerEmail}</Text>
-                            
+        <View style={styles.orderItemContainer}>
+            {Object.entries(groupedBySeller).map(([sellerName, productDetails]) => (
+                <View key={sellerName}>
+                    <View style={styles.buyerHeader}>
+                        <Icon name="money" size={20} color="#808080" style={styles.shopIcon} />
+                        <Text style={styles.buyerName}>{order.buyerEmail}</Text>
+                       {/*  <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text> */}
+                    </View>
+                    {productDetails.map((item, index) => (
+                        <View key={index} style={styles.productContainer}>
+                            <Image source={{ uri: item.photo }} style={styles.productImage} />
+                            <View style={styles.productInfo}>
+                            <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text>
+                                <Text style={styles.productName}>{item.name}</Text>
+                                <Text style={styles.productCategory}>{item.category}</Text>
+                                <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
+                                <Text style={styles.productPrice}>₱{item.price}</Text>
+                            </View>
                         </View>
-            {productDetails.map((item, index) => {
-              return (
-                <View key={index} style={styles.productContainer}>
-                  <Image source={{ uri: item.photo }} style={styles.productImage} />
-                  <View style={styles.productInfo}>
-                  <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text>
-                    <Text style={styles.productName}>{item.name}</Text> 
-                    <Text style={styles.productCategory}>{item.category}</Text>   
-                    <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
-                    <Text style={styles.productPrice}>₱{item.price}</Text>
-                  </View>
+                    ))}
+                    <View style={styles.totalPriceContainer}>
+                        <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
+                        <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+                    </View>
+                    <View style={styles.buttonContainer}>
+                        {selectedTab === 'To Approve' && (
+                            <>
+                                <Text style={styles.hintText}>
+                                    Approve the order to prepare it for shipment.
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.approveButton}
+                                    onPress={() => approveOrder(order.id)}
+                                >
+                                    <Text style={styles.approveButtonText}>Approve Order</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+                        {selectedTab === 'To Ship' && (
+                            <>
+                                <Text style={styles.hintText}>
+                                    Tap button if items are ready to ship.
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.shipButton}
+                                    onPress={() => markAsReadyToShip(order.id)}
+                                >
+                                    <Text style={styles.shipButtonText}>Ready to Ship</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+                    </View>
                 </View>
-              );
-            })}
-          </View>
-        ))}
-        <View style={styles.totalPriceContainer}>
-          <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
-          <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+            ))}
         </View>
-        <View style={styles.buttonContainer}>
-        <Text style={styles.approveHint}>
-                                Approve the order that it will be awaiting for Shipment.
-                            </Text>
-          <TouchableOpacity
-            style={styles.approveButton}
-            onPress={() => approveOrder(order.id)}
-          >
-            <Text style={styles.approveButtonText}>Approve Order</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
     );
-  };
+};
+
+  
 
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" />;
@@ -335,7 +380,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     top: -10,
   },
-approveHint: {
+  hintText: {
     marginLeft: 10,
     fontStyle: 'italic',
     fontSize: 12,
@@ -393,6 +438,16 @@ approveHint: {
     fontSize: 12,
     flex: 1,
     paddingHorizontal: 10,
+  },
+  shipButton: {
+    backgroundColor: '#FFA500', 
+    padding: 10,
+    borderRadius: 5,
+  },
+  shipButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
