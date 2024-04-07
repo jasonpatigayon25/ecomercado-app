@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback  } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, ActivityIndicator, Dimensions, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { getAuth } from 'firebase/auth';
 import { collection, getDocs, query, where, orderBy, getDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -166,103 +167,130 @@ const SellerOrderManagement = ({ navigation }) => {
     );
   };
 
-  const renderOrderItem = ({ item: order }) => {
+  const renderEmptyListComponent = (tab) => {
+    let icon = 'inbox'; // Default icon
+    let message = `No ${tab} Orders yet.`;
 
-    if ((selectedTab === 'To Approve' && order.status !== 'Pending') ||
-    (selectedTab === 'To Ship' && order.status !== 'Approved') ||
-    (selectedTab === 'Shipped' && order.status !== 'Receiving')) {
-    return null;
-}
-
-
-    const groupedBySeller = order.productDetails.reduce((acc, productDetail) => {
-        const product = products[productDetail.productId];
-        const sellerName = product ? product.sellerName : 'Unknown Seller';
-
-        if (!acc[sellerName]) {
-            acc[sellerName] = [];
-        }
-
-        if (product) {
-            acc[sellerName].push({
-                ...productDetail,
-                ...product
-            });
-        }
-        return acc;
-    }, {});
+    switch (tab) {
+        case 'To Approve':
+            icon = 'clock-o';
+            break;
+        case 'To Ship':
+            icon = 'truck';
+            break;
+        case 'Shipped':
+            icon = 'truck';
+            break;
+        case 'Completed':
+            icon = 'check-circle';
+            break;
+    }
 
     return (
-        <View style={styles.orderItemContainer}>
-            {Object.entries(groupedBySeller).map(([sellerName, productDetails]) => (
-                <View key={sellerName}>
-                    <View style={styles.buyerHeader}>
-                        <Icon name="money" size={20} color="#808080" style={styles.shopIcon} />
-                        <Text style={styles.buyerName}>{order.buyerEmail}</Text>
-                       {/*  <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text> */}
-                    </View>
-                    {productDetails.map((item, index) => (
-                        <View key={index} style={styles.productContainer}>
-                            <Image source={{ uri: item.photo }} style={styles.productImage} />
-                            <View style={styles.productInfo}>
-                            <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text>
-                                <Text style={styles.productName}>{item.name}</Text>
-                                <Text style={styles.productCategory}>{item.category}</Text>
-                                <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
-                                <Text style={styles.productPrice}>₱{item.price}</Text>
-                            </View>
-                        </View>
-                    ))}
-                    <View style={styles.totalPriceContainer}>
-                        <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
-                        <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
-                    </View>
-                    <View style={styles.buttonContainer}>
-                        {selectedTab === 'To Approve' && (
-                            <>
-                                <Text style={styles.hintText}>
-                                    Approve the order to prepare it for shipment.
-                                </Text>
-                                <TouchableOpacity
-                                    style={styles.approveButton}
-                                    onPress={() => approveOrder(order.id)}
-                                >
-                                    <Text style={styles.approveButtonText}>Approve Order</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
-                        {selectedTab === 'To Ship' && (
-                            <>
-                                <Text style={styles.hintText}>
-                                    Tap button if items are ready to ship.
-                                </Text>
-                                <TouchableOpacity
-                                    style={styles.shipButton}
-                                    onPress={() => approveToShipOrder(order.id)}
-                                >
-                                    <Text style={styles.shipButtonText}>Ready to Ship</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
-                        {selectedTab === 'Shipped' && (
-                            <>
-                                <Text style={styles.hintText}>
-                                    Waiting for buyer to approve if items are received.
-                                </Text>
-                                <TouchableOpacity
-                                    style={styles.pendingToReceiveButton}
-                                    // onPress={() => markAsReadyToShip(order.id)}
-                                >
-                                    <Text style={styles.shipButtonText}>Pending to Receive</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
-                    </View>
-                </View>
-            ))}
+        <View style={styles.emptyOrdersContainer}>
+            <Icon name={icon} size={50} color="#cccccc" />
+            <Text style={styles.emptyOrdersText}>{message}</Text>
         </View>
     );
 };
+
+  const renderOrderItem = ({ item: order }) => {
+
+      if ((selectedTab === 'To Approve' && order.status !== 'Pending') ||
+      (selectedTab === 'To Ship' && order.status !== 'Approved') ||
+      (selectedTab === 'Shipped' && order.status !== 'Receiving')) {
+      return null;
+  }
+
+
+      const groupedBySeller = order.productDetails.reduce((acc, productDetail) => {
+          const product = products[productDetail.productId];
+          const sellerName = product ? product.sellerName : 'Unknown Seller';
+
+          if (!acc[sellerName]) {
+              acc[sellerName] = [];
+          }
+
+          if (product) {
+              acc[sellerName].push({
+                  ...productDetail,
+                  ...product
+              });
+          }
+          return acc;
+      }, {});
+
+      return (
+          <View style={styles.orderItemContainer}>
+              {Object.entries(groupedBySeller).map(([sellerName, productDetails]) => (
+                  <View key={sellerName}>
+                      <View style={styles.buyerHeader}>
+                          <Icon name="money" size={20} color="#808080" style={styles.shopIcon} />
+                          <Text style={styles.buyerName}>{order.buyerEmail}</Text>
+                        {/*  <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text> */}
+                      </View>
+                      {productDetails.map((item, index) => (
+                          <View key={index} style={styles.productContainer}>
+                              <Image source={{ uri: item.photo }} style={styles.productImage} />
+                              <View style={styles.productInfo}>
+                              <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text>
+                                  <Text style={styles.productName}>{item.name}</Text>
+                                  <Text style={styles.productCategory}>{item.category}</Text>
+                                  <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
+                                  <Text style={styles.productPrice}>₱{item.price}</Text>
+                              </View>
+                          </View>
+                      ))}
+                      <View style={styles.totalPriceContainer}>
+                          <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
+                          <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+                      </View>
+                      <View style={styles.buttonContainer}>
+                          {selectedTab === 'To Approve' && (
+                              <>
+                                  <Text style={styles.hintText}>
+                                      Approve the order to prepare it for shipment.
+                                  </Text>
+                                  <TouchableOpacity
+                                      style={styles.approveButton}
+                                      onPress={() => approveOrder(order.id)}
+                                  >
+                                      <Text style={styles.approveButtonText}>Approve Order</Text>
+                                  </TouchableOpacity>
+                              </>
+                          )}
+                          {selectedTab === 'To Ship' && (
+                              <>
+                                  <Text style={styles.hintText}>
+                                      Tap button if items are ready to ship.
+                                  </Text>
+                                  <TouchableOpacity
+                                      style={styles.shipButton}
+                                      onPress={() => approveToShipOrder(order.id)}
+                                  >
+                                      <Text style={styles.shipButtonText}>Ready to Ship</Text>
+                                  </TouchableOpacity>
+                              </>
+                          )}
+                          {selectedTab === 'Shipped' && (
+                              <>
+                                  <Text style={styles.hintText}>
+                                      Waiting for buyer to approve if items are received.
+                                  </Text>
+                                  <TouchableOpacity
+                                      style={styles.pendingToReceiveButton}
+                                      // onPress={() => markAsReadyToShip(order.id)}
+                                  >
+                                      <Text style={styles.shipButtonText}>Pending to Receive</Text>
+                                  </TouchableOpacity>
+                              </>
+                          )}
+                      </View>
+                  </View>
+              ))}
+          </View>
+      );
+  };
 
   return (
     <View style={styles.container}>
@@ -292,11 +320,7 @@ const SellerOrderManagement = ({ navigation }) => {
                                 data={orders}
                                 keyExtractor={(item) => item.id}
                                 renderItem={renderOrderItem}
-                                ListEmptyComponent={
-                                    <View style={styles.emptyOrdersContainer}>
-                                        <Text>No orders found</Text>
-                                    </View>
-                                }
+                                ListEmptyComponent={renderEmptyListComponent(selectedTab)}
                             />
                         )}
                     </View>
@@ -425,6 +449,7 @@ const styles = StyleSheet.create({
     top: -10,
   },
   hintText: {
+    flex: 1, 
     marginLeft: 10,
     fontStyle: 'italic',
     fontSize: 12,
@@ -503,6 +528,17 @@ const styles = StyleSheet.create({
 },
 loading: {
     marginTop: 50,
+},
+emptyOrdersContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginTop: 50,
+},
+emptyOrdersText: {
+  fontSize: 18,
+  color: '#cccccc',
+  marginTop: 10,
 },
 });
 
