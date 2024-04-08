@@ -892,7 +892,7 @@ const styles = StyleSheet.create({
   },  
   productItemContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFFF0',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

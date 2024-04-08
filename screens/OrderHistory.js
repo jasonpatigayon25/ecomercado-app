@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     marginLeft: 20,
   },
   orderItemContainer: {
-    backgroundColor: '#F9F6EE',
+    backgroundColor: '#FFFFF0',
     padding: 10,
     marginBottom: 10,
     shadowColor: '#000',
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderBottomWidth: 1,  
     borderBottomColor: '#ccc',
-    backgroundColor: '#FFF',  
+    backgroundColor: '#FAF9F6',  
   },
   productImage: {
     width: 80,
