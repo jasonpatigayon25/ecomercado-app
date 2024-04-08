@@ -77,8 +77,12 @@ const OrderToPayDetails = ({ route, navigation }) => {
             </View>
           );
         })}
+            <View style={styles.paymentMethodContainer}>
+                <Text style={styles.paymentMethodLabel}>Payment Method:</Text>
+                <Text style={styles.paymentMethodValue}>{order.paymentMethod}</Text>
+            </View>
             <View style={styles.orderTotalSection}>
-                <Text style={styles.orderTotalLabel}>Order Total:</Text>
+                <Text style={styles.orderTotalLabel}>ORDER TOTAL</Text>
                 <View style={styles.orderTotalDetails}>
                 <View style={styles.orderTotalRow}>
                 <Text style={styles.orderTotalText}>
@@ -196,9 +200,10 @@ const styles = StyleSheet.create({
     orderTotalSection: {
         marginTop: 20,
         paddingHorizontal: 10,
-        paddingVertical: 15,
+        paddingVertical: 10,
+        borderTopWidth: 1, 
         borderBottomWidth: 1,  
-        borderBottomColor: '#ccc',
+        borderColor: '#ccc',
       },
       orderTotalDetails: {
         marginTop: 10,
@@ -321,30 +326,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  orderOverview: {
-    marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 5,
-  },
-  overviewText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  overviewLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  overviewValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
   orderInfo: {
-    marginTop: 20,
+    marginTop: 10,
     paddingVertical: 10,
     paddingHorizontal: 15,
   },
@@ -392,7 +375,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   orderTotalLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#333',
   },
@@ -419,6 +402,23 @@ const styles = StyleSheet.create({
   },
   itemsText: {
     fontSize: 14,
+    color: '#333',
+  },
+  paymentMethodContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+  },
+  paymentMethodLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  paymentMethodValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
     color: '#333',
   },
 });
