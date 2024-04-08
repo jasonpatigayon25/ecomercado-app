@@ -154,7 +154,7 @@ const OrderToShipDetails = ({ route, navigation }) => {
       </ScrollView>
       <View style={styles.footer}>
         <TouchableOpacity style={styles.pendingButton} disabled>
-            <Text style={styles.pendingButtonText}>Pending Order </Text>
+            <Text style={styles.pendingButtonText}>Pending Shipment </Text>
             <Animated.View style={{ transform: [{ rotate }] }}>
             <Icon5 name="hourglass-half" size={24} color="#fff" />
             </Animated.View>
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   contactButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#0096FF',
     padding: 15,
     borderRadius: 5,
     flex: 1,

@@ -130,9 +130,11 @@ useEffect(() => {
         navigation.navigate('OrderToPayDetails', { order, products });
       } else if (selectedTab === 'To Ship') {
         navigation.navigate('OrderToShipDetails', { order, products });
+      } else if (selectedTab === 'To Receive') {
+        navigation.navigate('OrderToReceiveDetails', { order, products });
       }
     };
-    
+
     if ((selectedTab === 'To Pay' && order.status !== 'Pending') ||
     (selectedTab === 'To Receive' && order.status !== 'Receiving') ||
     (selectedTab === 'Completed' && order.status !== 'Receiving') ||
@@ -452,7 +454,7 @@ confirmButtonText: {
   textAlign: 'center',
 },
 shipButton: {
-  backgroundColor: '#FFA500', 
+  backgroundColor: '#0096FF', 
   padding: 10,
   borderRadius: 5,
 },

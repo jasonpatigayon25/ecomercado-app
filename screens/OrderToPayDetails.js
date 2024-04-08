@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   contactButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#0096FF',
     padding: 15,
     borderRadius: 5,
     flex: 1,

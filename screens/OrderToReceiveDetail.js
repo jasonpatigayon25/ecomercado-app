@@ -117,15 +117,12 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
           <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
             <Text style={styles.buttonText}>Contact Seller</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelButton} onPress={cancelOrder}>
-            <Text style={styles.buttonText}>Cancel Order</Text>
-          </TouchableOpacity>
         </View>
       </View>
       </ScrollView>
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.pendingButton} disabled>
-          <Text style={styles.pendingButtonText}>Pending</Text>
+        <TouchableOpacity style={styles.confirmationButton} disabled>
+          <Text style={styles.confirmationButtonText}>Confirm Receipt</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -352,7 +349,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   contactButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#0096FF',
     padding: 15,
     borderRadius: 5,
     flex: 1,
@@ -437,15 +434,15 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     shadowOffset: { width: 0, height: -2 },
   },
-  pendingButton: {
-    backgroundColor: '#ccc',
+  confirmationButton: {
+    backgroundColor: '#4CAF50',
     padding: 15,
     justifyContent: 'center',
     alignItems: 'center',
     width: '90%',
     borderRadius: 10,
   },
-  pendingButtonText: {
+  confirmationButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
