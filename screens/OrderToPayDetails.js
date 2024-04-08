@@ -144,10 +144,10 @@ const OrderToPayDetails = ({ route, navigation }) => {
             </View>
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
-            <Text style={styles.buttonText}>Contact Seller</Text>
+            <Text style={styles.contactbuttonText}>Contact Seller</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelButton} onPress={cancelOrder}>
-            <Text style={styles.buttonText}>Cancel Order</Text>
+            <Text style={styles.cancelbuttonText}>Cancel Order</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -392,16 +392,22 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cancelButton: {
-    backgroundColor: '#F44336',
+    borderColor: 'red',
+    borderWidth: 2,
     padding: 15,
     borderRadius: 5,
     flex: 1,
-    elevation: 2,
   },
-  buttonText: {
+  contactbuttonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
+    textAlign: 'center',
+  },
+  cancelbuttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ff0000',
     textAlign: 'center',
   },
   totalPriceContainer: {
