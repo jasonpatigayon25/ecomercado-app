@@ -1,11 +1,49 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
+import { getDocs, query, collection, where } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import moment from 'moment';
 
 const OrderToPayDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
+  const [sellerName, setSellerName] = useState('Unknown Seller');
+  
+  useEffect(() => {
+    const fetchSellerName = async () => {
+      if (order.sellerEmail) {
+        const sellersQuery = query(collection(db, 'registeredSeller'), where('email', '==', order.sellerEmail));
+        const querySnapshot = await getDocs(sellersQuery);
+        querySnapshot.forEach((doc) => {
+          if (doc.exists()) {
+            setSellerName(doc.data().sellerName);
+          }
+        });
+      }
+    };
+    fetchSellerName();
+  }, [order.sellerEmail]);
 
+  const contactSeller = () => {
+    // 
+  };
+
+  const cancelOrder = () => {
+    // 
+  };
+
+  // 
+  const subtotal = order.productDetails.reduce(
+    (sum, detail) => sum + detail.orderedQuantity * products[detail.productId].price,
+    0
+  );
+
+  const totalItems = order.productDetails.reduce(
+    (sum, detail) => sum + detail.orderedQuantity,
+    0
+  );
+  
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -17,9 +55,14 @@ const OrderToPayDetails = ({ route, navigation }) => {
       <View style={styles.orderItemContainer}>
         <View style={styles.sellerHeader}>
           <Icon5 name="store" size={20} color="#808080" />
-          <Text style={styles.sellerName}>{order.sellerName || 'Unknown Seller'}</Text>
+          <Text style={styles.sellerName}>{sellerName}</Text>
+          <TouchableOpacity
+            style={styles.visitButton}
+            onPress={() => navigation.navigate('UserVisit', { email: order.sellerEmail })}
+          >
+            <Text style={styles.visitButtonText}>Visit</Text>
+          </TouchableOpacity>
         </View>
-
         {order.productDetails.map((item, index) => {
           const product = products[item.productId];
           return (
@@ -34,15 +77,43 @@ const OrderToPayDetails = ({ route, navigation }) => {
             </View>
           );
         })}
-
-        {/* Total price and action button */}
-        <View style={styles.totalPriceContainer}>
-          <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
-          <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.pendingButton} disabled={true}>
-            <Text style={styles.pendingButtonText}>Pending</Text>
+            <View style={styles.orderTotalSection}>
+                <Text style={styles.orderTotalLabel}>Order Total:</Text>
+                <View style={styles.orderTotalDetails}>
+                <View style={styles.orderTotalRow}>
+                <Text style={styles.orderTotalText}>
+                    Merchandise Subtotal: <Text style={styles.itemsText}>({totalItems} items)</Text>
+                </Text>
+                    <Text style={styles.orderTotalValue}>₱{subtotal.toFixed(2)}</Text>
+                </View>
+                <View style={styles.orderTotalRow}>
+                    <Text style={styles.orderTotalText}>Shipping Fee:</Text>
+                    <Text style={styles.orderTotalValue}>₱{order.shippingFee.toFixed(2)}</Text>
+                </View>
+                <View style={styles.orderTotalRow}>
+                    <Text style={styles.orderTotalTextFinal}>Total:</Text>
+                    <Text style={styles.orderTotalValueFinal}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+                </View>
+                </View>
+            </View>
+            <View style={styles.orderInfo}>
+            <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Order ID:</Text>
+                <Text style={styles.detailValue}>{order.id.toUpperCase()}</Text>
+            </View>
+            <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Order Time:</Text>
+                <Text style={styles.detailValue}>
+                {moment(order.dateOrdered.toDate()).format('DD-MM-YYYY HH:mm')}
+                </Text>
+            </View>
+            </View>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
+            <Text style={styles.buttonText}>Contact Seller</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.cancelButton} onPress={cancelOrder}>
+            <Text style={styles.buttonText}>Cancel Order</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -122,6 +193,39 @@ const styles = StyleSheet.create({
       borderBottomWidth: 1,  
       borderBottomColor: '#ccc',
     },
+    orderTotalSection: {
+        marginTop: 20,
+        paddingHorizontal: 10,
+        paddingVertical: 15,
+        borderBottomWidth: 1,  
+        borderBottomColor: '#ccc',
+      },
+      orderTotalDetails: {
+        marginTop: 10,
+      },
+      orderTotalRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 5,
+      },
+      orderTotalText: {
+        fontSize: 14,
+        color: '#666',
+      },
+      orderTotalTextFinal: {
+        fontSize: 14,
+        color: '#333',
+        fontWeight: 'bold',
+      },
+      orderTotalValue: {
+        fontSize: 14,
+        color: '#666',
+      },
+      orderTotalValueFinal: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+      },
     orderTotalLabel: {
       fontSize: 16,
       color: '#000', 
@@ -201,6 +305,121 @@ const styles = StyleSheet.create({
       fontSize: 16,
       color: '#ccc',
       textAlign: 'center',
+  },
+  visitButton: {
+    position: 'absolute',
+    right: 8,
+    top: 6,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#05652D',
+  },
+  visitButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  orderOverview: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 5,
+  },
+  overviewText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+  overviewLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  overviewValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  orderInfo: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+  },
+  orderLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  orderValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  actionButtons: {
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  contactButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 10,
+    elevation: 2,
+  },
+  cancelButton: {
+    backgroundColor: '#F44336',
+    padding: 15,
+    borderRadius: 5,
+    flex: 1,
+    elevation: 2,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  totalPriceContainer: {
+    borderTopWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingTop: 10,
+    marginTop: 20,
+    borderBottomWidth: 1,
+  },
+  orderTotalLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  orderTotalPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    textAlign: 'right',
+  },
+  detailRow: { 
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  detailLabel: { 
+    fontSize: 14,
+    color: '#666',
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  itemsText: {
+    fontSize: 14,
+    color: '#333',
   },
 });
 

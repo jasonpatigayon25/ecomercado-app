@@ -323,11 +323,11 @@ const Cart = ({ navigation }) => {
           <Text style={styles.removeButtonText}> Remove</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleCheckout} style={styles.checkoutButton}>
-  <View>
-    <Text style={styles.checkoutButtonText}>Check Out ({selectedItems.size})</Text>
-    <Text style={styles.totalPriceText}>Total: ₱{totalPrice.toFixed(2)}</Text>
-  </View>
-</TouchableOpacity>
+          <View>
+            <Text style={styles.checkoutButtonText}>Check Out ({selectedItems.size})</Text>
+            <Text style={styles.totalPriceText}>Total: ₱{totalPrice.toFixed(2)}</Text>
+          </View>
+        </TouchableOpacity>
       </View>
       <CartModal item={currentItem} visible={modalVisible} onClose={() => setModalVisible(false)} />
     </SafeAreaView>
