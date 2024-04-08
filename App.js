@@ -59,7 +59,7 @@ import DonateAddDonation from './screens/DonateAddDonation';
 import RatingReview from './screens/RatingReview';
 import SellerOrderManagement from './screens/SellerOrderManagement';
 import OrderToPayDetails from './screens/OrderToPayDetails';
-
+import OrderToShipDetails from './screens/OrderToShipDetails';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -285,6 +285,7 @@ const App = () => {
               <Stack.Screen name="DonateAddDonation" component={DonateAddDonation} />
               <Stack.Screen name="OrderHistory" component={OrderHistory} />
               <Stack.Screen name="OrderToPayDetails" component={OrderToPayDetails} />
+              <Stack.Screen name="OrderToShipDetails" component={OrderToShipDetails} />
               <Stack.Screen name="SellerOrderManagement" component={SellerOrderManagement} />
               <Stack.Screen name="RequestApproval" component={RequestApproval} />
               <Stack.Screen name="CheckOutScreen" component={CheckOutScreen} />

@@ -1,43 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { getDocs, query, collection, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
 
-const OrderToPayDetails = ({ route, navigation }) => {
+const OrderToReceiveDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
   const [sellerName, setSellerName] = useState('Unknown Seller');
-
-  const rotateAnimation = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(rotateAnimation, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotateAnimation, {
-          toValue: -1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotateAnimation, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [rotateAnimation]);
-
-  const rotate = rotateAnimation.interpolate({
-    inputRange: [-1, 1],
-    outputRange: ['-15deg', '15deg'],
-  });
   
   useEffect(() => {
     const fetchSellerName = async () => {
@@ -154,12 +125,9 @@ const OrderToPayDetails = ({ route, navigation }) => {
       </ScrollView>
       <View style={styles.footer}>
         <TouchableOpacity style={styles.pendingButton} disabled>
-            <Text style={styles.pendingButtonText}>Pending Order </Text>
-            <Animated.View style={{ transform: [{ rotate }] }}>
-            <Icon5 name="hourglass-half" size={24} color="#fff" />
-            </Animated.View>
+          <Text style={styles.pendingButtonText}>Pending</Text>
         </TouchableOpacity>
-        </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -470,12 +438,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
   },
   pendingButton: {
-    backgroundColor: '#666',
+    backgroundColor: '#ccc',
     padding: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
-    width: '70%',
+    width: '90%',
     borderRadius: 10,
   },
   pendingButtonText: {
@@ -485,4 +452,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OrderToPayDetails;
+export default OrderToReceiveDetails;

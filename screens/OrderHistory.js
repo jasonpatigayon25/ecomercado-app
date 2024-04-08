@@ -124,6 +124,15 @@ useEffect(() => {
 }, [selectedTab, fetchOrders]);
 
   const renderOrderItem = ({ item: order }) => {
+
+    const handlePress = () => {
+      if (selectedTab === 'To Pay') {
+        navigation.navigate('OrderToPayDetails', { order, products });
+      } else if (selectedTab === 'To Ship') {
+        navigation.navigate('OrderToShipDetails', { order, products });
+      }
+    };
+    
     if ((selectedTab === 'To Pay' && order.status !== 'Pending') ||
     (selectedTab === 'To Receive' && order.status !== 'Receiving') ||
     (selectedTab === 'Completed' && order.status !== 'Receiving') ||
@@ -146,7 +155,7 @@ useEffect(() => {
     }, {});
   
     return (
-      <TouchableOpacity onPress={() => navigation.navigate('OrderToPayDetails', { order, products })} style={styles.orderItemContainer}>
+      <TouchableOpacity onPress={handlePress} style={styles.orderItemContainer}>
         {Object.entries(groupedBySeller).map(([sellerName, productDetails]) => (
           <View key={sellerName}>
             <View style={styles.sellerHeader}>
@@ -340,7 +349,7 @@ const styles = StyleSheet.create({
   },
   orderTotalLabel: {
     fontSize: 16,
-    color: '#000', 
+    color: '#666', 
     marginBottom: 10,
   },
   orderTotalPrice: {
