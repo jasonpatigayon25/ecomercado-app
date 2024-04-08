@@ -20,6 +20,7 @@ const OrderHistory = ({ navigation }) => {
 
   const tabStatusMapping = {
     'To Pay': 'Pending',
+    'To Ship': 'Approved',
     'To Receive': 'Receiving',
     'Completed': 'Completed',
     'Cancelled': 'Cancelled'
@@ -172,11 +173,21 @@ useEffect(() => {
         <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
         <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
       </View>
+      {selectedTab === 'To Pay' && (
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.pendingButton} disabled={true}>
           <Text style={styles.pendingButtonText}>Pending</Text>
         </TouchableOpacity>
       </View>
+       )}
+      {selectedTab === 'To Receive' && (
+          <View style={styles.confirmationContainer}>
+            <Text style={styles.noteText}>Please confirm when you've received your items.</Text>
+            <TouchableOpacity style={styles.confirmButton} onPress={() => confirmReceipt(order.id)}>
+              <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
@@ -398,6 +409,30 @@ emptyOrdersText: {
     fontSize: 16,
     color: '#ccc',
     textAlign: 'center',
+},
+confirmationContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: 10,
+  marginTop: 10,
+},
+noteText: {
+  fontSize: 14,
+  color: '#666',
+  flex: 1,
+},
+confirmButton: {
+  backgroundColor: '#4CAF50',
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  borderRadius: 5,
+  marginLeft: 10,
+},
+confirmButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  textAlign: 'center',
 },
 });
 
