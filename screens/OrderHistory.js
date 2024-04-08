@@ -145,7 +145,7 @@ useEffect(() => {
     }, {});
   
     return (
-      <View style={styles.orderItemContainer}>
+      <TouchableOpacity onPress={() => navigation.navigate('OrderToPayDetails', { order, products })} style={styles.orderItemContainer}>
         {Object.entries(groupedBySeller).map(([sellerName, productDetails]) => (
           <View key={sellerName}>
             <View style={styles.sellerHeader}>
@@ -177,7 +177,7 @@ useEffect(() => {
           <Text style={styles.pendingButtonText}>Pending</Text>
         </TouchableOpacity>
       </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
