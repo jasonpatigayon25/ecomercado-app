@@ -180,6 +180,14 @@ useEffect(() => {
         </TouchableOpacity>
       </View>
        )}
+        {selectedTab === 'To Ship' && (
+          <View style={styles.confirmationContainer}>
+            <Text style={styles.noteText}>Your order is being processed. Please wait for the seller to confirm shipment.</Text>
+            <TouchableOpacity style={styles.shipButton} onPress={() => confirmReceipt(order.id)}>
+              <Text style={styles.confirmButtonText}>Contact Seller</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       {selectedTab === 'To Receive' && (
           <View style={styles.confirmationContainer}>
             <Text style={styles.noteText}>Please confirm when you've received your items.</Text>
@@ -433,6 +441,11 @@ confirmButtonText: {
   color: '#fff',
   fontSize: 16,
   textAlign: 'center',
+},
+shipButton: {
+  backgroundColor: '#FFA500', 
+  padding: 10,
+  borderRadius: 5,
 },
 });
 
