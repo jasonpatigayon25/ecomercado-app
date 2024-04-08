@@ -132,6 +132,8 @@ useEffect(() => {
         navigation.navigate('OrderToShipDetails', { order, products });
       } else if (selectedTab === 'To Receive') {
         navigation.navigate('OrderToReceiveDetails', { order, products });
+      } else if (selectedTab === 'Cancelled') {
+        navigation.navigate('OrderCancelledDetails', { order, products });
       }
     };
 
@@ -204,6 +206,14 @@ useEffect(() => {
             <Text style={styles.noteText}>Please confirm when you've received your items.</Text>
             <TouchableOpacity style={styles.confirmButton} onPress={() => confirmReceipt(order.id)}>
               <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {selectedTab === 'Cancelled' && (
+          <View style={styles.confirmationContainer}>
+            <Text style={styles.noteText}>Please confirm when you've received your items.</Text>
+            <TouchableOpacity style={styles.confirmButton} onPress={() => confirmReceipt(order.id)}>
+              <Text style={styles.confirmButtonText}>Cart Again</Text>
             </TouchableOpacity>
           </View>
         )}
