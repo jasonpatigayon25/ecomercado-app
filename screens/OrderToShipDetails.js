@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { getDocs, query, collection, where } from 'firebase/firestore';
@@ -9,6 +9,35 @@ import moment from 'moment';
 const OrderToShipDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
   const [sellerName, setSellerName] = useState('Unknown Seller');
+
+  const rotateAnimation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnimation, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnimation, {
+          toValue: -1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnimation, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [rotateAnimation]);
+
+  const rotate = rotateAnimation.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-15deg', '15deg'],
+  });
   
   useEffect(() => {
     const fetchSellerName = async () => {
@@ -115,19 +144,22 @@ const OrderToShipDetails = ({ route, navigation }) => {
             </View>
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
-            <Text style={styles.buttonText}>Contact Seller</Text>
+            <Text style={styles.contactbuttonText}>Contact Seller</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelButton} onPress={cancelOrder}>
-            <Text style={styles.buttonText}>Cancel Order</Text>
+            <Text style={styles.cancelbuttonText}>Cancel Order</Text>
           </TouchableOpacity>
         </View>
       </View>
       </ScrollView>
       <View style={styles.footer}>
         <TouchableOpacity style={styles.pendingButton} disabled>
-          <Text style={styles.pendingButtonText}>Pending for Shipment</Text>
+            <Text style={styles.pendingButtonText}>Pending Order </Text>
+            <Animated.View style={{ transform: [{ rotate }] }}>
+            <Icon5 name="hourglass-half" size={24} color="#fff" />
+            </Animated.View>
         </TouchableOpacity>
-      </View>
+        </View>
     </SafeAreaView>
   );
 };
@@ -360,16 +392,22 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cancelButton: {
-    backgroundColor: '#F44336',
+    borderColor: 'red',
+    borderWidth: 2,
     padding: 15,
     borderRadius: 5,
     flex: 1,
-    elevation: 2,
   },
-  buttonText: {
+  contactbuttonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
+    textAlign: 'center',
+  },
+  cancelbuttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ff0000',
     textAlign: 'center',
   },
   totalPriceContainer: {
@@ -438,11 +476,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
   },
   pendingButton: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#666',
     padding: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '90%',
+    flexDirection: 'row',
+    width: '70%',
     borderRadius: 10,
   },
   pendingButtonText: {
