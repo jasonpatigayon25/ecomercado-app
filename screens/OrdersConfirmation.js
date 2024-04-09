@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert } from 'r
 import { ScrollView } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
-import { collection, addDoc, doc, updateDoc, getDoc, runTransaction } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDoc, runTransaction, writeBatch } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
@@ -101,12 +101,19 @@ const OrdersConfirmation = ({ route, navigation }) => {
     setOrderPlaced(true);
     setConfirmModalVisible(false);
 
+    const batch = writeBatch(db);
+
     try {
+      const cartRef = doc(db, 'carts', user.email);
+      const orderHistoryRef = doc(collection(db, 'orderHistory'));
+      const allOrderedProductIds = [];
+      
         for (const [sellerName, products] of Object.entries(groupedProducts)) {
             const sellerTotal = products.reduce((sum, product) => sum + product.price * product.orderedQuantity, 0);
             const shippingFeeForSeller = shippingFees[sellerName] || 0;
             const totalForSeller = sellerTotal + shippingFeeForSeller;
             const sellerEmail = products[0]?.seller_email;
+            
 
             const orderData = {
                 deliveryAddress: address,
@@ -126,6 +133,8 @@ const OrdersConfirmation = ({ route, navigation }) => {
 
             const orderDocRef = await addDoc(collection(db, 'orders'), orderData);
             console.log(`Order placed with ID: ${orderDocRef.id} for seller: ${sellerName}`);
+        
+            allOrderedProductIds.push(...products.map(product => product.productId));
 
             // Notification for the buyer
             const buyerNotificationMessage = `Your order with ${sellerName} has been placed successfully.`;
@@ -157,6 +166,21 @@ const OrdersConfirmation = ({ route, navigation }) => {
                 await incrementUserRecommendHit(product.productId);
             }
         }
+        if (allOrderedProductIds.length > 0) {
+          const cartSnapshot = await getDoc(cartRef);
+          if (cartSnapshot.exists()) {
+              const updatedCartItems = cartSnapshot.data().cartItems.filter(
+                  item => !allOrderedProductIds.includes(item.productId)
+              );
+              batch.update(cartRef, { cartItems: updatedCartItems });
+              batch.set(orderHistoryRef, {
+                  productIds: allOrderedProductIds,
+                  buyerEmail: user.email,
+              });
+          }
+      }
+
+      await batch.commit();
 
         setSuccessModalVisible(true);
         // navigation.navigate('Home'); 
