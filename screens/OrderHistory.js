@@ -211,7 +211,7 @@ useEffect(() => {
         )}
         {selectedTab === 'Cancelled' && (
           <View style={styles.confirmationContainer}>
-            <Text style={styles.noteText}>Please confirm when you've received your items.</Text>
+            <Text style={styles.noteText}>Please press button if you wish to cart the items again.</Text>
             <TouchableOpacity style={styles.confirmButton} onPress={() => confirmReceipt(order.id)}>
               <Text style={styles.confirmButtonText}>Cart Again</Text>
             </TouchableOpacity>
