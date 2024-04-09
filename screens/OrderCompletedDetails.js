@@ -1,19 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Modal, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
-import { getDocs, query, collection, where, updateDoc, doc } from 'firebase/firestore';
-import * as ImagePicker from 'expo-image-picker';
+import { getDocs, query, collection, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
-import CameraIcon from 'react-native-vector-icons/MaterialIcons';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-const OrderToReceiveDetails = ({ route, navigation }) => {
+const OrderCompletedDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
   const [sellerName, setSellerName] = useState('Unknown Seller');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+
+  const rotateAnimation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnimation, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnimation, {
+          toValue: -1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnimation, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [rotateAnimation]);
+
+  const rotate = rotateAnimation.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-15deg', '15deg'],
+  });
   
   useEffect(() => {
     const fetchSellerName = async () => {
@@ -48,133 +72,9 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     (sum, detail) => sum + detail.orderedQuantity,
     0
   );
-
-  const uploadImageAsync = async (uri) => {
-    const blob = await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.onload = function () {
-        resolve(xhr.response);
-      };
-      xhr.onerror = function (e) {
-        console.log(e);
-        reject(new TypeError('Network request failed'));
-      };
-      xhr.responseType = 'blob';
-      xhr.open('GET', uri, true);
-      xhr.send(null);
-    });
-  
-    const storage = getStorage();
-    const storageRef = ref(storage, `uploads/${Date.now()}`);
-    await uploadBytes(storageRef, blob);
-  
-    blob.close();
-  
-    return await getDownloadURL(storageRef);
-  };
-
-  const pickImage = async (type) => {
-  let result;
-  if (type === 'camera') {
-    result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-  } else {
-    result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-  }
-
-  if (!result.canceled && result.assets && result.assets[0].uri) {
-    const uploadUrl = await uploadImageAsync(result.assets[0].uri);
-    setSelectedImage({ uri: uploadUrl });
-  }
-};
-
-  const handleChoosePhoto = () => {
-    Alert.alert("Upload Photo", "Choose an option", [
-      {
-        text: "Take Photo",
-        onPress: () => pickImage('camera'),
-      },
-      {
-        text: "Choose from Gallery",
-        onPress: () => pickImage('library'),
-      },
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-    ]);
-  };
-
-  const confirmReceipt = async () => {
-    if (!selectedImage) {
-      Alert.alert('Photo Required', 'Please provide a photo of the item received.');
-      return;
-    }
-  
-    const imageUrl = await uploadImageAsync(selectedImage.uri);
-  
-    const orderDocRef = doc(db, 'orders', order.id);
-    await updateDoc(orderDocRef, {
-      receivedPhoto: imageUrl,
-      status: 'Completed'
-    });
-  
-    Alert.alert(
-      'Confirmation Success',
-      'Receipt has been confirmed successfully.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            setModalVisible(false);
-            navigation.navigate('OrderHistory');
-          }
-        }
-      ]
-    );
-  };
   
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-            setModalVisible(!modalVisible);
-        }}
-    >
-        <View style={styles.modalView}>
-            {selectedImage ? (
-                <>
-                    <Text style={styles.imageAttachedText}>Image Attached</Text>
-                    <Image source={{ uri: selectedImage.uri }} style={styles.previewImage} />
-                    <TouchableOpacity onPress={handleChoosePhoto} style={styles.cameraButton}>
-                        <CameraIcon name="camera-alt" size={60} color="#fff" />
-                        <Text style={styles.cameraButtonText}>Change Photo</Text>
-                    </TouchableOpacity>
-                </>
-            ) : (
-                <TouchableOpacity onPress={handleChoosePhoto} style={styles.cameraButton}>
-                    <CameraIcon name="camera-alt" size={60} color="#fff" />
-                    <Text style={styles.cameraButtonText}>Take Photo</Text>
-                </TouchableOpacity>
-            )}
-            <Text style={styles.modalText}>To confirm item received, please attach a photo.</Text>
-            <TouchableOpacity onPress={confirmReceipt} style={styles.confirmButton}>
-                <Text style={styles.buttonText}>Confirm Receipt</Text>
-            </TouchableOpacity>
-        </View>
-    </Modal>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#000" />
@@ -242,21 +142,8 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
                 </Text>
             </View>
             </View>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
-            <Text style={styles.buttonText}>Contact Seller</Text>
-          </TouchableOpacity>
-        </View>
       </View>
       </ScrollView>
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.confirmationButton}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.confirmationButtonText}>Confirm Receipt</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -489,16 +376,22 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cancelButton: {
-    backgroundColor: '#F44336',
+    borderColor: 'red',
+    borderWidth: 2,
     padding: 15,
     borderRadius: 5,
     flex: 1,
-    elevation: 2,
   },
-  buttonText: {
+  contactbuttonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
+    textAlign: 'center',
+  },
+  cancelbuttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ff0000',
     textAlign: 'center',
   },
   totalPriceContainer: {
@@ -566,85 +459,20 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     shadowOffset: { width: 0, height: -2 },
   },
-  confirmationButton: {
-    backgroundColor: '#4CAF50',
+  pendingButton: {
+    backgroundColor: '#666',
     padding: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '90%',
+    flexDirection: 'row',
+    width: '70%',
     borderRadius: 10,
   },
-  confirmationButtonText: {
+  pendingButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  modalView: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 15,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: "center",
-    fontWeight: 'bold'
-  },
-  cameraButton: {
-    backgroundColor: "#2196F3",
-    borderRadius: 10,
-    padding: 10,
-    paddingVertical: 20,
-    elevation: 2,
-    marginBottom: 10
-  },
-  cameraButtonText: {
-    color: "#fff",
-    marginLeft: 10
-  },
-  previewImage: {
-    width: 300,
-    height: 300,
-    marginBottom: 10
-  },
-  confirmButton: {
-    backgroundColor: "#4CAF50",
-    borderRadius: 10,
-    padding: 20,
-    elevation: 2
-  },
-  buttonText: {
-    color: "#fff",
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  previewImage: {
-    width: 300,
-    height: 300,
-    marginBottom: 10
-},
-imagePreviewContainer: {
-    alignItems: 'center',
-    marginBottom: 10,
-},
-imageAttachedText: {
-  textAlign: 'center',
-  fontWeight: 'bold',
-  fontSize: 16,
-  marginBottom: 10,
-},
 });
 
-export default OrderToReceiveDetails;
+export default OrderCompletedDetails;

@@ -156,6 +156,8 @@ useEffect(() => {
         navigation.navigate('OrderToShipDetails', { order, products });
       } else if (selectedTab === 'To Receive') {
         navigation.navigate('OrderToReceiveDetails', { order, products });
+      } else if (selectedTab === 'Completed') {
+        navigation.navigate('OrderCompletedDetails', { order, products });
       } else if (selectedTab === 'Cancelled') {
         navigation.navigate('OrderCancelledDetails', { order, products });
       }
@@ -163,7 +165,7 @@ useEffect(() => {
 
     if ((selectedTab === 'To Pay' && order.status !== 'Pending') ||
     (selectedTab === 'To Receive' && order.status !== 'Receiving') ||
-    (selectedTab === 'Completed' && order.status !== 'Receiving') ||
+    (selectedTab === 'Completed' && order.status !== 'Completed') ||
     (selectedTab === 'Cancelled' && order.status !== 'Cancelled')) {
     return null;
 }
