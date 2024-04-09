@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, 
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, query, where, orderBy, getDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import OrderTab from '../navbars/OrderTab';
 
@@ -122,6 +122,30 @@ const fetchProductDetails = async (orders) => {
 useEffect(() => {
   fetchOrders(selectedTab);
 }, [selectedTab, fetchOrders]);
+
+useEffect(() => {
+  const status = tabStatusMapping[selectedTab];
+  const ordersQuery = query(
+      collection(db, 'orders'),
+      where('buyerEmail', '==', user.email),
+      where('status', '==', status),
+      orderBy('dateOrdered', 'desc')
+  );
+
+  const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
+      const updatedOrders = [];
+      querySnapshot.forEach((doc) => {
+          updatedOrders.push({ id: doc.id, ...doc.data() });
+      });
+
+      setOrders(updatedOrders);
+      fetchProductDetails(updatedOrders);
+  }, (error) => {
+      console.error("Error fetching orders:", error);
+  });
+
+  return () => unsubscribe();
+}, [selectedTab, user.email, fetchProductDetails]);
 
   const renderOrderItem = ({ item: order }) => {
 
