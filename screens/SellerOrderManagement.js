@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, query, where, orderBy, getDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, getDoc, doc, updateDoc, onSnapshot, runTransaction } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import OrderSellerTab from '../navbars/OrderSellerTab';
 
@@ -84,43 +84,44 @@ const SellerOrderManagement = ({ navigation }) => {
     setLoading(false);
   };
 
-  const fetchOrders = useCallback(async (tab = selectedTab) => {
+  const fetchOrders = useCallback((tab = selectedTab) => {
     if (user) {
-        setLoading(true);
-        try {
-            let statusCriteria = [];
-            if (tab === 'To Approve') {
-                statusCriteria = ['Pending'];
-            } else if (tab === 'To Ship') {
-                statusCriteria = ['Approved'];
-            } else if (tab === 'Shipped') {
-              statusCriteria = ['Receiving'];
-          }
+      setLoading(true);
 
-            const ordersQuery = query(
-                collection(db, 'orders'),
-                where('sellerEmail', '==', user.email),
-                where('status', 'in', statusCriteria),
-                orderBy('dateOrdered', 'desc')
-            );
+      const statusCriteria = {
+        'To Approve': ['Pending'],
+        'To Ship': ['Approved'],
+        'Shipped': ['Receiving'],
+        'Completed': ['Completed']
+      }[tab];
 
-            const querySnapshot = await getDocs(ordersQuery);
-            const fetchedOrders = [];
-            querySnapshot.forEach((doc) => {
-                fetchedOrders.push({ id: doc.id, ...doc.data() });
-            });
-            setOrders(fetchedOrders);
-            await fetchProductDetails(fetchedOrders);
-        } catch (error) {
-            console.error("Error fetching orders:", error);
-        } finally {
-            setLoading(false);
-        }
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        where('sellerEmail', '==', user.email),
+        where('status', 'in', statusCriteria),
+        orderBy('dateOrdered', 'desc')
+      );
+
+      // Here we use onSnapshot for real-time updates
+      return onSnapshot(ordersQuery, async (querySnapshot) => {
+        const updatedOrders = [];
+        querySnapshot.forEach((doc) => {
+          updatedOrders.push({ id: doc.id, ...doc.data() });
+        });
+
+        setOrders(updatedOrders);
+        await fetchProductDetails(updatedOrders);
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching orders:", error);
+        setLoading(false);
+      });
     }
-}, [user, selectedTab]);
+  }, [user, selectedTab]);
 
   useEffect(() => {
-    fetchOrders();
+    const unsubscribe = fetchOrders();
+    return () => unsubscribe && unsubscribe(); // Cleanup subscription on unmount
   }, [fetchOrders]);
 
   const approveOrder = async (orderId) => {
