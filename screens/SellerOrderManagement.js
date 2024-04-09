@@ -102,7 +102,6 @@ const SellerOrderManagement = ({ navigation }) => {
         orderBy('dateOrdered', 'desc')
       );
 
-      // Here we use onSnapshot for real-time updates
       return onSnapshot(ordersQuery, async (querySnapshot) => {
         const updatedOrders = [];
         querySnapshot.forEach((doc) => {
@@ -121,7 +120,7 @@ const SellerOrderManagement = ({ navigation }) => {
 
   useEffect(() => {
     const unsubscribe = fetchOrders();
-    return () => unsubscribe && unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe && unsubscribe(); 
   }, [fetchOrders]);
 
   const approveOrder = async (orderId) => {
