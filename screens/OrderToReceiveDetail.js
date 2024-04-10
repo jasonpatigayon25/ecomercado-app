@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Modal, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { getDocs, query, collection, where, updateDoc, doc } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import { db } from '../config/firebase';
 import moment from 'moment';
+import { LinearGradient } from 'expo-linear-gradient'; 
 import CameraIcon from 'react-native-vector-icons/MaterialIcons';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -183,6 +185,19 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
       </View>
       <ScrollView style={styles.container}>
       <View style={styles.orderItemContainer}>
+      <LinearGradient
+          colors={['#e0f2f1', '#00695c']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.deliveryInfoContainer}>
+          <Text style={styles.deliveryInfoText}>
+            Your order is on the way{'\n'}
+            Delivery should be made between 
+            {order.deliveryStart?.toDate() ? moment(order.deliveryStart.toDate()).format('DD MMM YYYY') : 'N/A'} and 
+            {order.deliveryEnd?.toDate() ? moment(order.deliveryEnd.toDate()).format('DD MMM YYYY') : 'N/A'}
+          </Text>
+          <MaterialIcons name="local-shipping" size={30} color="#FFF" style={styles.deliveryIcon} />
+        </LinearGradient>
         <View style={styles.sellerHeader}>
           <Icon5 name="store" size={20} color="#808080" />
           <Text style={styles.sellerName}>{sellerName}</Text>
@@ -644,6 +659,21 @@ imageAttachedText: {
   fontWeight: 'bold',
   fontSize: 16,
   marginBottom: 10,
+},
+deliveryInfoContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: 15,
+  borderRadius: 5,
+  marginBottom: 10,
+},
+deliveryInfoText: {
+  color: '#fff',
+  fontWeight: 'bold',
+},
+deliveryIcon: {
+  backgroundColor: 'transparent',
 },
 });
 

@@ -4,8 +4,10 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
 import { collection, getDocs, query, where, orderBy, getDoc, doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import OrderSellerTab from '../navbars/OrderSellerTab';
+
 
 const windowWidth = Dimensions.get('window').width;
 
@@ -208,38 +210,38 @@ const SellerOrderManagement = ({ navigation }) => {
 
   const confirmDeliveryDates = async () => {
     if (currentOrder) {
-      Alert.alert(
-        "Finalize Delivery Dates",
-        "Are you sure you want to set these delivery dates?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel"
-          },
-          {
-            text: "Confirm",
-            onPress: async () => {
-              try {
-                const orderRef = doc(db, 'orders', currentOrder);
-                await updateDoc(orderRef, {
-                  deliveryStart: deliveryStart.toISOString(),
-                  deliveryEnd: deliveryEnd.toISOString(),
-                  status: 'Receiving'
-                });
-                setDeliveryDateModalVisible(false);
-                await fetchOrders(); 
-                Alert.alert("Success", "Delivery dates set successfully.");
-              } catch (error) {
-                console.error("Error setting delivery dates: ", error);
-                Alert.alert("Error", "Failed to set delivery dates.");
-              }
-            }
-          }
-        ],
-        { cancelable: false }
-      );
+        Alert.alert(
+            "Finalize Delivery Dates",
+            "Are you sure you want to set these delivery dates?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Confirm",
+                    onPress: async () => {
+                        try {
+                            const orderRef = doc(db, 'orders', currentOrder);
+                            await updateDoc(orderRef, {
+                                deliveryStart: Timestamp.fromDate(new Date(deliveryStart)), 
+                                deliveryEnd: Timestamp.fromDate(new Date(deliveryEnd)), 
+                                status: 'Receiving'
+                            });
+                            setDeliveryDateModalVisible(false);
+                            await fetchOrders();
+                            Alert.alert("Success", "Delivery dates set successfully.");
+                        } catch (error) {
+                            console.error("Error setting delivery dates: ", error);
+                            Alert.alert("Error", "Failed to set delivery dates.");
+                        }
+                    }
+                }
+            ],
+            { cancelable: false }
+        );
     }
-  };
+};
 
     const renderEmptyListComponent = (tab) => {
         let icon = 'inbox';

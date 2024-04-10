@@ -69,7 +69,8 @@
     "react-native-sweet-alert": "^3.5.0",
     "react-native-vector-icons": "^10.0.3",
     "react-native-youtube": "^2.0.2",
-    "react-router-native": "^6.11.2"
+    "react-router-native": "^6.11.2",
+    "expo-linear-gradient": "~12.7.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
