@@ -1,14 +1,40 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Animated, Dimensions, ScrollView } from 'react-native';
+import { getAuth } from 'firebase/auth';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const windowWidth = Dimensions.get('window').width;
 const visibleTabCount = 5; 
-const tabWidth = windowWidth / visibleTabCount * 1.2; 
+const tabWidth = windowWidth / visibleTabCount * 1.2;
 
 const OrderTab = ({ selectedTab, setSelectedTab }) => {
+    const [orderCounts, setOrderCounts] = useState({ Pending: 0, Approved: 0, Receiving: 0, Completed: 0, Cancelled: 0 });
     const indicatorAnim = useRef(new Animated.Value(0)).current;
     const scrollViewRef = useRef(null);
     const tabNames = ['To Pay', 'To Ship', 'To Receive', 'Completed', 'Cancelled'];
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    const statusMap = {
+        'To Pay': 'Pending',
+        'To Ship': 'Approved',
+        'To Receive': 'Receiving',
+        'Completed': 'Completed',
+        'Cancelled': 'Cancelled'
+    };
+
+    useEffect(() => {
+        const unsubscribe = Object.entries(statusMap).map(([tabName, status]) => {
+            const q = query(collection(db, "orders"), where("buyerEmail", "==", currentUser.email), where("status", "==", status));
+
+            return onSnapshot(q, (snapshot) => {
+                setOrderCounts(prevCounts => ({ ...prevCounts, [status]: snapshot.size }));
+            });
+        });
+
+        return () => unsubscribe.forEach(unsub => unsub());
+    }, [currentUser.email]);
 
     useEffect(() => {
         const tabIndex = tabNames.indexOf(selectedTab);
@@ -25,6 +51,9 @@ const OrderTab = ({ selectedTab, setSelectedTab }) => {
 
     const renderTab = (tabName) => {
         const isActive = selectedTab === tabName;
+        const status = statusMap[tabName];
+        const count = orderCounts[status];
+    
         return (
             <TouchableOpacity 
                 onPress={() => setSelectedTab(tabName)} 
@@ -34,6 +63,11 @@ const OrderTab = ({ selectedTab, setSelectedTab }) => {
                 <Text style={[styles.tabText, isActive && styles.activeTabText]}>
                     {tabName}
                 </Text>
+                <View style={styles.counterContainer}>
+                    <Text style={styles.countText}>
+                        {count}
+                    </Text>
+                </View>
             </TouchableOpacity>
         );
     };
@@ -60,7 +94,7 @@ const OrderTab = ({ selectedTab, setSelectedTab }) => {
         </View>
     );
 };
-  
+
 const styles = StyleSheet.create({
     container: {
         backgroundColor: '#FFF',
@@ -78,11 +112,35 @@ const styles = StyleSheet.create({
         width: tabWidth,
         alignItems: 'center',
         paddingVertical: 15,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        position: 'relative',
+    },
+    activeTab: {
+        backgroundColor: '#f0f0f0', 
     },
     tabText: {
         fontSize: 16,
         color: '#888',
         fontWeight: '600',
+    },
+    counterContainer: {
+        backgroundColor: '#E3FCE9', 
+        borderRadius: 10,
+        width: 20,
+        height: 20,
+        position: 'absolute',
+        top: 5, 
+        right: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#05652D', 
+    },
+    countText: {
+        fontSize: 12,
+        color: '#05652D', // Green text color matching Home.js
+        fontWeight: 'bold',
     },
     activeTabText: {
         color: '#05652D',
@@ -95,5 +153,5 @@ const styles = StyleSheet.create({
         backgroundColor: '#05652D',
     },
 });
-  
+
 export default OrderTab;
