@@ -186,18 +186,24 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
       <ScrollView style={styles.container}>
       <View style={styles.orderItemContainer}>
       <LinearGradient
-          colors={['#e0f2f1', '#00695c']}
+          colors={['#333', '#05652D']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={styles.deliveryInfoContainer}>
           <Text style={styles.deliveryInfoText}>
-            Your order is on the way{'\n'}
-            Delivery should be made between 
-            {order.deliveryStart?.toDate() ? moment(order.deliveryStart.toDate()).format('DD MMM YYYY') : 'N/A'} and 
-            {order.deliveryEnd?.toDate() ? moment(order.deliveryEnd.toDate()).format('DD MMM YYYY') : 'N/A'}
+            Your order is on the way{'\n\n'}
+            Delivery should be made 
+            between {order.deliveryStart?.toDate() ? moment(order.deliveryStart.toDate()).format('DD MMM YYYY') : 'N/A'} and {order.deliveryEnd?.toDate() ? moment(order.deliveryEnd.toDate()).format('DD MMM YYYY') : 'N/A'}
           </Text>
-          <MaterialIcons name="local-shipping" size={30} color="#FFF" style={styles.deliveryIcon} />
+          <MaterialIcons name="local-shipping" size={40} color="#FFF" style={styles.deliveryIcon} />
         </LinearGradient>
+        <View style={styles.deliveryAddress}>
+            <Text style={styles.orderTotalLabel}>Delivery Address</Text>
+            <View style={styles.orderTotalRow}>
+                <MaterialIcons name="location-on" size={20} color="#333" />
+                <Text style={styles.orderTotalValue}>{order.deliveryAddress}</Text>
+            </View>
+        </View>
         <View style={styles.sellerHeader}>
           <Icon5 name="store" size={20} color="#808080" />
           <Text style={styles.sellerName}>{sellerName}</Text>
@@ -665,15 +671,23 @@ deliveryInfoContainer: {
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: 15,
-  borderRadius: 5,
-  marginBottom: 10,
 },
 deliveryInfoText: {
   color: '#fff',
   fontWeight: 'bold',
 },
 deliveryIcon: {
-  backgroundColor: 'transparent',
+  backgroundColor: '#000000',
+  borderRadius: 30,
+  top: -32,
+},
+deliveryAddress: {
+  marginTop: 20,
+  paddingHorizontal: 10,
+  paddingVertical: 10,
+  borderTopWidth: 1, 
+  borderBottomWidth: 1,  
+  borderColor: '#ccc',
 },
 });
 
