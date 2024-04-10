@@ -63,11 +63,13 @@ const OrderTab = ({ selectedTab, setSelectedTab }) => {
                 <Text style={[styles.tabText, isActive && styles.activeTabText]}>
                     {tabName}
                 </Text>
-                <View style={styles.counterContainer}>
-                    <Text style={styles.countText}>
-                        {count}
-                    </Text>
-                </View>
+                {count > 0 && ( 
+                    <View style={styles.counterContainer}>
+                        <Text style={styles.countText}>
+                            {count}
+                        </Text>
+                    </View>
+                )}
             </TouchableOpacity>
         );
     };
@@ -139,7 +141,7 @@ const styles = StyleSheet.create({
     },
     countText: {
         fontSize: 12,
-        color: '#05652D', // Green text color matching Home.js
+        color: '#05652D',
         fontWeight: 'bold',
     },
     activeTabText: {
