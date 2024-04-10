@@ -229,7 +229,7 @@ const confirmReceipt = async () => {
   const imageUrl = await uploadImageAsync(selectedImage.uri);
 
   if (activeOrder) {
-    const orderDocRef = doc(db, 'orders', activeOrder.id);
+    const orderDocRef = doc(db, 'orders', activeOrder.id); 
     await updateDoc(orderDocRef, {
       receivedPhoto: imageUrl,
       status: 'Completed'
@@ -238,13 +238,11 @@ const confirmReceipt = async () => {
     Alert.alert(
       'Confirmation Success',
       'Receipt has been confirmed successfully.',
-      [
-        { text: 'OK', onPress: () => {
-            setModalVisible(false);
-            navigation.navigate('OrderHistory');
-          }
+      [{ text: 'OK', onPress: () => {
+          setModalVisible(false);
+          navigation.navigate('OrderHistory');
         }
-      ]
+      }]
     );
   } else {
     Alert.alert('Error', 'No active order selected.');
