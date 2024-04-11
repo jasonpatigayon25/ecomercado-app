@@ -458,39 +458,57 @@ const Donate = ({ navigation }) => {
           isVisible={isSubPhotoPickerModalVisible}
           onCancel={() => setIsSubPhotoPickerModalVisible(false)}
         />
-      <Modal
+     <Modal
         visible={showModal}
         onRequestClose={handleCancel}
         animationType="slide"
         transparent={true}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Donate Confirmation</Text>
-            <View style={styles.modalContent}>
-              {donationInfo.photo && (
-                <Image source={{ uri: donationInfo.photo }} style={styles.modalProductImage} />
-              )}
+          <ScrollView contentContainerStyle={styles.modalContainerScroll}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Donate Confirmation</Text>
+              <View style={styles.modalContent}>
+                {donationInfo.photo && (
+                  <Image source={{ uri: donationInfo.photo }} style={styles.modalProductImage} />
+                )}
 
-              <View style={styles.modalProductDetails}>
-                <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Name:</Text> {donationInfo.name}</Text>
-                <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Location:</Text> {donationInfo.location}</Text>
-                <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Message:</Text> {donationInfo.message}</Text>
+                <View style={styles.modalProductDetails}>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Name:</Text> {donationInfo.name}</Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Category:</Text> {donationInfo.category}</Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Location:</Text> {donationInfo.location}</Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Purpose:</Text> {donationInfo.purpose}</Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Message:</Text> {donationInfo.message}</Text>
+                  
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Sub-Photos:</Text> </Text>
+                  <View style={styles.subPhotosContainer}>
+                    {donationInfo.subPhotos.map((photo, index) => (
+                      <Image key={index} source={{ uri: photo }} style={styles.modalSubPhotoImage} />
+                    ))}
+                  </View>
+                  
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Item Names:</Text> </Text>
+                  <View style={styles.modalItemNamesContainer}>
+                    {donationInfo.itemNames.map((name, index) => (
+                      <Text key={index} style={styles.modalItemName}>{index + 1}. {name}</Text>
+                    ))}
+                  </View>
+                  
+                </View>
               </View>
             </View>
+          </ScrollView>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitButtonText}>Donate</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.modalButtons}>
+            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+              <Text style={styles.submitButtonText}>Donate</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress}>
           <View style={styles.backContainer}>
@@ -501,154 +519,154 @@ const Donate = ({ navigation }) => {
       </View>
       <ScrollView style={styles.contentContainer}>
         
-<View style={styles.formContainer}>
-  <Text style={styles.label}>
-    Main Photo
-    {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>}
-  </Text>
-  <TouchableOpacity style={styles.addPhotoContainer} onPress={() => handleChoosePhoto()}>
-    {donationInfo.photo ? (
-      <Image source={{ uri: donationInfo.photo }} style={styles.productImage} />
-    ) : (
-      <Icon name="camera" size={24} color="#D3D3D3" />
-    )}
-  </TouchableOpacity>
- <Text style={styles.label}>Sub-Photos</Text>
- <View style={styles.subPhotosContainer}>
-  {donationInfo.subPhotos.map((photo, index) => (
-    <View key={index} style={styles.subPhotoContainer}>
-      {photo ? (
-        <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
-          <Image source={{ uri: photo }} style={styles.subPhotoImage} />
+      <View style={styles.formContainer}>
+        <Text style={styles.label}>
+          Main Photo
+          {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>}
+        </Text>
+        <TouchableOpacity style={styles.addPhotoContainer} onPress={() => handleChoosePhoto()}>
+          {donationInfo.photo ? (
+            <Image source={{ uri: donationInfo.photo }} style={styles.productImage} />
+          ) : (
+            <Icon name="camera" size={24} color="#D3D3D3" />
+          )}
         </TouchableOpacity>
-      ) : (
-        <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
-          <Icon name="camera" size={24} color="#D3D3D3" />
+      <Text style={styles.label}>Sub-Photos</Text>
+      <View style={styles.subPhotosContainer}>
+        {donationInfo.subPhotos.map((photo, index) => (
+          <View key={index} style={styles.subPhotoContainer}>
+            {photo ? (
+              <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
+                <Image source={{ uri: photo }} style={styles.subPhotoImage} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
+                <Icon name="camera" size={24} color="#D3D3D3" />
+              </TouchableOpacity>
+            )}
+            {photo && (
+              <TouchableOpacity style={styles.removePhotoIconContainer} onPress={() => removeSubPhoto(index)}>
+                <Icon name="times-circle" size={24} color="#FF0000" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+        {donationInfo.subPhotos.length < MAX_SUB_PHOTOS && (
+          <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
+            <Icon name="camera" size={24} color="#D3D3D3" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+        <Text style={styles.label}>
+          Donation Name
+          {missingFields.name && <Text style={{ color: 'red' }}> *</Text>}
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter donation name"
+          value={donationInfo.name}
+          onChangeText={(name) => setDonationInfo({ ...donationInfo, name })}
+        />
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Item Names</Text>
+        {donationInfo.itemNames.map((name, index) => (
+          <View key={index} style={styles.itemInputContainer}>
+            <TextInput
+              style={[styles.input, { width: '80%' }]} 
+              placeholder={`Enter item name ${index + 1}`}
+              value={name}
+              onChangeText={(text) => handleItemNameChange(text, index)}
+            />
+            {index === donationInfo.itemNames.length - 1 && ( 
+              <TouchableOpacity onPress={addNewItemNameField} style={styles.addButton}>
+                <Icon name="plus" size={40} color="#D3D3D3" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+      </View>
+        <Text style={styles.label}>Eco-Bundle Category</Text>
+        <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={donationInfo.category}
+          onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, category: itemValue })}
+          style={styles.picker}
+        >
+          <Picker.Item label="Select a Category" value="" />
+          <Picker.Item label="Clothing" value="Clothing" />
+          <Picker.Item label="Devices" value="Devices" />
+          <Picker.Item label="Furniture" value="Furniture" />
+          <Picker.Item label="Mixed" value="Mixed" />
+        </Picker>
+        </View>
+        <Text style={styles.label}>Weight (kg)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter total weight"
+          value={donationInfo.weight}
+          keyboardType="numeric"
+          onChangeText={(weight) => setDonationInfo({ ...donationInfo, weight })}
+        />
+
+        <Text style={styles.label}>Dimensions (cm)</Text>
+        <View style={styles.dimensionsContainer}>
+          <TextInput
+            style={[styles.dimensionInput, { marginRight: 10 }]}
+            placeholder="Width"
+            keyboardType="numeric"
+            value={donationInfo.dimensions.width}
+            onChangeText={(width) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, width } })}
+          />
+          <TextInput
+            style={[styles.dimensionInput, { marginRight: 10 }]}
+            placeholder="Length"
+            keyboardType="numeric"
+            value={donationInfo.dimensions.length}
+            onChangeText={(length) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, length } })}
+          />
+          <TextInput
+            style={styles.dimensionInput}
+            placeholder="Height"
+            keyboardType="numeric"
+            value={donationInfo.dimensions.height}
+            onChangeText={(height) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, height } })}
+          />
+        </View>
+        <Text style={styles.label}>Purpose</Text>
+        <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={donationInfo.purpose}
+          onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, purpose: itemValue })}
+          style={styles.picker}
+        >
+          <Picker.Item label="For people in need" value="PeopleInNeed" />
+          <Picker.Item label="Environmental purpose" value="Environment" />
+        </Picker>
+        </View>
+
+        <Text style={styles.label}>
+          Location
+          {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
+        </Text>
+        <TouchableOpacity style={styles.input} onPress={openLocationSearchModal}>
+          <Text>{donationInfo.location || 'Enter Location'}</Text>
         </TouchableOpacity>
-      )}
-      {photo && (
-        <TouchableOpacity style={styles.removePhotoIconContainer} onPress={() => removeSubPhoto(index)}>
-          <Icon name="times-circle" size={24} color="#FF0000" />
+
+        <Text style={styles.label}>Message</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your message (optional)"
+          multiline
+          numberOfLines={4}
+          value={donationInfo.message}
+          onChangeText={(message) => setDonationInfo({ ...donationInfo, message })}
+        />
+
+        <TouchableOpacity style={styles.donateButton} onPress={handleDonate}>
+          <Text style={styles.buttonText}>Donate</Text>
         </TouchableOpacity>
-      )}
-    </View>
-  ))}
-  {donationInfo.subPhotos.length < MAX_SUB_PHOTOS && (
-    <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
-      <Icon name="camera" size={24} color="#D3D3D3" />
-    </TouchableOpacity>
-  )}
-</View>
-
-  <Text style={styles.label}>
-    Donation Name
-    {missingFields.name && <Text style={{ color: 'red' }}> *</Text>}
-  </Text>
-  <TextInput
-    style={styles.input}
-    placeholder="Enter donation name"
-    value={donationInfo.name}
-    onChangeText={(name) => setDonationInfo({ ...donationInfo, name })}
-  />
- <View style={styles.inputContainer}>
-  <Text style={styles.label}>Item Names</Text>
-  {donationInfo.itemNames.map((name, index) => (
-    <View key={index} style={styles.itemInputContainer}>
-      <TextInput
-        style={[styles.input, { width: '80%' }]} 
-        placeholder={`Enter item name ${index + 1}`}
-        value={name}
-        onChangeText={(text) => handleItemNameChange(text, index)}
-      />
-      {index === donationInfo.itemNames.length - 1 && ( 
-        <TouchableOpacity onPress={addNewItemNameField} style={styles.addButton}>
-          <Icon name="plus" size={40} color="#D3D3D3" />
-        </TouchableOpacity>
-      )}
-    </View>
-  ))}
-</View>
-  <Text style={styles.label}>Eco-Bundle Category</Text>
-  <View style={styles.pickerContainer}>
-  <Picker
-    selectedValue={donationInfo.category}
-    onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, category: itemValue })}
-    style={styles.picker}
-  >
-    <Picker.Item label="Select a Category" value="" />
-    <Picker.Item label="Clothing" value="clothing" />
-    <Picker.Item label="Devices" value="devices" />
-    <Picker.Item label="Furniture" value="furniture" />
-    <Picker.Item label="Mixed" value="furniture" />
-  </Picker>
-  </View>
-  <Text style={styles.label}>Weight (kg)</Text>
-  <TextInput
-    style={styles.input}
-    placeholder="Enter total weight"
-    value={donationInfo.weight}
-    keyboardType="numeric"
-    onChangeText={(weight) => setDonationInfo({ ...donationInfo, weight })}
-  />
-
-  <Text style={styles.label}>Dimensions (cm)</Text>
-  <View style={styles.dimensionsContainer}>
-    <TextInput
-      style={[styles.dimensionInput, { marginRight: 10 }]}
-      placeholder="Width"
-      keyboardType="numeric"
-      value={donationInfo.dimensions.width}
-      onChangeText={(width) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, width } })}
-    />
-    <TextInput
-      style={[styles.dimensionInput, { marginRight: 10 }]}
-      placeholder="Length"
-      keyboardType="numeric"
-      value={donationInfo.dimensions.length}
-      onChangeText={(length) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, length } })}
-    />
-    <TextInput
-      style={styles.dimensionInput}
-      placeholder="Height"
-      keyboardType="numeric"
-      value={donationInfo.dimensions.height}
-      onChangeText={(height) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, height } })}
-    />
-  </View>
-  <Text style={styles.label}>Purpose</Text>
-  <View style={styles.pickerContainer}>
-  <Picker
-    selectedValue={donationInfo.purpose}
-    onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, purpose: itemValue })}
-    style={styles.picker}
-  >
-    <Picker.Item label="For people in need" value="people_in_need" />
-    <Picker.Item label="Environmental purpose" value="environmental" />
-  </Picker>
-  </View>
-
-  <Text style={styles.label}>
-    Location
-    {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
-  </Text>
-  <TouchableOpacity style={styles.input} onPress={openLocationSearchModal}>
-    <Text>{donationInfo.location || 'Enter Location'}</Text>
-  </TouchableOpacity>
-
-  <Text style={styles.label}>Message</Text>
-  <TextInput
-    style={styles.input}
-    placeholder="Enter your message (optional)"
-    multiline
-    numberOfLines={4}
-    value={donationInfo.message}
-    onChangeText={(message) => setDonationInfo({ ...donationInfo, message })}
-  />
-
-  <TouchableOpacity style={styles.donateButton} onPress={handleDonate}>
-    <Text style={styles.buttonText}>Donate</Text>
-  </TouchableOpacity>
-</View>
+      </View>
       </ScrollView>
       <Modal
         animationType="slide"
@@ -760,7 +778,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    width: '90%',
+    width: '100%',
     backgroundColor: '#FFF',
     borderRadius: 10,
     padding: 20,
@@ -792,7 +810,8 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
+    padding: 20,
+    backgroundColor: '#fff',
   },
   cancelButton: {
     flex: 1,
@@ -803,7 +822,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E3E3E3',
+    borderColor: '#fff',
   },
   submitButton: {
     flex: 1,
@@ -831,9 +850,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainerPhoto: {
-    width: '80%',
+    width: '100%',
     backgroundColor: '#FFF',
-    borderRadius: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
     padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
@@ -1009,6 +1029,21 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     marginRight: 10,
+  },
+  modalSubPhotoImage: {
+    width: 100,
+    height: 100,
+    marginRight: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+
+  modalItemName: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+    modalContainerScroll: {
+    flexGrow: 1,
   },
 });
 
