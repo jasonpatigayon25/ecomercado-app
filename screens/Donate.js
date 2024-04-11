@@ -268,8 +268,14 @@ const Donate = ({ navigation }) => {
   
       const donationDocRef = await addDoc(donationCollection, {
         photo: donationInfo.photo,
+        subPhotos: donationInfo.subPhotos, // Include sub-photos
         name: donationInfo.name,
+        category: donationInfo.category, // Include category
+        itemNames: donationInfo.itemNames, // Include item names
+        weight: donationInfo.weight, // Include if needed
+        dimensions: donationInfo.dimensions, // Include if needed
         location: donationInfo.location,
+        purpose: donationInfo.purpose, // Include purpose
         message: donationInfo.message,
         donor_email: userEmail,
         createdAt, 
