@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Modal, Alert } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -16,9 +15,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const screenHeight = Dimensions.get('window').height;
 
 const Donate = ({ navigation }) => {
-
-  const [isSubPhotoPickerModalVisible, setIsSubPhotoPickerModalVisible] = useState(false);
-  const MAX_SUB_PHOTOS = 15;
 
   const [locationSearchModalVisible, setLocationSearchModalVisible] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState('');
@@ -105,28 +101,6 @@ const Donate = ({ navigation }) => {
     });
   };
   
-  const addNewItemNameField = () => {
-    setDonationInfo(prevState => ({
-      ...prevState,
-      itemNames: [...prevState.itemNames, ''] 
-    }));
-  };
-
-  const handleItemNameChange = (text, index) => {
-    const updatedItemNames = donationInfo.itemNames.map((name, i) => {
-      if (i === index) return text;
-      return name;
-    });
-    setDonationInfo({ ...donationInfo, itemNames: updatedItemNames });
-  };
-
-  const removeSubPhoto = (indexToRemove) => {
-
-    const updatedSubPhotos = donationInfo.subPhotos.filter((_, index) => index !== indexToRemove);
-
-    setDonationInfo({ ...donationInfo, subPhotos: updatedSubPhotos });
-  };
-  
 
   const handleLocationSearch = async (query) => {
     setLocationSearchQuery(query);
@@ -199,14 +173,8 @@ const Donate = ({ navigation }) => {
 
   const [donationInfo, setDonationInfo] = useState({
     photo: null,
-    subPhotos: [],
     name: '',
-    itemNames: [''],
-    category: '',
-    weight: '',
-    dimensions: { width: '', length: '', height: '' },
     location: '',
-    purpose: '',
     message: '',
   });
   const [showModal, setShowModal] = useState(false);
@@ -256,7 +224,6 @@ const Donate = ({ navigation }) => {
       setDonationInfo({ ...donationInfo, photo: uploadUrl });
     }
   };
-
 
   const handleSubmit = async () => {
     if (!validateForm()) {
@@ -371,81 +338,8 @@ const Donate = ({ navigation }) => {
     </Modal>
   );
 
-  const SubPhotoPickerModal = ({ isVisible, onCancel }) => (
-    <Modal
-      visible={isVisible}
-      onRequestClose={onCancel}
-      animationType="slide"
-      transparent={true}
-    >
-      <View style={styles.modalOverlayPhoto}>
-        <View style={styles.modalContainerPhoto}>
-          <TouchableOpacity style={styles.cancelButtonTopRight} onPress={onCancel}>
-            <Icon name="times" size={24} color="#05652D" />
-          </TouchableOpacity>
-          <Text style={styles.modalHeader}>Select Sub-Photo</Text>
-          <Text style={styles.modalSubHeader}>Choose a photo from the gallery or take a new one.</Text>
-          <View style={styles.photoOptionsContainer}>
-            <TouchableOpacity
-              style={[styles.photoOption, styles.separateBorder]}
-              onPress={async () => {
-                await handleSubPhotoPickImage('library');
-                onCancel();
-              }}
-            >
-              <Icon name="photo" size={80} color="#05652D" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.photoOption, styles.separateBorder]}
-              onPress={async () => {
-                await handleSubPhotoPickImage('camera');
-                onCancel();
-              }}
-            >
-              <Icon name="camera" size={80} color="#05652D" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-  
-  const handleChooseSubPhoto = () => {
-    setIsSubPhotoPickerModalVisible(true);
-  };
-  
-
   const handleChoosePhoto = () => {
     setIsPhotoPickerModalVisible(true);
-  };
-
-  const handleSubPhotoPickImage = async (type) => {
-    let result;
-    if (type === 'camera') {
-      result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-    } else {
-      result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-    }
-  
-    if (!result.cancelled && result.assets && result.assets.length > 0) {
-      const uploadUrl = await uploadImageAsync(result.assets[0].uri);
-      setDonationInfo({
-        ...donationInfo,
-        subPhotos: [...donationInfo.subPhotos, uploadUrl]
-      });
-    }
-  
-    setIsSubPhotoPickerModalVisible(false);
   };
 
   return (
@@ -454,10 +348,6 @@ const Donate = ({ navigation }) => {
         isVisible={isPhotoPickerModalVisible}
         onCancel={() => setIsPhotoPickerModalVisible(false)}
       />
-      <SubPhotoPickerModal
-          isVisible={isSubPhotoPickerModalVisible}
-          onCancel={() => setIsSubPhotoPickerModalVisible(false)}
-        />
       <Modal
         visible={showModal}
         onRequestClose={handleCancel}
@@ -500,155 +390,48 @@ const Donate = ({ navigation }) => {
         <Text style={styles.title}>Donate</Text>
       </View>
       <ScrollView style={styles.contentContainer}>
-        
-<View style={styles.formContainer}>
-  <Text style={styles.label}>
-    Main Photo
-    {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>}
-  </Text>
-  <TouchableOpacity style={styles.addPhotoContainer} onPress={() => handleChoosePhoto()}>
-    {donationInfo.photo ? (
-      <Image source={{ uri: donationInfo.photo }} style={styles.productImage} />
-    ) : (
-      <Icon name="camera" size={24} color="#D3D3D3" />
-    )}
-  </TouchableOpacity>
- <Text style={styles.label}>Sub-Photos</Text>
- <View style={styles.subPhotosContainer}>
-  {donationInfo.subPhotos.map((photo, index) => (
-    <View key={index} style={styles.subPhotoContainer}>
-      {photo ? (
-        <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
-          <Image source={{ uri: photo }} style={styles.subPhotoImage} />
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
-          <Icon name="camera" size={24} color="#D3D3D3" />
-        </TouchableOpacity>
-      )}
-      {photo && (
-        <TouchableOpacity style={styles.removePhotoIconContainer} onPress={() => removeSubPhoto(index)}>
-          <Icon name="times-circle" size={24} color="#FF0000" />
-        </TouchableOpacity>
-      )}
-    </View>
-  ))}
-  {donationInfo.subPhotos.length < MAX_SUB_PHOTOS && (
-    <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
-      <Icon name="camera" size={24} color="#D3D3D3" />
-    </TouchableOpacity>
-  )}
-</View>
-
-  <Text style={styles.label}>
-    Donation Name
-    {missingFields.name && <Text style={{ color: 'red' }}> *</Text>}
-  </Text>
-  <TextInput
-    style={styles.input}
-    placeholder="Enter donation name"
-    value={donationInfo.name}
-    onChangeText={(name) => setDonationInfo({ ...donationInfo, name })}
-  />
- <View style={styles.inputContainer}>
-  <Text style={styles.label}>Item Names</Text>
-  {donationInfo.itemNames.map((name, index) => (
-    <View key={index} style={styles.itemInputContainer}>
-      <TextInput
-        style={[styles.input, { width: '80%' }]} 
-        placeholder={`Enter item name ${index + 1}`}
-        value={name}
-        onChangeText={(text) => handleItemNameChange(text, index)}
-      />
-      {index === donationInfo.itemNames.length - 1 && ( 
-        <TouchableOpacity onPress={addNewItemNameField} style={styles.addButton}>
-          <Icon name="plus" size={40} color="#D3D3D3" />
-        </TouchableOpacity>
-      )}
-    </View>
-  ))}
-</View>
-  <Text style={styles.label}>Eco-Bundle Category</Text>
-  <View style={styles.pickerContainer}>
-  <Picker
-    selectedValue={donationInfo.category}
-    onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, category: itemValue })}
-    style={styles.picker}
-  >
-    <Picker.Item label="Select a Category" value="" />
-    <Picker.Item label="Clothing" value="clothing" />
-    <Picker.Item label="Devices" value="devices" />
-    <Picker.Item label="Furniture" value="furniture" />
-    <Picker.Item label="Mixed" value="furniture" />
-  </Picker>
-  </View>
-  <Text style={styles.label}>Weight (kg)</Text>
-  <TextInput
-    style={styles.input}
-    placeholder="Enter total weight"
-    value={donationInfo.weight}
-    keyboardType="numeric"
-    onChangeText={(weight) => setDonationInfo({ ...donationInfo, weight })}
-  />
-
-  <Text style={styles.label}>Dimensions (cm)</Text>
-  <View style={styles.dimensionsContainer}>
-    <TextInput
-      style={[styles.dimensionInput, { marginRight: 10 }]}
-      placeholder="Width"
-      keyboardType="numeric"
-      value={donationInfo.dimensions.width}
-      onChangeText={(width) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, width } })}
-    />
-    <TextInput
-      style={[styles.dimensionInput, { marginRight: 10 }]}
-      placeholder="Length"
-      keyboardType="numeric"
-      value={donationInfo.dimensions.length}
-      onChangeText={(length) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, length } })}
-    />
-    <TextInput
-      style={styles.dimensionInput}
-      placeholder="Height"
-      keyboardType="numeric"
-      value={donationInfo.dimensions.height}
-      onChangeText={(height) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, height } })}
-    />
-  </View>
-  <Text style={styles.label}>Purpose</Text>
-  <View style={styles.pickerContainer}>
-  <Picker
-    selectedValue={donationInfo.purpose}
-    onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, purpose: itemValue })}
-    style={styles.picker}
-  >
-    <Picker.Item label="For people in need" value="people_in_need" />
-    <Picker.Item label="Environmental purpose" value="environmental" />
-  </Picker>
-  </View>
-
-  <Text style={styles.label}>
-    Location
-    {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
-  </Text>
-  <TouchableOpacity style={styles.input} onPress={openLocationSearchModal}>
-    <Text>{donationInfo.location || 'Enter Location'}</Text>
-  </TouchableOpacity>
-
-  <Text style={styles.label}>Message</Text>
-  <TextInput
-    style={styles.input}
-    placeholder="Enter your message (optional)"
-    multiline
-    numberOfLines={4}
-    value={donationInfo.message}
-    onChangeText={(message) => setDonationInfo({ ...donationInfo, message })}
-  />
-
-  <TouchableOpacity style={styles.donateButton} onPress={handleDonate}>
-    <Text style={styles.buttonText}>Donate</Text>
-  </TouchableOpacity>
-</View>
+        <View style={styles.formContainer}>
+        <Text style={styles.label}>
+          Item Photo
+          {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
+        </Text>
+          <TouchableOpacity style={styles.addPhotoContainer} onPress={handleChoosePhoto}>
+            {donationInfo.photo ? (
+              <Image source={{ uri: donationInfo.photo }} style={styles.productImage} />
+            ) : (
+              <Icon name="camera" size={24} color="#D3D3D3" />
+            )}
+          </TouchableOpacity>
+          <Text style={styles.label}>
+            Item Name
+            {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter item name"
+            value={donationInfo.name}
+            onChangeText={(name) => setDonationInfo({ ...donationInfo, name })}
+          />
+          <Text style={styles.label}>
+            Location
+            {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
+          </Text>
+          <TouchableOpacity style={styles.input} onPress={() => setLocationSearchModalVisible(true)}>
+            <Text>{donationInfo.location || 'Enter Location'}</Text>
+          </TouchableOpacity>
+          <Text style={styles.label}>Message</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your message"
+            multiline={true}
+            numberOfLines={3}
+            value={donationInfo.message}
+            onChangeText={(message) => setDonationInfo({ ...donationInfo, message })}
+          />
+          <TouchableOpacity style={styles.donateButton} onPress={handleDonate}>
+            <Text style={styles.buttonText}>Donate</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
       <Modal
         animationType="slide"
@@ -928,87 +711,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFF', 
-  },
-  subPhotosContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  subPhotoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 10,
-    marginBottom: 10,
-  },
-  subPhoto: {
-    width: 120,
-    height: 120,
-    backgroundColor: '#EFEFEF',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  cameraIconContainer: {
-    width: 120,
-    height: 120,
-    backgroundColor: '#EFEFEF',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removePhotoIconContainer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    zIndex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    borderRadius: 12,
-    padding: 4,
-  },
-  subPhotoImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 10,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  itemInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  addButton: {
-    marginLeft: 10,
-    marginBottom: 10,
-  },
-  picker: {
-    height: 40,
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 5,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#D3D3D3',
-    marginBottom: 10,
-  },
-  dimensionsContainer: {
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  dimensionInput: {
-    flex: 1,
-    height: 40,
-    borderWidth: 2,
-    borderColor: '#D3D3D3',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginRight: 10,
   },
 });
 
