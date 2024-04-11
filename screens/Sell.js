@@ -342,6 +342,13 @@ const handleSubmit = async () => {
     setShowModal(false);
   };
 
+  const handleShippingInfoPress = () => {
+    Alert.alert(
+      "Note:",
+      "Volume and weight determine the cost of the delivery fee."
+    );
+  };
+
   const validateForm = () => {
     const missing = {
       photo: !productInfo.photo,
@@ -594,7 +601,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
         <TouchableOpacity onPress={handleBackPress}>
           <Icon name="arrow-left" size={24} color="#FFFFFF" style={styles.backButtonIcon} />
         </TouchableOpacity>
-        <Text style={styles.title}>Sell Eco-Friendly Product</Text>
+        <Text style={styles.title}>Sell Product</Text>
       </View>
       <ScrollView style={styles.content}>
       <Text style={styles.label}>
@@ -676,8 +683,15 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           </TouchableOpacity>
         </View>
         <Text style={styles.label}>
-          Shipping:
-          {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>}
+          Shipping: 
+          {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>} 
+          <Icon
+            name="info-circle"
+            size={20}
+            color="#808080"
+            onPress={handleShippingInfoPress}
+            style={styles.infoIcon}
+          />
         </Text>
         <View style={styles.shippingContainer}>
           <Text style={styles.shippingLabel}>Packaging</Text>

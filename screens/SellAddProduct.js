@@ -15,7 +15,47 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const screenHeight = Dimensions.get('window').height;
 
+const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, navigateToProductPosts }) => {
+  return (
+    <Modal
+      visible={isVisible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onCancel}
+    >
+      <View style={styles.centeredView1}>
+        <View style={styles.modalView1}>
+          <Text style={styles.modalText}>Pending Product</Text>
+          <Icon name="check-circle" size={60} color="white" />
+          <Text style={styles.pendingText}>{productName} successfully Added! </Text>
+          <Text style={styles.subtext}>
+            The product is pending for approval if it is fit to be sold. Go to My Product Posts for more info.
+            Pending Product
+          </Text>
+          <View style={styles.modalButtonContainer}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonHome]}
+              onPress={navigateToSell}
+            >
+              <Text style={styles.homeButton}>Add Product Again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonOrder]}
+              onPress={navigateToProductPosts}
+            >
+              <Text style={styles.homeButton}>My Product Posts</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 const SellAddProduct = ({ navigation }) => {
+
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [productName, setProductName] = useState('');
 
   const [locationSearchModalVisible, setLocationSearchModalVisible] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState('');
@@ -261,6 +301,12 @@ const handleSubmit = async () => {
       quantity: productInfo.quantity,
       createdAt,
       publicationStatus: 'pending',
+      shipping: {
+        width: productInfo.width,
+        length: productInfo.length,
+        height: productInfo.height,
+        weight: productInfo.weight,
+      },
     });
 
     const updatedProductInfo = {
@@ -270,8 +316,9 @@ const handleSubmit = async () => {
     };
 
     await notifySubscribers(userEmail, updatedProductInfo);
-
-    Alert.alert(`${productInfo.name} successfully Added!`);
+    setProductName(productInfo.name);
+    setSuccessModalVisible(true);
+    //Alert.alert(`${productInfo.name} successfully Added!`);
     resetProductInfo();
     setShowModal(false);
   } catch (error) {
@@ -295,6 +342,14 @@ const handleSubmit = async () => {
     setShowModal(false);
   };
 
+  const handleShippingInfoPress = () => {
+    Alert.alert(
+      "Note:",
+      "Volume and weight determine the cost of the delivery fee."
+    );
+  };
+  
+
   const validateForm = () => {
     const missing = {
       photo: !productInfo.photo,
@@ -304,6 +359,10 @@ const handleSubmit = async () => {
       description: !productInfo.description,
       location: !productInfo.location,
       quantity: quantity < 1,
+      width: !productInfo.width,
+      length: !productInfo.length,
+      height: !productInfo.height,
+      weight: !productInfo.weight,
     };
 
     setMissingFields(missing);
@@ -439,6 +498,12 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
               </Text>
 
               <Text style={styles.productDetailText}>
+                <Text style={styles.productDetailLabel}>Shipping: </Text>
+                {productInfo.width}cm x {productInfo.length}cm x {productInfo.height}cm | {productInfo.weight}kg
+
+              </Text>
+
+              <Text style={styles.productDetailText}>
                 <Text style={styles.productDetailLabel}>Description: </Text>
                 {productInfo.description}
               </Text>
@@ -537,7 +602,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
         <TouchableOpacity onPress={handleBackPress}>
           <Icon name="arrow-left" size={24} color="#FFFFFF" style={styles.backButtonIcon} />
         </TouchableOpacity>
-        <Text style={styles.title}>Sell Eco-Friendly Product</Text>
+        <Text style={styles.title}>Sell Product</Text>
       </View>
       <ScrollView style={styles.content}>
       <Text style={styles.label}>
@@ -619,6 +684,54 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           </TouchableOpacity>
         </View>
         <Text style={styles.label}>
+          Shipping: 
+          {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>} 
+          <Icon
+            name="info-circle"
+            size={20}
+            color="#808080"
+            onPress={handleShippingInfoPress}
+            style={styles.infoIcon}
+          />
+        </Text>
+        <View style={styles.shippingContainer}>
+          <Text style={styles.shippingLabel}>Packaging</Text>
+          <View style={styles.dimensionsContainer}>
+            <TextInput
+              style={[styles.input, styles.dimensionInput, missingFields.width && styles.missingField]}
+              placeholder="Width (cm)"
+              keyboardType="numeric"
+              value={productInfo.width}
+              onChangeText={(text) => setProductInfo({ ...productInfo, width: text })}
+            />
+            <TextInput
+              style={[styles.input, styles.dimensionInput, missingFields.length && styles.missingField]}
+              placeholder="Length (cm)"
+              keyboardType="numeric"
+              value={productInfo.length}
+              onChangeText={(text) => setProductInfo({ ...productInfo, length: text })}
+            />
+            <TextInput
+              style={[styles.input, styles.dimensionInput, missingFields.height && styles.missingField]}
+              placeholder="Height (cm)"
+              keyboardType="numeric"
+              value={productInfo.height}
+              onChangeText={(text) => setProductInfo({ ...productInfo, height: text })}
+            />
+          </View>
+        </View>
+
+        <View style={styles.shippingContainer}>
+          <Text style={styles.shippingLabel}>Weight (kg):</Text>
+          <TextInput
+            style={[styles.input, styles.weightInput, missingFields.weight && styles.missingField]}
+            placeholder="Enter Weight (kg)"
+            keyboardType="numeric"
+            value={productInfo.weight}
+            onChangeText={(text) => setProductInfo({ ...productInfo, weight: text })}
+          />
+        </View>
+        <Text style={styles.label}>
           Product Description:
           {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>}
         </Text>
@@ -630,10 +743,10 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           multiline={true}
           numberOfLines={3}
         />
-      </ScrollView>
-      <TouchableOpacity style={styles.addButton} onPress={handleAddProductToSell}>
+        <TouchableOpacity style={styles.addButton} onPress={handleAddProductToSell}>
           <Text style={styles.addButtonLabel}>Add Product to Sell</Text>
         </TouchableOpacity>
+      </ScrollView>
       <Modal
         animationType="slide"
         transparent={true}
@@ -663,6 +776,19 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           </View>
         </View>
       </Modal>
+      <SuccessModal 
+        productName={productName}
+        isVisible={successModalVisible}
+        onCancel={() => setSuccessModalVisible(false)}
+        navigateToSell={() => {
+          setSuccessModalVisible(false);
+          navigation.navigate('Sell');
+        }}
+        navigateToProductPosts={() => {
+          setSuccessModalVisible(false);
+          navigation.navigate('ProductPosts');
+        }}
+      />
     </View>
   );
 };
@@ -670,7 +796,6 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between',
     backgroundColor: '#F9F9F9',
   },
   header: {
@@ -737,9 +862,8 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
-    marginVertical: 10,
+    marginVertical: 20,
     marginTop: 10,
-    marginHorizontal: 20,
   },
   addButtonLabel: {
     color: '#FFF',
@@ -791,10 +915,10 @@ const styles = StyleSheet.create({
     color: '#05652D',
   },
   productDetailValue: {
-    color: '#666',
+    color: '#ccc',
     marginBottom: 5,
+    fontSize: 14,
   },
-
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -968,7 +1092,110 @@ const styles = StyleSheet.create({
     height: 80, 
     borderRadius: 40, 
     marginBottom: 10, 
-  },                                                             
+  }, 
+  shippingContainer: {
+    marginBottom: 10,
+  },
+  shippingLabel: {
+    fontSize: 14,
+    paddingLeft: 20,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#333',
+  },
+  dimensionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  dimensionInput: {
+    flex: 1,
+    marginRight: 10,
+  },
+  weightInput: {
+    width: '100%',
+  },  
+  centeredView1: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+    // backgroundColor: 'rgba(0, 0, 0, 0.6)',
+
+  },
+  modalView1: {
+    margin: 20,
+    backgroundColor: '#05652D',
+
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    shadowOpacity: 0.25,
+    elevation: 5,
+  },   
+  modalText: {
+    marginBottom: 18,
+    textAlign: "center",
+    color: "white",
+    fontWeight:'bold',
+  },
+  pendingIcon: {
+    textAlign: 'center',
+  },
+  pendingText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  subtext: {
+    fontSize: 14,
+    marginBottom: 20,
+    color: "#ffffff",
+    textAlign: 'center',
+  }, 
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },  
+  modalButtonOrder: {
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  textButton: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  homeButton: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+
+  textStyle1: {
+    color: "#05652D",
+    fontWeight: "bold",
+    textAlign: "center"
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center"
+  }, 
+  modalButtonHome: {
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  modalButton: {
+    borderRadius: 20,
+    padding: 10,
+    marginHorizontal: 10,
+    width: '60%',
+  },                            
 });
 
 export default SellAddProduct;
