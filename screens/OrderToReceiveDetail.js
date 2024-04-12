@@ -57,14 +57,6 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     // 
   };
 
-  const cancelOrder = () => {
-    // 
-  };
-
-  const handleCommentFocus = () => {
-    scrollViewRef.current?.scrollToEnd({ animated: true }); 
-  };
-
   // 
   const subtotal = order.productDetails.reduce(
     (sum, detail) => sum + detail.orderedQuantity * products[detail.productId].price,
@@ -142,16 +134,14 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
   };
 
   const confirmReceipt = async () => {
-    // Check if a photo has been selected
+
     if (!selectedImage) {
       Alert.alert('Photo Required', 'Please provide a photo of the item received.');
       return;
     }
-    
-    // Upload the photo and get the URL
+
     const imageUrl = await uploadImageAsync(selectedImage.uri);
-    
-    // Update the order document with the received photo and change the status to 'Completed'
+
     const orderDocRef = doc(db, 'orders', order.id);
     await updateDoc(orderDocRef, {
       receivedPhoto: imageUrl,
@@ -165,12 +155,12 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
 
   const submitRatings = async () => {
     const auth = getAuth();
-    const currentUser = auth.currentUser; // Get the currently logged-in user
-    const userEmail = currentUser ? currentUser.email : null; // Check if there is a user logged in to avoid errors
+    const currentUser = auth.currentUser;
+    const userEmail = currentUser ? currentUser.email : null; 
   
     if (!userEmail) {
       Alert.alert('Error', 'You must be logged in to submit ratings.');
-      return; // Stop the function if no user is logged in
+      return; 
     }
   
     await Promise.all(order.productDetails.map(async item => {
@@ -179,8 +169,8 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
           prodId: item.productId,
           rating: ratings[item.productId],
           ratedBy: userEmail,
-          ratedAt: new Date(), // Current timestamp
-          comment: comments[item.productId], // Optional comment
+          ratedAt: new Date(), 
+          comment: comments[item.productId], 
         };
         await addDoc(collection(db, 'productRatings'), ratingDoc);
       }
@@ -202,32 +192,32 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
        <Modal
-  animationType="slide"
-  transparent={true}
-  visible={confirmationModalVisible}
-  onRequestClose={() => {
-    setConfirmationModalVisible(false);
-    navigation.navigate('OrderHistory'); // Ensures navigation to OrderHistory on back press
-  }}
->
-  <View style={styles.confirmationModalCenteredView}>
-    <View style={styles.confirmationModalView}>
-      <Text style={styles.confirmationModalText}>Receipt has been confirmed successfully.</Text>
-      <View style={styles.confirmationModalButtonContainer}>
-        <TouchableOpacity
-          style={styles.confirmationModalRatingButton}
-          onPress={() => {
-            setRatingModalVisible(true);
-            setConfirmationModalVisible(false);
-          }}
-        >
-          <Icon name="star" size={20} color="#ffd700" style={styles.confirmationModalIconStyle} />
-          <Text style={styles.confirmationModalButtonText}>Rate Products</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal>
+        animationType="slide"
+        transparent={true}
+        visible={confirmationModalVisible}
+        onRequestClose={() => {
+          setConfirmationModalVisible(false);
+          navigation.navigate('OrderHistory'); 
+        }}
+      >
+        <View style={styles.confirmationModalCenteredView}>
+          <View style={styles.confirmationModalView}>
+            <Text style={styles.confirmationModalText}>Receipt has been confirmed successfully.</Text>
+            <View style={styles.confirmationModalButtonContainer}>
+              <TouchableOpacity
+                style={styles.confirmationModalRatingButton}
+                onPress={() => {
+                  setRatingModalVisible(true);
+                  setConfirmationModalVisible(false);
+                }}
+              >
+                <Icon name="star" size={20} color="#ffd700" style={styles.confirmationModalIconStyle} />
+                <Text style={styles.confirmationModalButtonText}>Rate Products</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <Modal
         animationType="slide"
         transparent={true}
@@ -258,50 +248,50 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
             </TouchableOpacity>
         </View>
     </Modal>
-    <Modal
-  visible={ratingModalVisible}
-  onRequestClose={() => setRatingModalVisible(false)}
-  animationType="slide"
-  transparent={true}
->
-  <View style={styles.ratingModalContainer}>
-    <ScrollView
-      ref={scrollViewRef}
-      contentContainerStyle={styles.ratingModalContent}
-      style={styles.ratingModalScrollView}
-    >
-      <Text style={styles.ratingModalTitle}>You can rate the products:</Text>
-      {order.productDetails.map((item, index) => {
-        const product = products[item.productId];
-        return (
-          <View key={index} style={styles.ratingItemContainer}>
-            <Image source={{ uri: product.photo }} style={styles.ratingProductImage} />
-            <Text style={styles.ratingProductName}>{product.name}</Text>
-            <Rating
-              startingValue={ratings[item.productId]}
-              imageSize={30}
-              onFinishRating={(rating) => handleRatingChange(item.productId, rating)}
-            />
-            {ratings[item.productId] > 0 && (
-              <TextInput
-                style={styles.ratingCommentInput}
-                placeholder="Add a comment (optional)"
-                value={comments[item.productId]}
-                onChangeText={(text) => handleCommentChange(item.productId, text)}
-                onFocus={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-              />
-            )}
-          </View>
-        );
-      })}
-    </ScrollView>
-    {Object.values(ratings).some(rating => rating > 0) && (
-      <TouchableOpacity onPress={submitRatings} style={styles.ratingSubmitButton}>
-        <Text style={styles.ratingButtonText}>Submit Ratings</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-</Modal>
+      <Modal
+        visible={ratingModalVisible}
+        onRequestClose={() => setRatingModalVisible(false)}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.ratingModalContainer}>
+          <ScrollView
+            ref={scrollViewRef}
+            contentContainerStyle={styles.ratingModalContent}
+            style={styles.ratingModalScrollView}
+          >
+            <Text style={styles.ratingModalTitle}>You can rate the products:</Text>
+            {order.productDetails.map((item, index) => {
+              const product = products[item.productId];
+              return (
+                <View key={index} style={styles.ratingItemContainer}>
+                  <Image source={{ uri: product.photo }} style={styles.ratingProductImage} />
+                  <Text style={styles.ratingProductName}>{product.name}</Text>
+                  <Rating
+                    startingValue={ratings[item.productId]}
+                    imageSize={30}
+                    onFinishRating={(rating) => handleRatingChange(item.productId, rating)}
+                  />
+                  {ratings[item.productId] > 0 && (
+                    <TextInput
+                      style={styles.ratingCommentInput}
+                      placeholder="Add a comment (optional)"
+                      value={comments[item.productId]}
+                      onChangeText={(text) => handleCommentChange(item.productId, text)}
+                      onFocus={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+                    />
+                  )}
+                </View>
+              );
+            })}
+          </ScrollView>
+          {Object.values(ratings).some(rating => rating > 0) && (
+            <TouchableOpacity onPress={submitRatings} style={styles.ratingSubmitButton}>
+              <Text style={styles.ratingButtonText}>Submit Ratings</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </Modal>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#000" />
