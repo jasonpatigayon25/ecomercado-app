@@ -7,143 +7,12 @@ import { collection, getDocs, query, where, orderBy, getDoc, doc, updateDoc, onS
 import { Timestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { LinearGradient } from 'expo-linear-gradient'; 
 
 
-const OrderToShipBySellerDetails = ({ route, navigation }) => {
+const OrderCompletedBySellerDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
-  const [orders, setOrders] = useState([]);
-  const [currentOrder, setCurrentOrder] = useState(null);
-  const [isStartDatePickerVisible, setStartDatePickerVisibility] = useState(false);
-  const [isEndDatePickerVisible, setEndDatePickerVisibility] = useState(false);
-  const [deliveryStart, setDeliveryStart] = useState(new Date());
-  const [deliveryEnd, setDeliveryEnd] = useState(new Date());
-  const [isDeliveryDateModalVisible, setDeliveryDateModalVisible] = useState(false);
-
-  const approveToShipOrder = (orderId) => {
-    setCurrentOrder(orderId);
-    setDeliveryStart(new Date()); 
-    setDeliveryEnd(new Date()); 
-    setDeliveryDateModalVisible(true); 
-};
-
-  const showStartDatePicker = () => {
-    setStartDatePickerVisibility(true);
-};
-
-const showEndDatePicker = () => {
-    setEndDatePickerVisibility(true);
-};
-
-const handleConfirmStartDate = (date) => {
-    setDeliveryStart(date);
-    setStartDatePickerVisibility(false);
-};
-
-const handleConfirmEndDate = (date) => {
-    setDeliveryEnd(date);
-    setEndDatePickerVisibility(false);
-};
-
-  const confirmDeliveryDates = async () => {
-    if (currentOrder) {
-        Alert.alert(
-            "Finalize Delivery Dates",
-            "Are you sure you want to set these delivery dates?",
-            [
-                {
-                    text: "Cancel",
-                    style: "cancel"
-                },
-                {
-                    text: "Confirm",
-                    onPress: async () => {
-                        try {
-                            const orderRef = doc(db, 'orders', currentOrder);
-                            await updateDoc(orderRef, {
-                                deliveryStart: Timestamp.fromDate(new Date(deliveryStart)), 
-                                deliveryEnd: Timestamp.fromDate(new Date(deliveryEnd)), 
-                                status: 'Receiving'
-                            });
-                            setDeliveryDateModalVisible(false);
-                            Alert.alert("Success", "Delivery dates set successfully.", [
-                              { text: "OK", onPress: () => navigation.navigate('SellerOrderManagement') }
-                          ]);
-                        } catch (error) {
-                            console.error("Error setting delivery dates: ", error);
-                            Alert.alert("Error", "Failed to set delivery dates.");
-                        }
-                    }
-                }
-            ],
-            { cancelable: false }
-        );
-    }
-};
-
-  const cancelOrder = async () => {
-    Alert.alert(
-      "Cancel Order",
-      "Are you sure you want to cancel this order?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        { 
-          text: "Yes", 
-          onPress: async () => {
-            try {
-              const orderRef = doc(db, 'orders', order.id);
-              await updateDoc(orderRef, {
-                status: 'Cancelled',
-              });
-  
-              Alert.alert(
-                "Order Cancelled",
-                "Your order has been cancelled successfully.",
-                [
-                  { text: "OK", onPress: () => navigation.navigate('SellerOrderManagement') }
-                ]
-              );
-            } catch (error) {
-              console.error("Error updating order status: ", error);
-              Alert.alert("Error", "Could not cancel the order at this time.");
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const approveOrder = async () => {
-    Alert.alert(
-      "Confirm Approval",
-      "Are you sure you want to approve this order?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        { 
-          text: "Approve", 
-          onPress: async () => {
-            try {
-              const orderRef = doc(db, 'orders', order.id);
-              await updateDoc(orderRef, {
-                status: 'Approved'
-              });
-  
-              Alert.alert("Order Approved", "The order has been approved successfully.");
-              navigation.goBack();
-            } catch (error) {
-              console.error("Error updating order status: ", error);
-              Alert.alert("Error", "Could not approve the order at this time.");
-            }
-          }
-        }
-      ]
-    );
-  };
 
   const subtotal = order.productDetails.reduce(
     (sum, detail) => sum + detail.orderedQuantity * products[detail.productId].price,
@@ -225,63 +94,17 @@ const handleConfirmEndDate = (date) => {
           <Text style={styles.orderTotalLabel}>Total:</Text>
           <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
         </View>
-        <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.approveButton} onPress={() => approveToShipOrder(order.id)}>
-          <Text style={styles.approveButtonText}>Deliver Order</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.cancelButton} onPress={cancelOrder}>
-            <Text style={styles.cancelbuttonText}>Cancel Order</Text>
-          </TouchableOpacity>
-        </View>
+        {order.receivedPhoto && (
+          <View style={styles.receivedPhotoContainer}>
+            <Text style={styles.receivedPhotoLabel}>Confirmation Received:</Text>
+            <Image source={{ uri: order.receivedPhoto }} style={styles.receivedPhoto} />
+          </View>
+        )}
       </View>
     </ScrollView>
-    <View style={styles.footer}>
-        <TouchableOpacity style={styles.approveButtonMain} onPress={() => approveToShipOrder(order.id)}>
-          <Text style={styles.approveButtonTextMain}>Deliver Order</Text>
-        </TouchableOpacity>
-      </View>
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={isDeliveryDateModalVisible}
-                onRequestClose={() => setDeliveryDateModalVisible(false)}
-            >
-                <View style={styles.modalBottomView}>
-                    <View style={styles.modalInnerView}>
-                        <Text style={styles.modalText}>Set Delivery Dates</Text>
-                        <Text style={styles.modalDescription}>
-                            The purpose of setting the start and end delivery dates is to specify the window within which the order should be delivered. The delivery of the item should occur between these dates.
-                        </Text>
-                        <TouchableOpacity onPress={() => showStartDatePicker()} style={styles.datePickerButton}>
-                            <Text>Start Date: {deliveryStart.toDateString()}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => showEndDatePicker()} style={styles.datePickerButton}>
-                            <Text>End Date: {deliveryEnd.toDateString()}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={confirmDeliveryDates} style={styles.confirmButton}>
-                          <Text style={styles.confirmButtonText}>Confirm Dates</Text>
-                      </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-
-            <DateTimePickerModal
-                isVisible={isStartDatePickerVisible}
-                mode="date"
-                onConfirm={handleConfirmStartDate}
-                onCancel={() => setStartDatePickerVisibility(false)}
-            />
-            <DateTimePickerModal
-                isVisible={isEndDatePickerVisible}
-                mode="date"
-                onConfirm={handleConfirmEndDate}
-                onCancel={() => setEndDatePickerVisibility(false)}
-            />
     </SafeAreaView>
   );
 };
-
-
 
 const styles = StyleSheet.create({
     safeArea: {
@@ -626,7 +449,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   approveButtonMain: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#ccc',
     padding: 15,
     justifyContent: 'center',
     alignItems: 'center',
@@ -716,7 +539,45 @@ const styles = StyleSheet.create({
     color: '#FFFFFF', 
     fontSize: 16,
     fontWeight: 'bold',
-  }
+  },
+  deliveryInfoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+  },
+  deliveryInfoText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  deliveryIcon: {
+    backgroundColor: '#000000',
+    borderRadius: 30,
+    top: -32,
+  },
+  deliveryAddress: {
+    marginTop: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderTopWidth: 1, 
+    borderBottomWidth: 1,  
+    borderColor: '#ccc',
+  },
+  receivedPhotoContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  receivedPhotoLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  receivedPhoto: {
+    width: '100%', // You can adjust this as needed
+    height: 200, // You can adjust this as needed
+    resizeMode: 'contain',
+  },
 });
 
-export default OrderToShipBySellerDetails;
+export default OrderCompletedBySellerDetails;

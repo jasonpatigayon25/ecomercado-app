@@ -67,6 +67,7 @@ import SuspendedProducts from './screens/SuspendedProducts';
 import OrderToApproveDetails from './screens/OrderToApproveDetail';
 import OrderToShipBySellerDetails from './screens/OrderToShipBySellerDetails';
 import OrderShippedDetails from './screens/OrderShippedDetails';
+import OrderCompletedBySellerDetails from './screens/OrderCompletedBySellerDetails';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -299,6 +300,7 @@ const App = () => {
               <Stack.Screen name="OrderToApproveDetails" component={OrderToApproveDetails} />
               <Stack.Screen name="OrderToShipBySellerDetails" component={OrderToShipBySellerDetails} />
               <Stack.Screen name="OrderShippedDetails" component={OrderShippedDetails} />
+              <Stack.Screen name="OrderCompletedBySellerDetails" component={OrderCompletedBySellerDetails} />
               <Stack.Screen name="SellerOrderManagement" component={SellerOrderManagement} />
               <Stack.Screen name="SuspendedProducts" component={SuspendedProducts} />
               <Stack.Screen name="RequestApproval" component={RequestApproval} />

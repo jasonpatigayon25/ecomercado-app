@@ -31,7 +31,7 @@ const OrderShippedDetails = ({ route, navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Order Approval Details</Text>
+        <Text style={styles.title}>Order Details</Text>
       </View>
       <ScrollView style={styles.container}>
       <View style={styles.orderItemContainer}>

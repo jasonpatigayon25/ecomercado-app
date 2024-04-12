@@ -256,9 +256,9 @@ const SellerOrderManagement = ({ navigation }) => {
             } else if (selectedTab === 'Shipped') {
               navigation.navigate('OrderShippedDetails', { order, products });
             } else if (selectedTab === 'Completed') {
-              navigation.navigate('OrderCompletedbySellerDetails', { order, products });
+              navigation.navigate('OrderCompletedBySellerDetails', { order, products });
             } else if (selectedTab === 'Cancelled') {
-                navigation.navigate('OrderCancelledbySellerDetails', { order, products });
+                navigation.navigate('OrderCancelledBySellerDetails', { order, products });
               }
           };
 
