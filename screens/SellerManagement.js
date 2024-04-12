@@ -174,11 +174,31 @@ const SellerManagement = ({ navigation }) => {
             </ScrollView>
             <View style={styles.scrollableContainer}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <ScrollableItem imageSource={toApproveIcon} label="To Approve" onPress={() => {}} />
-                    <ScrollableItem imageSource={toShipIcon} label="To Ship" onPress={() => {}} />
-                    <ScrollableItem imageSource={shippedIcon} label="Shipped" onPress={() => {}} />
-                    <ScrollableItem imageSource={completedIcon} label="Completed" onPress={() => {}} />
-                    <ScrollableItem imageSource={cancelledIcon} label="Cancelled Orders" onPress={() => {}} />
+                <ScrollableItem
+                    imageSource={toApproveIcon}
+                    label="To Approve"
+                    onPress={() => navigation.navigate('SellerOrderManagement', { selectedTab: 'To Approve' })}
+                />
+                <ScrollableItem
+                    imageSource={toShipIcon}
+                    label="To Ship"
+                    onPress={() => navigation.navigate('SellerOrderManagement', { selectedTab: 'To Ship' })}
+                />
+                <ScrollableItem
+                    imageSource={shippedIcon}
+                    label="Shipped"
+                    onPress={() => navigation.navigate('SellerOrderManagement', { selectedTab: 'Shipped' })}
+                />
+                <ScrollableItem
+                    imageSource={completedIcon}
+                    label="Completed"
+                    onPress={() => navigation.navigate('SellerOrderManagement', { selectedTab: 'Completed' })}
+                />
+                <ScrollableItem
+                    imageSource={cancelledIcon}
+                    label="Cancelled Orders"
+                    onPress={() => navigation.navigate('SellerOrderManagement', { selectedTab: 'Cancelled' })}
+                />
                     <ScrollableItem imageSource={approvedIcon} label="Approved Posts" onPress={() => {}} />
                     <ScrollableItem imageSource={pendingIcon} label="Pending Posts" onPress={() => {}} />
                 </ScrollView>
