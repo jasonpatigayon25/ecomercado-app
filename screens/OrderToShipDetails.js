@@ -5,6 +5,7 @@ import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { getDocs, query, collection, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const OrderToShipDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
@@ -83,6 +84,13 @@ const OrderToShipDetails = ({ route, navigation }) => {
       </View>
       <ScrollView style={styles.container}>
       <View style={styles.orderItemContainer}>
+      <View style={styles.deliveryAddress}>
+            <Text style={styles.orderTotalLabel}>Delivery Address</Text>
+            <View style={styles.orderTotalRow}>
+                <MaterialIcons name="location-on" size={20} color="#333" />
+                <Text style={styles.orderTotalValue}>{order.deliveryAddress}</Text>
+            </View>
+        </View>
         <View style={styles.sellerHeader}>
           <Icon5 name="store" size={20} color="#808080" />
           <Text style={styles.sellerName}>{sellerName}</Text>
@@ -488,6 +496,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  deliveryAddress: {
+    marginTop: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderBottomWidth: 1,  
+    borderColor: '#ccc',
   },
 });
 
