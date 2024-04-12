@@ -32,7 +32,11 @@ const SuccessModal = ({ donationName, isVisible, onCancel, navigateToDonate, nav
           <View style={styles.modalButtonContainer}>
             <TouchableOpacity
               style={[styles.modalButton, styles.modalButtonHome]}
-              onPress={navigateToDonate}
+              onPress={() => {
+                setSuccessModalVisible(false);
+                resetDonationInfo(); 
+                navigateToDonate();
+              }}
             >
               <Text style={styles.homeButton}>Add Donation Again</Text>
             </TouchableOpacity>
@@ -369,6 +373,11 @@ const Donate = ({ navigation }) => {
       width: donationInfo.width === '',
       length: donationInfo.length === '',
       height: donationInfo.height === '',
+      weight: donationInfo.weight === '',
+      purpose: donationInfo.purpose === '',
+      category: donationInfo.category === '' || donationInfo.category === 'Select a Category',
+      itemNames: donationInfo.itemNames.some(item => item === ''),
+      subPhotos: donationInfo.subPhotos.length === 0,
     };
 
     setMissingFields(missing);
@@ -390,8 +399,16 @@ const Donate = ({ navigation }) => {
   const resetDonationInfo = () => {
     setDonationInfo({
       photo: null,
+      subPhotos: [],
       name: '',
+      itemNames: [''],
+      category: '',
+      weight: '',
+      width: '',
+      length: '',
+      height: '',
       location: '',
+      purpose: '',
       message: '',
     });
   };
@@ -602,7 +619,10 @@ const Donate = ({ navigation }) => {
             <Icon name="camera" size={24} color="#D3D3D3" />
           )}
         </TouchableOpacity>
-      <Text style={styles.label}>Sub-Photos</Text>
+        <Text style={styles.label}>
+          Sub-Photos
+          {missingFields.subPhotos && <Text style={{ color: 'red' }}> *</Text>}  
+        </Text>
       <View style={styles.subPhotosContainer}>
         {Array.isArray(donationInfo.subPhotos) && donationInfo.subPhotos.map((photo, index) => (
           <View key={index} style={styles.subPhotoContainer}>
@@ -634,7 +654,7 @@ const Donate = ({ navigation }) => {
           {missingFields.name && <Text style={{ color: 'red' }}> *</Text>}
         </Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, missingFields.name && styles.missingField]}
           placeholder="Enter donation name"
           value={donationInfo.name}
           onChangeText={(name) => setDonationInfo({ ...donationInfo, name })}
@@ -644,7 +664,7 @@ const Donate = ({ navigation }) => {
         {Array.isArray(donationInfo.itemNames) && donationInfo.itemNames.map((name, index) => (
           <View key={index} style={styles.itemInputContainer}>
             <TextInput
-              style={[styles.input, { width: '80%' }]} 
+              style={[styles.input1, styles.itemInput, missingFields.itemNames && styles.missingField]}
               placeholder={`Enter item name ${index + 1}`}
               value={name}
               onChangeText={(text) => handleItemNameChange(text, index)}
@@ -658,11 +678,11 @@ const Donate = ({ navigation }) => {
         ))}
       </View>
         <Text style={styles.label}>Eco-Bundle Category</Text>
-        <View style={styles.pickerContainer}>
+        <View style={[styles.pickerContainer, missingFields.category && styles.missingField]}>
         <Picker
           selectedValue={donationInfo.category}
           onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, category: itemValue })}
-          style={styles.picker}
+          style={[styles.picker]}
         >
           <Picker.Item label="Select a Category" value="" />
           <Picker.Item label="Clothing" value="Clothing" />
@@ -673,7 +693,7 @@ const Donate = ({ navigation }) => {
         </View>
         <Text style={styles.label}>Weight (kg)</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, missingFields.weight && styles.missingField]}
           placeholder="Enter total weight"
           value={donationInfo.weight}
           keyboardType="numeric"
@@ -707,7 +727,7 @@ const Donate = ({ navigation }) => {
 
         <Text style={styles.label}>Purpose</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, missingFields.purpose && styles.missingField]}
           placeholder="e.g., For People in Need"
           value={donationInfo.purpose}
           onChangeText={(text) => setDonationInfo({ ...donationInfo, purpose: text })}
@@ -717,7 +737,7 @@ const Donate = ({ navigation }) => {
           Location
           {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
         </Text>
-        <TouchableOpacity style={styles.input} onPress={openLocationSearchModal}>
+        <TouchableOpacity style={[styles.input, missingFields.location && styles.missingField]} onPress={openLocationSearchModal}>
           <Text>{donationInfo.location || 'Enter Location'}</Text>
         </TouchableOpacity>
 
@@ -826,6 +846,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: '#FFF',
     marginBottom: 20,
+  },
+  input1: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFF',
+    marginBottom: 20,
+    width: '80%',
   },
   addPhotoContainer: {
     alignItems: 'center',
@@ -1207,7 +1237,10 @@ const styles = StyleSheet.create({
     padding: 10,
     marginHorizontal: 10,
     width: '60%',
-  },     
+  },  
+  missingField: {
+    borderColor: 'red',
+  },   
 });
 
 export default Donate;
