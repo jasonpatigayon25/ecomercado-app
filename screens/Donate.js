@@ -487,7 +487,7 @@ const Donate = ({ navigation }) => {
           isVisible={isSubPhotoPickerModalVisible}
           onCancel={() => setIsSubPhotoPickerModalVisible(false)}
         />
-     <Modal
+    <Modal
         visible={showModal}
         onRequestClose={handleCancel}
         animationType="slide"
@@ -509,12 +509,15 @@ const Donate = ({ navigation }) => {
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Purpose:</Text> {donationInfo.purpose}</Text>
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Message:</Text> {donationInfo.message}</Text>
                   
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Weight:</Text> {donationInfo.weight} kg</Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Donation Packaging:</Text> {donationInfo.width} cm x {donationInfo.length} cm x {donationInfo.height} cm</Text>
+                  
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Sub-Photos:</Text> </Text>
                   <View style={styles.subPhotosContainer}>
                     {donationInfo.subPhotos?.map((photo, index) => (
                         <Image key={index} source={{ uri: photo }} style={styles.modalSubPhotoImage} />
                     ))}
-                </View>
+                  </View>
 
                   
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Item Names:</Text> </Text>
@@ -639,29 +642,29 @@ const Donate = ({ navigation }) => {
           onChangeText={(weight) => setDonationInfo({ ...donationInfo, weight })}
         />
 
-        <Text style={styles.label}>Dimensions (cm)</Text>
+        <Text style={styles.label}>Donation Packaging (cm)</Text>
         <View style={styles.dimensionsContainer}>
         <TextInput
-  style={[styles.input, styles.dimensionInput, missingFields.width && styles.missingField]}
-  placeholder="Width (cm)"
-  keyboardType="numeric"
-  value={donationInfo.width}
-  onChangeText={(text) => setDonationInfo({ ...donationInfo, width: text })}
-/>
-<TextInput
-  style={[styles.input, styles.dimensionInput, missingFields.length && styles.missingField]}
-  placeholder="Length (cm)"
-  keyboardType="numeric"
-  value={donationInfo.length}
-  onChangeText={(text) => setDonationInfo({ ...donationInfo, length: text })}
-/>
-<TextInput
-  style={[styles.input, styles.dimensionInput, missingFields.height && styles.missingField]}
-  placeholder="Height (cm)"
-  keyboardType="numeric"
-  value={donationInfo.height}
-  onChangeText={(text) => setDonationInfo({ ...donationInfo, height: text })}
-/>
+            style={[styles.input, styles.dimensionInput, missingFields.width && styles.missingField]}
+            placeholder="Width (cm)"
+            keyboardType="numeric"
+            value={donationInfo.width}
+            onChangeText={(text) => setDonationInfo({ ...donationInfo, width: text })}
+          />
+          <TextInput
+            style={[styles.input, styles.dimensionInput, missingFields.length && styles.missingField]}
+            placeholder="Length (cm)"
+            keyboardType="numeric"
+            value={donationInfo.length}
+            onChangeText={(text) => setDonationInfo({ ...donationInfo, length: text })}
+          />
+          <TextInput
+            style={[styles.input, styles.dimensionInput, missingFields.height && styles.missingField]}
+            placeholder="Height (cm)"
+            keyboardType="numeric"
+            value={donationInfo.height}
+            onChangeText={(text) => setDonationInfo({ ...donationInfo, height: text })}
+          />
         </View>
 
         <Text style={styles.label}>Purpose</Text>
