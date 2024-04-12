@@ -11,7 +11,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient'; 
 
 
-const OrderCompletedBySellerDetails = ({ route, navigation }) => {
+const OrderCancelledBySellerDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
 
   const subtotal = order.productDetails.reduce(
@@ -31,7 +31,7 @@ const OrderCompletedBySellerDetails = ({ route, navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Order Details</Text>
+        <Text style={styles.title}>Cancelled Order</Text>
       </View>
       <ScrollView style={styles.container}>
       <View style={styles.orderItemContainer}>
@@ -580,4 +580,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OrderCompletedBySellerDetails;
+export default OrderCancelledBySellerDetails;
