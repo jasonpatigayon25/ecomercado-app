@@ -8,7 +8,7 @@ import moment from 'moment';
 
 const OrderCancelledDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
-  const [sellerName, setSellerName] = useState('Unknown Seller');
+  const [sellerName, setSellerName] = useState('...');
   
   useEffect(() => {
     const fetchSellerName = async () => {

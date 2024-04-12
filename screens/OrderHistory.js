@@ -117,7 +117,7 @@ const fetchProductDetails = async (orders) => {
   if (sellerEmailsToFetch.size > 0) {
     const sellerNames = await fetchSellerNames(sellerEmailsToFetch);
     Object.values(fetchedProducts).forEach(product => {
-      product.sellerName = sellerNames[product.seller_email] || 'Unknown Seller';
+      product.sellerName = sellerNames[product.seller_email] || '...';
     });
   }
 
@@ -274,7 +274,7 @@ const confirmReceipt = async () => {
 }
     const groupedBySeller = order.productDetails.reduce((acc, productDetail) => {
       const product = products[productDetail.productId];
-        const sellerName = product ? product.sellerName : 'Unknown Seller'; 
+        const sellerName = product ? product.sellerName : '...'; 
         if (!acc[sellerName]) {
             acc[sellerName] = [];
         }

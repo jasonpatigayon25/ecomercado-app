@@ -8,7 +8,7 @@ import moment from 'moment';
 
 const OrderCompletedDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
-  const [sellerName, setSellerName] = useState('Unknown Seller');
+  const [sellerName, setSellerName] = useState('...');
 
   const rotateAnimation = useRef(new Animated.Value(0)).current;
 

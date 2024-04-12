@@ -17,7 +17,7 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
   const scrollViewRef = useRef();
   const [confirmationModalVisible, setConfirmationModalVisible] = useState(false);
   const { order, products } = route.params;
-  const [sellerName, setSellerName] = useState('Unknown Seller');
+  const [sellerName, setSellerName] = useState('...');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
