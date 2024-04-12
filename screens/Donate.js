@@ -113,18 +113,20 @@ const Donate = ({ navigation }) => {
   };
 
   const handleItemNameChange = (text, index) => {
-    const updatedItemNames = donationInfo.itemNames.map((name, i) => {
-      if (i === index) return text;
-      return name;
-    });
-    setDonationInfo({ ...donationInfo, itemNames: updatedItemNames });
+    if (Array.isArray(donationInfo.itemNames)) {
+      const updatedItemNames = donationInfo.itemNames.map((name, i) => {
+        if (i === index) return text;
+        return name;
+      });
+      setDonationInfo({ ...donationInfo, itemNames: updatedItemNames });
+    }
   };
 
   const removeSubPhoto = (indexToRemove) => {
-
-    const updatedSubPhotos = donationInfo.subPhotos.filter((_, index) => index !== indexToRemove);
-
-    setDonationInfo({ ...donationInfo, subPhotos: updatedSubPhotos });
+    if (Array.isArray(donationInfo.subPhotos)) {
+      const updatedSubPhotos = donationInfo.subPhotos.filter((_, index) => index !== indexToRemove);
+      setDonationInfo({ ...donationInfo, subPhotos: updatedSubPhotos });
+    }
   };
   
 
@@ -204,7 +206,9 @@ const Donate = ({ navigation }) => {
     itemNames: [''],
     category: '',
     weight: '',
-    dimensions: { width: '', length: '', height: '' },
+    width: '',  
+    length: '',
+    height: '',
     location: '',
     purpose: '',
     message: '',
@@ -214,10 +218,20 @@ const Donate = ({ navigation }) => {
     photo: false,
     name: false,
     location: false,
+    width: false,
+    length: false,
+    height: false,
   });
 
   const handleBackPress = () => {
     navigation.goBack();
+  };
+
+  const handleDimensionChange = (dimension, value) => {
+    setDonationInfo(prevState => ({
+      ...prevState,
+      [dimension]: value,
+    }));
   };
 
   const uploadImageAsync = async (uri) => {
@@ -262,42 +276,48 @@ const Donate = ({ navigation }) => {
     if (!validateForm()) {
       return;
     }
+    if (Array.isArray(donationInfo.subPhotos) && Array.isArray(donationInfo.itemNames)) {
+      try {
+        const createdAt = Timestamp.fromDate(new Date());
   
-    try {
-      const createdAt = Timestamp.fromDate(new Date()); 
+        const donationDocRef = await addDoc(donationCollection, {
+          photo: donationInfo.photo,
+          subPhotos: donationInfo.subPhotos,
+          name: donationInfo.name,
+          category: donationInfo.category,
+          itemNames: donationInfo.itemNames,
+          weight: donationInfo.weight,
+          width: donationInfo.width,
+          length: donationInfo.length,
+          height: donationInfo.height,
+          location: donationInfo.location,
+          purpose: donationInfo.purpose,
+          message: donationInfo.message,
+          donor_email: userEmail,
+          createdAt,
+          publicationStatus: 'pending',
+        });
   
-      const donationDocRef = await addDoc(donationCollection, {
-        photo: donationInfo.photo,
-        subPhotos: donationInfo.subPhotos, // Include sub-photos
-        name: donationInfo.name,
-        category: donationInfo.category, // Include category
-        itemNames: donationInfo.itemNames, // Include item names
-        weight: donationInfo.weight, // Include if needed
-        dimensions: donationInfo.dimensions, // Include if needed
-        location: donationInfo.location,
-        purpose: donationInfo.purpose, // Include purpose
-        message: donationInfo.message,
-        donor_email: userEmail,
-        createdAt, 
-        publicationStatus: 'pending',
-      });
-
-      const updatedDonationInfo = {
-        ...donationInfo,
-        id: donationDocRef.id,
-        publicationStatus: 'pending',
-      };
-
-      await notifySubscribers(userEmail, updatedDonationInfo);
+        const updatedDonationInfo = {
+          ...donationInfo,
+          id: donationDocRef.id,
+          publicationStatus: 'pending',
+        };
   
-      Alert.alert(`Donation of ${donationInfo.name} successfully submitted!`);
-      resetDonationInfo();
-      setShowModal(false);
-    } catch (error) {
-      console.error("Error adding document: ", error);
-      Alert.alert('An error occurred while submitting your donation. Please try again.');
+        await notifySubscribers(userEmail, updatedDonationInfo);
+  
+        Alert.alert(`Donation of ${donationInfo.name} successfully submitted!`);
+        resetDonationInfo();
+        setShowModal(false);
+      } catch (error) {
+        console.error("Error submitting donation:", error);
+        Alert.alert('An error occurred while submitting your donation. Please try again.');
+      }
+    } else {
+      console.error('An error occurred: subPhotos or itemNames is not an array.');
     }
   };
+  
 
   const handleCancel = () => {
     setShowModal(false);
@@ -308,6 +328,9 @@ const Donate = ({ navigation }) => {
       photo: !donationInfo.photo,
       name: !donationInfo.name,
       location: !donationInfo.location,
+      width: donationInfo.width === '',
+      length: donationInfo.length === '',
+      height: donationInfo.height === '',
     };
 
     setMissingFields(missing);
@@ -443,7 +466,7 @@ const Donate = ({ navigation }) => {
       });
     }
   
-    if (!result.cancelled && result.assets && result.assets.length > 0) {
+    if (result && !result.cancelled && result.assets && result.assets.length > 0) {
       const uploadUrl = await uploadImageAsync(result.assets[0].uri);
       setDonationInfo({
         ...donationInfo,
@@ -488,16 +511,17 @@ const Donate = ({ navigation }) => {
                   
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Sub-Photos:</Text> </Text>
                   <View style={styles.subPhotosContainer}>
-                    {donationInfo.subPhotos.map((photo, index) => (
-                      <Image key={index} source={{ uri: photo }} style={styles.modalSubPhotoImage} />
+                    {donationInfo.subPhotos?.map((photo, index) => (
+                        <Image key={index} source={{ uri: photo }} style={styles.modalSubPhotoImage} />
                     ))}
-                  </View>
+                </View>
+
                   
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Item Names:</Text> </Text>
                   <View style={styles.modalItemNamesContainer}>
-                    {donationInfo.itemNames.map((name, index) => (
-                      <Text key={index} style={styles.modalItemName}>{index + 1}. {name}</Text>
-                    ))}
+                      {donationInfo.itemNames?.map((name, index) => (
+                          <Text key={index} style={styles.modalItemName}>{index + 1}. {name}</Text>
+                      ))}
                   </View>
                   
                 </View>
@@ -539,7 +563,7 @@ const Donate = ({ navigation }) => {
         </TouchableOpacity>
       <Text style={styles.label}>Sub-Photos</Text>
       <View style={styles.subPhotosContainer}>
-        {donationInfo.subPhotos.map((photo, index) => (
+        {Array.isArray(donationInfo.subPhotos) && donationInfo.subPhotos.map((photo, index) => (
           <View key={index} style={styles.subPhotoContainer}>
             {photo ? (
               <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
@@ -557,7 +581,7 @@ const Donate = ({ navigation }) => {
             )}
           </View>
         ))}
-        {donationInfo.subPhotos.length < MAX_SUB_PHOTOS && (
+        {Array.isArray(donationInfo.subPhotos) && donationInfo.subPhotos.length < MAX_SUB_PHOTOS && (
           <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
             <Icon name="camera" size={24} color="#D3D3D3" />
           </TouchableOpacity>
@@ -576,7 +600,7 @@ const Donate = ({ navigation }) => {
         />
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Item Names</Text>
-        {donationInfo.itemNames.map((name, index) => (
+        {Array.isArray(donationInfo.itemNames) && donationInfo.itemNames.map((name, index) => (
           <View key={index} style={styles.itemInputContainer}>
             <TextInput
               style={[styles.input, { width: '80%' }]} 
@@ -617,39 +641,36 @@ const Donate = ({ navigation }) => {
 
         <Text style={styles.label}>Dimensions (cm)</Text>
         <View style={styles.dimensionsContainer}>
-          <TextInput
-            style={[styles.dimensionInput, { marginRight: 10 }]}
-            placeholder="Width"
-            keyboardType="numeric"
-            value={donationInfo.dimensions.width}
-            onChangeText={(width) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, width } })}
-          />
-          <TextInput
-            style={[styles.dimensionInput, { marginRight: 10 }]}
-            placeholder="Length"
-            keyboardType="numeric"
-            value={donationInfo.dimensions.length}
-            onChangeText={(length) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, length } })}
-          />
-          <TextInput
-            style={styles.dimensionInput}
-            placeholder="Height"
-            keyboardType="numeric"
-            value={donationInfo.dimensions.height}
-            onChangeText={(height) => setDonationInfo({ ...donationInfo, dimensions: { ...donationInfo.dimensions, height } })}
-          />
+        <TextInput
+  style={[styles.input, styles.dimensionInput, missingFields.width && styles.missingField]}
+  placeholder="Width (cm)"
+  keyboardType="numeric"
+  value={donationInfo.width}
+  onChangeText={(text) => setDonationInfo({ ...donationInfo, width: text })}
+/>
+<TextInput
+  style={[styles.input, styles.dimensionInput, missingFields.length && styles.missingField]}
+  placeholder="Length (cm)"
+  keyboardType="numeric"
+  value={donationInfo.length}
+  onChangeText={(text) => setDonationInfo({ ...donationInfo, length: text })}
+/>
+<TextInput
+  style={[styles.input, styles.dimensionInput, missingFields.height && styles.missingField]}
+  placeholder="Height (cm)"
+  keyboardType="numeric"
+  value={donationInfo.height}
+  onChangeText={(text) => setDonationInfo({ ...donationInfo, height: text })}
+/>
         </View>
+
         <Text style={styles.label}>Purpose</Text>
-        <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={donationInfo.purpose}
-          onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, purpose: itemValue })}
-          style={styles.picker}
-        >
-          <Picker.Item label="For people in need" value="PeopleInNeed" />
-          <Picker.Item label="Environmental purpose" value="Environment" />
-        </Picker>
-        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g., For People in Need"
+          value={donationInfo.purpose}
+          onChangeText={(text) => setDonationInfo({ ...donationInfo, purpose: text })}
+        />
 
         <Text style={styles.label}>
           Location
