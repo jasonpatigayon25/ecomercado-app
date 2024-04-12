@@ -117,7 +117,7 @@ const fetchProductDetails = async (orders) => {
   if (sellerEmailsToFetch.size > 0) {
     const sellerNames = await fetchSellerNames(sellerEmailsToFetch);
     Object.values(fetchedProducts).forEach(product => {
-      product.sellerName = sellerNames[product.seller_email] || '...';
+      product.sellerName = sellerNames[product.seller_email] || 'Unknown Seller';
     });
   }
 
@@ -249,6 +249,13 @@ const confirmReceipt = async () => {
   }
 };
 
+const navigateToOrderDetails = (order) => {
+  navigation.navigate('OrderToReceiveDetails', {
+    order,
+    products,
+    shouldOpenConfirmModal: true
+  });
+};
 
   const renderOrderItem = ({ item: order }) => {
 
@@ -274,7 +281,7 @@ const confirmReceipt = async () => {
 }
     const groupedBySeller = order.productDetails.reduce((acc, productDetail) => {
       const product = products[productDetail.productId];
-        const sellerName = product ? product.sellerName : '...'; 
+        const sellerName = product ? product.sellerName : 'Unknown Seller'; 
         if (!acc[sellerName]) {
             acc[sellerName] = [];
         }
@@ -333,12 +340,15 @@ const confirmReceipt = async () => {
       {selectedTab === 'To Receive' && (
           <View style={styles.confirmationContainer}>
             <Text style={styles.noteText}>Please confirm when you've received your items.</Text>
-            <TouchableOpacity style={styles.confirmButton} onPress={() => {
-              setActiveOrder(order);
-              setModalVisible(true);
-            }}>
-              <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
-            </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={() => {
+                  setActiveOrder(order); 
+                  navigation.navigate('OrderToReceiveDetails', { order, products, shouldOpenConfirmModal: true });
+                }}
+              >
+                <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
+              </TouchableOpacity>
           </View>
         )}
         {selectedTab === 'Cancelled' && (

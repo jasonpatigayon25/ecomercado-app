@@ -26,6 +26,12 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
   const [comments, setComments] = useState({});
 
   useEffect(() => {
+    if (route.params.shouldOpenConfirmModal) {
+      setModalVisible(true);
+    }
+  }, [route.params.shouldOpenConfirmModal]);
+
+  useEffect(() => {
 
     const initialRatings = {};
     const initialComments = {};
@@ -738,16 +744,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   cameraButton: {
+    flex: 1,
+    justifyContent: 'center',  
+    alignItems: 'center',     
     backgroundColor: "#2196F3",
     borderRadius: 10,
-    padding: 10,
-    paddingVertical: 20,
+    padding: 20,
     elevation: 2,
+    marginHorizontal: 30,
     marginBottom: 10
   },
   cameraButtonText: {
     color: "#fff",
-    marginLeft: 10
+    marginLeft: 10,
+    textAlign: 'center',
   },
   previewImage: {
     width: 300,
