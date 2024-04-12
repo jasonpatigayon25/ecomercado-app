@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Modal, Alert } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -12,9 +13,52 @@ import { Dimensions } from 'react-native';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const SuccessModal = ({ donationName, isVisible, onCancel, navigateToDonate, navigateToDonationPosts }) => {
+  return (
+    <Modal
+      visible={isVisible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onCancel}
+    >
+      <View style={styles.centeredView1}>
+        <View style={styles.modalView1}>
+          <Text style={styles.modalText}>Donation Pending</Text>
+          <Icon name="check-circle" size={60} color="white" />
+          <Text style={styles.pendingText}>Donation successfully submitted!</Text>
+          <Text style={styles.subtext}>
+            The donation is pending approval. You can view your pending donations in your dashboard.
+          </Text>
+          <View style={styles.modalButtonContainer}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonHome]}
+              onPress={() => {
+                navigateToDonate();
+              }}
+            >
+              <Text style={styles.homeButton}>Add Donation Again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonOrder]}
+              onPress={navigateToDonationPosts}
+            >
+              <Text style={styles.homeButton}>My Donation Posts</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 const screenHeight = Dimensions.get('window').height;
 
 const DonateAddDonation = ({ navigation }) => {
+
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+
+  const [isSubPhotoPickerModalVisible, setIsSubPhotoPickerModalVisible] = useState(false);
+  const MAX_SUB_PHOTOS = 15;
 
   const [locationSearchModalVisible, setLocationSearchModalVisible] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState('');
@@ -101,6 +145,30 @@ const DonateAddDonation = ({ navigation }) => {
     });
   };
   
+  const addNewItemNameField = () => {
+    setDonationInfo(prevState => ({
+      ...prevState,
+      itemNames: [...prevState.itemNames, ''] 
+    }));
+  };
+
+  const handleItemNameChange = (text, index) => {
+    if (Array.isArray(donationInfo.itemNames)) {
+      const updatedItemNames = donationInfo.itemNames.map((name, i) => {
+        if (i === index) return text;
+        return name;
+      });
+      setDonationInfo({ ...donationInfo, itemNames: updatedItemNames });
+    }
+  };
+
+  const removeSubPhoto = (indexToRemove) => {
+    if (Array.isArray(donationInfo.subPhotos)) {
+      const updatedSubPhotos = donationInfo.subPhotos.filter((_, index) => index !== indexToRemove);
+      setDonationInfo({ ...donationInfo, subPhotos: updatedSubPhotos });
+    }
+  };
+  
 
   const handleLocationSearch = async (query) => {
     setLocationSearchQuery(query);
@@ -173,8 +241,16 @@ const DonateAddDonation = ({ navigation }) => {
 
   const [donationInfo, setDonationInfo] = useState({
     photo: null,
+    subPhotos: [],
     name: '',
+    itemNames: [''],
+    category: '',
+    weight: '',
+    width: '',  
+    length: '',
+    height: '',
     location: '',
+    purpose: '',
     message: '',
   });
   const [showModal, setShowModal] = useState(false);
@@ -182,10 +258,20 @@ const DonateAddDonation = ({ navigation }) => {
     photo: false,
     name: false,
     location: false,
+    width: false,
+    length: false,
+    height: false,
   });
 
   const handleBackPress = () => {
     navigation.goBack();
+  };
+
+  const handleDimensionChange = (dimension, value) => {
+    setDonationInfo(prevState => ({
+      ...prevState,
+      [dimension]: value,
+    }));
   };
 
   const uploadImageAsync = async (uri) => {
@@ -225,40 +311,53 @@ const DonateAddDonation = ({ navigation }) => {
     }
   };
 
+
   const handleSubmit = async () => {
     if (!validateForm()) {
       return;
     }
+    if (Array.isArray(donationInfo.subPhotos) && Array.isArray(donationInfo.itemNames)) {
+      try {
+        const createdAt = Timestamp.fromDate(new Date());
   
-    try {
-      const createdAt = Timestamp.fromDate(new Date()); 
+        const donationDocRef = await addDoc(donationCollection, {
+          photo: donationInfo.photo,
+          subPhotos: donationInfo.subPhotos,
+          name: donationInfo.name,
+          category: donationInfo.category,
+          itemNames: donationInfo.itemNames,
+          weight: donationInfo.weight,
+          width: donationInfo.width,
+          length: donationInfo.length,
+          height: donationInfo.height,
+          location: donationInfo.location,
+          purpose: donationInfo.purpose,
+          message: donationInfo.message,
+          donor_email: userEmail,
+          createdAt,
+          publicationStatus: 'pending',
+        });
   
-      const donationDocRef = await addDoc(donationCollection, {
-        photo: donationInfo.photo,
-        name: donationInfo.name,
-        location: donationInfo.location,
-        message: donationInfo.message,
-        donor_email: userEmail,
-        createdAt, 
-        publicationStatus: 'pending',
-      });
-
-      const updatedDonationInfo = {
-        ...donationInfo,
-        id: donationDocRef.id,
-        publicationStatus: 'pending',
-      };
-
-      await notifySubscribers(userEmail, updatedDonationInfo);
+        const updatedDonationInfo = {
+          ...donationInfo,
+          id: donationDocRef.id,
+          publicationStatus: 'pending',
+        };
   
-      Alert.alert(`Donation of ${donationInfo.name} successfully submitted!`);
-      resetDonationInfo();
-      setShowModal(false);
-    } catch (error) {
-      console.error("Error adding document: ", error);
-      Alert.alert('An error occurred while submitting your donation. Please try again.');
+        await notifySubscribers(userEmail, updatedDonationInfo);
+        setSuccessModalVisible(true);
+        // Alert.alert(`Donation of ${donationInfo.name} successfully submitted!`);
+        resetDonationInfo();
+        setShowModal(false);
+      } catch (error) {
+        console.error("Error submitting donation:", error);
+        Alert.alert('An error occurred while submitting your donation. Please try again.');
+      }
+    } else {
+      console.error('An error occurred: subPhotos or itemNames is not an array.');
     }
   };
+  
 
   const handleCancel = () => {
     setShowModal(false);
@@ -269,6 +368,14 @@ const DonateAddDonation = ({ navigation }) => {
       photo: !donationInfo.photo,
       name: !donationInfo.name,
       location: !donationInfo.location,
+      width: donationInfo.width === '',
+      length: donationInfo.length === '',
+      height: donationInfo.height === '',
+      weight: donationInfo.weight === '',
+      purpose: donationInfo.purpose === '',
+      category: donationInfo.category === '' || donationInfo.category === 'Select a Category',
+      itemNames: donationInfo.itemNames.some(item => item === ''),
+      subPhotos: donationInfo.subPhotos.length === 0,
     };
 
     setMissingFields(missing);
@@ -290,8 +397,16 @@ const DonateAddDonation = ({ navigation }) => {
   const resetDonationInfo = () => {
     setDonationInfo({
       photo: null,
+      subPhotos: [],
       name: '',
+      itemNames: [''],
+      category: '',
+      weight: '',
+      width: '',
+      length: '',
+      height: '',
       location: '',
+      purpose: '',
       message: '',
     });
   };
@@ -338,8 +453,80 @@ const DonateAddDonation = ({ navigation }) => {
     </Modal>
   );
 
+  const SubPhotoPickerModal = ({ isVisible, onCancel }) => (
+    <Modal
+      visible={isVisible}
+      onRequestClose={onCancel}
+      animationType="slide"
+      transparent={true}
+    >
+      <View style={styles.modalOverlayPhoto}>
+        <View style={styles.modalContainerPhoto}>
+          <TouchableOpacity style={styles.cancelButtonTopRight} onPress={onCancel}>
+            <Icon name="times" size={24} color="#05652D" />
+          </TouchableOpacity>
+          <Text style={styles.modalHeader}>Select Sub-Photo</Text>
+          <Text style={styles.modalSubHeader}>Choose a photo from the gallery or take a new one.</Text>
+          <View style={styles.photoOptionsContainer}>
+            <TouchableOpacity
+              style={[styles.photoOption, styles.separateBorder]}
+              onPress={async () => {
+                await handleSubPhotoPickImage('library');
+                onCancel();
+              }}
+            >
+              <Icon name="photo" size={80} color="#05652D" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.photoOption, styles.separateBorder]}
+              onPress={async () => {
+                await handleSubPhotoPickImage('camera');
+                onCancel();
+              }}
+            >
+              <Icon name="camera" size={80} color="#05652D" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+  
+  const handleChooseSubPhoto = () => {
+    setIsSubPhotoPickerModalVisible(true);
+  };
+  
   const handleChoosePhoto = () => {
     setIsPhotoPickerModalVisible(true);
+  };
+
+  const handleSubPhotoPickImage = async (type) => {
+    let result;
+    if (type === 'camera') {
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    } else {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    }
+  
+    if (result && !result.cancelled && result.assets && result.assets.length > 0) {
+      const uploadUrl = await uploadImageAsync(result.assets[0].uri);
+      setDonationInfo({
+        ...donationInfo,
+        subPhotos: [...donationInfo.subPhotos, uploadUrl]
+      });
+    }
+  
+    setIsSubPhotoPickerModalVisible(false);
   };
 
   return (
@@ -348,39 +535,65 @@ const DonateAddDonation = ({ navigation }) => {
         isVisible={isPhotoPickerModalVisible}
         onCancel={() => setIsPhotoPickerModalVisible(false)}
       />
-      <Modal
+      <SubPhotoPickerModal
+          isVisible={isSubPhotoPickerModalVisible}
+          onCancel={() => setIsSubPhotoPickerModalVisible(false)}
+        />
+    <Modal
         visible={showModal}
         onRequestClose={handleCancel}
         animationType="slide"
         transparent={true}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Donate Confirmation</Text>
-            <View style={styles.modalContent}>
-              {donationInfo.photo && (
-                <Image source={{ uri: donationInfo.photo }} style={styles.modalProductImage} />
-              )}
+          <ScrollView contentContainerStyle={styles.modalContainerScroll}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Donate Confirmation</Text>
+              <View style={styles.modalContent}>
+                {donationInfo.photo && (
+                  <Image source={{ uri: donationInfo.photo }} style={styles.modalProductImage} />
+                )}
 
-              <View style={styles.modalProductDetails}>
-                <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Name:</Text> {donationInfo.name}</Text>
-                <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Location:</Text> {donationInfo.location}</Text>
-                <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Message:</Text> {donationInfo.message}</Text>
+                <View style={styles.modalProductDetails}>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Name:</Text> {donationInfo.name}</Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Category:</Text> {donationInfo.category}</Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Location:</Text> {donationInfo.location}</Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Purpose:</Text> {donationInfo.purpose}</Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Message:</Text> {donationInfo.message}</Text>
+                  
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Weight:</Text> {donationInfo.weight} kg</Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Donation Packaging:</Text> {donationInfo.width} cm x {donationInfo.length} cm x {donationInfo.height} cm</Text>
+                  
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Item Photos:</Text> </Text>
+                  <View style={styles.subPhotosContainer}>
+                    {donationInfo.subPhotos?.map((photo, index) => (
+                        <Image key={index} source={{ uri: photo }} style={styles.modalSubPhotoImage} />
+                    ))}
+                  </View>
+
+                  
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Item Names:</Text> </Text>
+                  <View style={styles.modalItemNamesContainer}>
+                      {donationInfo.itemNames?.map((name, index) => (
+                          <Text key={index} style={styles.modalItemName}>{index + 1}. {name}</Text>
+                      ))}
+                  </View>
+                  
+                </View>
               </View>
             </View>
+          </ScrollView>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitButtonText}>Donate</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.modalButtons}>
+            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+              <Text style={styles.submitButtonText}>Donate</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress}>
           <View style={styles.backContainer}>
@@ -390,49 +603,156 @@ const DonateAddDonation = ({ navigation }) => {
         <Text style={styles.title}>Donate</Text>
       </View>
       <ScrollView style={styles.contentContainer}>
-        <View style={styles.formContainer}>
+        
+      <View style={styles.formContainer}>
         <Text style={styles.label}>
-          Item Photo
-          {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
+          Main Photo
+          {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>}
         </Text>
-          <TouchableOpacity style={styles.addPhotoContainer} onPress={handleChoosePhoto}>
-            {donationInfo.photo ? (
-              <Image source={{ uri: donationInfo.photo }} style={styles.productImage} />
+        <TouchableOpacity style={styles.addPhotoContainer} onPress={() => handleChoosePhoto()}>
+          {donationInfo.photo ? (
+            <Image source={{ uri: donationInfo.photo }} style={styles.productImage} />
+          ) : (
+            <Icon name="camera" size={24} color="#D3D3D3" />
+          )}
+        </TouchableOpacity>
+        <Text style={styles.label}>
+          Item Photos
+          {missingFields.subPhotos && <Text style={{ color: 'red' }}> *</Text>}  
+        </Text>
+      <View style={styles.subPhotosContainer}>
+        {Array.isArray(donationInfo.subPhotos) && donationInfo.subPhotos.map((photo, index) => (
+          <View key={index} style={styles.subPhotoContainer}>
+            {photo ? (
+              <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
+                <Image source={{ uri: photo }} style={styles.subPhotoImage} />
+              </TouchableOpacity>
             ) : (
-              <Icon name="camera" size={24} color="#D3D3D3" />
+              <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
+                <Icon name="camera" size={24} color="#D3D3D3" />
+              </TouchableOpacity>
             )}
+            {photo && (
+              <TouchableOpacity style={styles.removePhotoIconContainer} onPress={() => removeSubPhoto(index)}>
+                <Icon name="times-circle" size={24} color="#FF0000" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+        {Array.isArray(donationInfo.subPhotos) && donationInfo.subPhotos.length < MAX_SUB_PHOTOS && (
+          <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
+            <Icon name="camera" size={24} color="#D3D3D3" />
           </TouchableOpacity>
-          <Text style={styles.label}>
-            Item Name
-            {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
-          </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter item name"
-            value={donationInfo.name}
-            onChangeText={(name) => setDonationInfo({ ...donationInfo, name })}
+        )}
+      </View>
+
+        <Text style={styles.label}>
+          Donation Name
+          {missingFields.name && <Text style={{ color: 'red' }}> *</Text>}
+        </Text>
+        <TextInput
+          style={[styles.input, missingFields.name && styles.missingField]}
+          placeholder="Enter donation name"
+          value={donationInfo.name}
+          onChangeText={(name) => setDonationInfo({ ...donationInfo, name })}
+        />
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Item Names</Text>
+        {Array.isArray(donationInfo.itemNames) && donationInfo.itemNames.map((name, index) => (
+          <View key={index} style={styles.itemInputContainer}>
+            <TextInput
+              style={[styles.input1, styles.itemInput, missingFields.itemNames && styles.missingField]}
+              placeholder={`Enter item name ${index + 1}`}
+              value={name}
+              onChangeText={(text) => handleItemNameChange(text, index)}
+            />
+            {index === donationInfo.itemNames.length - 1 && ( 
+              <TouchableOpacity onPress={addNewItemNameField} style={styles.addButton}>
+                <Icon name="plus" size={40} color="#D3D3D3" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+      </View>
+        <Text style={styles.label}>Eco-Bundle Category</Text>
+        <View style={[styles.pickerContainer, missingFields.category && styles.missingField]}>
+        <Picker
+          selectedValue={donationInfo.category}
+          onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, category: itemValue })}
+          style={[styles.picker]}
+        >
+          <Picker.Item label="Select a Category" value="" />
+          <Picker.Item label="Clothing" value="Clothing" />
+          <Picker.Item label="Devices" value="Devices" />
+          <Picker.Item label="Furniture" value="Furniture" />
+          <Picker.Item label="Mixed" value="Mixed" />
+        </Picker>
+        </View>
+        <Text style={styles.label}>Weight (kg)</Text>
+        <TextInput
+          style={[styles.input, missingFields.weight && styles.missingField]}
+          placeholder="Enter total weight"
+          value={donationInfo.weight}
+          keyboardType="numeric"
+          onChangeText={(weight) => setDonationInfo({ ...donationInfo, weight })}
+        />
+
+        <Text style={styles.label}>Donation Packaging (cm)</Text>
+        <View style={styles.dimensionsContainer}>
+        <TextInput
+            style={[styles.input, styles.dimensionInput, missingFields.width && styles.missingField]}
+            placeholder="Width (cm)"
+            keyboardType="numeric"
+            value={donationInfo.width}
+            onChangeText={(text) => setDonationInfo({ ...donationInfo, width: text })}
           />
-          <Text style={styles.label}>
-            Location
-            {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
-          </Text>
-          <TouchableOpacity style={styles.input} onPress={() => setLocationSearchModalVisible(true)}>
-            <Text>{donationInfo.location || 'Enter Location'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.label}>Message</Text>
           <TextInput
-            style={styles.input}
-            placeholder="Enter your message"
-            multiline={true}
-            numberOfLines={3}
-            value={donationInfo.message}
-            onChangeText={(message) => setDonationInfo({ ...donationInfo, message })}
+            style={[styles.input, styles.dimensionInput, missingFields.length && styles.missingField]}
+            placeholder="Length (cm)"
+            keyboardType="numeric"
+            value={donationInfo.length}
+            onChangeText={(text) => setDonationInfo({ ...donationInfo, length: text })}
+          />
+          <TextInput
+            style={[styles.input, styles.dimensionInput, missingFields.height && styles.missingField]}
+            placeholder="Height (cm)"
+            keyboardType="numeric"
+            value={donationInfo.height}
+            onChangeText={(text) => setDonationInfo({ ...donationInfo, height: text })}
           />
         </View>
+
+        <Text style={styles.label}>Purpose</Text>
+        <TextInput
+          style={[styles.input, missingFields.purpose && styles.missingField]}
+          placeholder="e.g., For People in Need"
+          value={donationInfo.purpose}
+          onChangeText={(text) => setDonationInfo({ ...donationInfo, purpose: text })}
+        />
+
+        <Text style={styles.label}>
+          Location
+          {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
+        </Text>
+        <TouchableOpacity style={[styles.input, missingFields.location && styles.missingField]} onPress={openLocationSearchModal}>
+          <Text>{donationInfo.location || 'Enter Location'}</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.label}>Message</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your message (optional)"
+          multiline
+          numberOfLines={4}
+          value={donationInfo.message}
+          onChangeText={(message) => setDonationInfo({ ...donationInfo, message })}
+        />
+
+        <TouchableOpacity style={styles.donateButton} onPress={handleDonate}>
+          <Text style={styles.buttonText}>Donate</Text>
+        </TouchableOpacity>
+      </View>
       </ScrollView>
-      <TouchableOpacity style={styles.donateButton} onPress={handleDonate}>
-            <Text style={styles.buttonText}>Donate</Text>
-          </TouchableOpacity>
       <Modal
         animationType="slide"
         transparent={true}
@@ -463,6 +783,19 @@ const DonateAddDonation = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+      <SuccessModal 
+        donationName={donationInfo.name}
+        isVisible={successModalVisible}
+        onCancel={() => setSuccessModalVisible(false)}
+        navigateToDonate={() => {
+          setSuccessModalVisible(false);
+          navigation.navigate('Donate');
+        }}
+        navigateToDonationPosts={() => {
+          setSuccessModalVisible(false);
+          navigation.navigate('DonationManagement');
+        }}
+      />
     </View>
   );
 };
@@ -470,7 +803,6 @@ const DonateAddDonation = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between',
     backgroundColor: '#F9F9F9',
   },
   header: {
@@ -512,6 +844,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     marginBottom: 20,
   },
+  input1: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFF',
+    marginBottom: 20,
+    width: '80%',
+  },
   addPhotoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -530,8 +872,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
-    marginVertical: 10,
-    marginHorizontal: 20,
+    marginVertical: 20,
   },
   buttonText: {
     color: '#FFF',
@@ -545,7 +886,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    width: '90%',
+    width: '100%',
     backgroundColor: '#FFF',
     borderRadius: 10,
     padding: 20,
@@ -577,7 +918,8 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
+    padding: 20,
+    backgroundColor: '#fff',
   },
   cancelButton: {
     flex: 1,
@@ -588,7 +930,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E3E3E3',
+    borderColor: '#fff',
   },
   submitButton: {
     flex: 1,
@@ -616,9 +958,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainerPhoto: {
-    width: '80%',
+    width: '100%',
     backgroundColor: '#FFF',
-    borderRadius: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
     padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
@@ -714,6 +1057,187 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFF', 
   },
+  subPhotosContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  subPhotoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  subPhoto: {
+    width: 120,
+    height: 120,
+    backgroundColor: '#EFEFEF',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  cameraIconContainer: {
+    width: 120,
+    height: 120,
+    backgroundColor: '#EFEFEF',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removePhotoIconContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  subPhotoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  itemInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  addButton: {
+    marginLeft: 10,
+    marginBottom: 10,
+  },
+  picker: {
+    height: 40,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    marginBottom: 10,
+  },
+  dimensionsContainer: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  dimensionInput: {
+    flex: 1,
+    height: 40,
+    borderWidth: 2,
+    borderColor: '#D3D3D3',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginRight: 10,
+  },
+  modalSubPhotoImage: {
+    width: 100,
+    height: 100,
+    marginRight: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+
+  modalItemName: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+    modalContainerScroll: {
+    flexGrow: 1,
+  },
+  centeredView1: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+    // backgroundColor: 'rgba(0, 0, 0, 0.6)',
+
+  },
+  modalView1: {
+    margin: 20,
+    backgroundColor: '#05652D',
+
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    shadowOpacity: 0.25,
+    elevation: 5,
+  },   
+  modalText: {
+    marginBottom: 18,
+    textAlign: "center",
+    color: "white",
+    fontWeight:'bold',
+  },
+  pendingIcon: {
+    textAlign: 'center',
+  },
+  pendingText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  subtext: {
+    fontSize: 14,
+    marginBottom: 20,
+    color: "#ffffff",
+    textAlign: 'center',
+  }, 
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },  
+  modalButtonOrder: {
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  textButton: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  homeButton: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+
+  textStyle1: {
+    color: "#05652D",
+    fontWeight: "bold",
+    textAlign: "center"
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center"
+  }, 
+  modalButtonHome: {
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  modalButton: {
+    borderRadius: 20,
+    padding: 10,
+    marginHorizontal: 10,
+    width: '60%',
+  },  
+  missingField: {
+    borderColor: 'red',
+  },   
 });
 
 export default DonateAddDonation;
