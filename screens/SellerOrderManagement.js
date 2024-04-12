@@ -7,7 +7,7 @@ import { collection, getDocs, query, where, orderBy, getDoc, doc, updateDoc, onS
 import { Timestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import OrderSellerTab from '../navbars/OrderSellerTab';
-
+import { useRoute } from '@react-navigation/native';
 
 const windowWidth = Dimensions.get('window').width;
 
@@ -24,7 +24,16 @@ const SellerOrderManagement = ({ navigation }) => {
     const [deliveryEnd, setDeliveryEnd] = useState(new Date());
     const auth = getAuth();
     const user = auth.currentUser;
-    const [selectedTab, setSelectedTab] = useState('To Approve');
+    const route = useRoute(); 
+    const initialTab = route.params?.selectedTab || 'To Approve';
+    const [selectedTab, setSelectedTab] = useState(initialTab);
+
+    useEffect(() => {
+        if (route.params?.selectedTab) {
+            setSelectedTab(route.params.selectedTab);
+        }
+    }, [route.params?.selectedTab]);
+
     const scrollRef = useRef();
     const [isDeliveryDateModalVisible, setDeliveryDateModalVisible] = useState(false);
 

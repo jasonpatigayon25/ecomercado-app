@@ -43,9 +43,9 @@ const SellerManagement = ({ navigation }) => {
         }
     }, [user]);
 
-    const ScrollableItem = ({ imageSource, label, onPress }) => {
+    const ScrollableItem = ({ imageSource, label, onPress, tabName }) => {
         return (
-            <TouchableOpacity style={styles.scrollableItem} onPress={onPress}>
+            <TouchableOpacity style={styles.scrollableItem} onPress={() => onPress(tabName)}>
                 <Image source={imageSource} style={styles.scrollableItemImage} />
                 <Text style={styles.scrollableItemText}>{label}</Text>
             </TouchableOpacity>
@@ -177,30 +177,45 @@ const SellerManagement = ({ navigation }) => {
                 <ScrollableItem
                     imageSource={toApproveIcon}
                     label="To Approve"
-                    onPress={() => navigation.navigate('SellerOrderManagement', { selectedTab: 'To Approve' })}
+                    onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
+                    tabName="To Approve"
                 />
                 <ScrollableItem
                     imageSource={toShipIcon}
                     label="To Ship"
-                    onPress={() => navigation.navigate('SellerOrderManagement', { selectedTab: 'To Ship' })}
+                    onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
+                    tabName="To Ship"
                 />
                 <ScrollableItem
                     imageSource={shippedIcon}
                     label="Shipped"
-                    onPress={() => navigation.navigate('SellerOrderManagement', { selectedTab: 'Shipped' })}
+                    onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
+                    tabName="Shipped"
                 />
                 <ScrollableItem
                     imageSource={completedIcon}
                     label="Completed"
-                    onPress={() => navigation.navigate('SellerOrderManagement', { selectedTab: 'Completed' })}
+                    onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
+                    tabName="Completed"
                 />
                 <ScrollableItem
                     imageSource={cancelledIcon}
                     label="Cancelled Orders"
-                    onPress={() => navigation.navigate('SellerOrderManagement', { selectedTab: 'Cancelled' })}
+                    onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
+                    tabName="Cancelled"
                 />
-                    <ScrollableItem imageSource={approvedIcon} label="Approved Posts" onPress={() => {}} />
-                    <ScrollableItem imageSource={pendingIcon} label="Pending Posts" onPress={() => {}} />
+                <ScrollableItem
+                    imageSource={approvedIcon}
+                    label="Approved Posts"
+                    onPress={(tabName) => {}}
+                    tabName="Approved Posts"
+                />
+                <ScrollableItem
+                    imageSource={pendingIcon}
+                    label="Pending Posts"
+                    onPress={(tabName) => {}}
+                    tabName="Pending Posts"
+                />
                 </ScrollView>
             </View>
         </View>
