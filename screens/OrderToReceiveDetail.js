@@ -1,21 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Modal, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Modal, Alert, TextInput } from 'react-native';
+import { Rating } from 'react-native-ratings';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { getDocs, query, collection, where, updateDoc, doc } from 'firebase/firestore';
+import { getDocs, query, collection, where, updateDoc, doc, addDoc } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import { db } from '../config/firebase';
 import moment from 'moment';
 import { LinearGradient } from 'expo-linear-gradient'; 
 import CameraIcon from 'react-native-vector-icons/MaterialIcons';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
 
 const OrderToReceiveDetails = ({ route, navigation }) => {
+  const scrollViewRef = useRef();
+  const [confirmationModalVisible, setConfirmationModalVisible] = useState(false);
   const { order, products } = route.params;
   const [sellerName, setSellerName] = useState('Unknown Seller');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  const [ratings, setRatings] = useState({});
+  const [comments, setComments] = useState({});
+
+  useEffect(() => {
+
+    const initialRatings = {};
+    const initialComments = {};
+    order.productDetails.forEach(item => {
+      initialRatings[item.productId] = 0; 
+      initialComments[item.productId] = ''; 
+    });
+    setRatings(initialRatings);
+    setComments(initialComments);
+  }, [order.productDetails]);
+
   
   useEffect(() => {
     const fetchSellerName = async () => {
@@ -38,6 +59,10 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
 
   const cancelOrder = () => {
     // 
+  };
+
+  const handleCommentFocus = () => {
+    scrollViewRef.current?.scrollToEnd({ animated: true }); 
   };
 
   // 
@@ -117,36 +142,92 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
   };
 
   const confirmReceipt = async () => {
+    // Check if a photo has been selected
     if (!selectedImage) {
       Alert.alert('Photo Required', 'Please provide a photo of the item received.');
       return;
     }
-  
+    
+    // Upload the photo and get the URL
     const imageUrl = await uploadImageAsync(selectedImage.uri);
-  
+    
+    // Update the order document with the received photo and change the status to 'Completed'
     const orderDocRef = doc(db, 'orders', order.id);
     await updateDoc(orderDocRef, {
       receivedPhoto: imageUrl,
       status: 'Completed'
     });
-  
-    Alert.alert(
-      'Confirmation Success',
-      'Receipt has been confirmed successfully.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            setModalVisible(false);
-            navigation.navigate('OrderHistory');
-          }
-        }
-      ]
-    );
+    
+    setModalVisible(false);
+    
+    setConfirmationModalVisible(true);
   };
+
+  const submitRatings = async () => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser; // Get the currently logged-in user
+    const userEmail = currentUser ? currentUser.email : null; // Check if there is a user logged in to avoid errors
+  
+    if (!userEmail) {
+      Alert.alert('Error', 'You must be logged in to submit ratings.');
+      return; // Stop the function if no user is logged in
+    }
+  
+    await Promise.all(order.productDetails.map(async item => {
+      if (ratings[item.productId] > 0) {
+        const ratingDoc = {
+          prodId: item.productId,
+          rating: ratings[item.productId],
+          ratedBy: userEmail,
+          ratedAt: new Date(), // Current timestamp
+          comment: comments[item.productId], // Optional comment
+        };
+        await addDoc(collection(db, 'productRatings'), ratingDoc);
+      }
+    }));
+  
+    Alert.alert('Ratings Submitted', 'Your ratings have been submitted successfully.');
+    navigation.navigate('OrderHistory');
+  };
+
+  const handleRatingChange = (productId, rating) => {
+    setRatings(prev => ({ ...prev, [productId]: rating }));
+  };
+
+  const handleCommentChange = (productId, text) => {
+    setComments(prev => ({ ...prev, [productId]: text }));
+  };
+
   
   return (
     <SafeAreaView style={styles.safeArea}>
+       <Modal
+  animationType="slide"
+  transparent={true}
+  visible={confirmationModalVisible}
+  onRequestClose={() => {
+    setConfirmationModalVisible(false);
+    navigation.navigate('OrderHistory'); // Ensures navigation to OrderHistory on back press
+  }}
+>
+  <View style={styles.confirmationModalCenteredView}>
+    <View style={styles.confirmationModalView}>
+      <Text style={styles.confirmationModalText}>Receipt has been confirmed successfully.</Text>
+      <View style={styles.confirmationModalButtonContainer}>
+        <TouchableOpacity
+          style={styles.confirmationModalRatingButton}
+          onPress={() => {
+            setRatingModalVisible(true);
+            setConfirmationModalVisible(false);
+          }}
+        >
+          <Icon name="star" size={20} color="#ffd700" style={styles.confirmationModalIconStyle} />
+          <Text style={styles.confirmationModalButtonText}>Rate Products</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
       <Modal
         animationType="slide"
         transparent={true}
@@ -171,12 +252,56 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
                     <Text style={styles.cameraButtonText}>Take Photo</Text>
                 </TouchableOpacity>
             )}
-            <Text style={styles.modalText}>To confirm item received, please attach a photo.</Text>
+             <Text style={styles.modalText}>Confirm receipt by uploading a photo of the item.</Text>
             <TouchableOpacity onPress={confirmReceipt} style={styles.confirmButton}>
                 <Text style={styles.buttonText}>Confirm Receipt</Text>
             </TouchableOpacity>
         </View>
     </Modal>
+    <Modal
+  visible={ratingModalVisible}
+  onRequestClose={() => setRatingModalVisible(false)}
+  animationType="slide"
+  transparent={true}
+>
+  <View style={styles.ratingModalContainer}>
+    <ScrollView
+      ref={scrollViewRef}
+      contentContainerStyle={styles.ratingModalContent}
+      style={styles.ratingModalScrollView}
+    >
+      <Text style={styles.ratingModalTitle}>You can rate the products:</Text>
+      {order.productDetails.map((item, index) => {
+        const product = products[item.productId];
+        return (
+          <View key={index} style={styles.ratingItemContainer}>
+            <Image source={{ uri: product.photo }} style={styles.ratingProductImage} />
+            <Text style={styles.ratingProductName}>{product.name}</Text>
+            <Rating
+              startingValue={ratings[item.productId]}
+              imageSize={30}
+              onFinishRating={(rating) => handleRatingChange(item.productId, rating)}
+            />
+            {ratings[item.productId] > 0 && (
+              <TextInput
+                style={styles.ratingCommentInput}
+                placeholder="Add a comment (optional)"
+                value={comments[item.productId]}
+                onChangeText={(text) => handleCommentChange(item.productId, text)}
+                onFocus={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+              />
+            )}
+          </View>
+        );
+      })}
+    </ScrollView>
+    {Object.values(ratings).some(rating => rating > 0) && (
+      <TouchableOpacity onPress={submitRatings} style={styles.ratingSubmitButton}>
+        <Text style={styles.ratingButtonText}>Submit Ratings</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+</Modal>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#000" />
@@ -689,6 +814,127 @@ deliveryAddress: {
   borderBottomWidth: 1,  
   borderColor: '#ccc',
 },
+ratingContainer: {
+  alignItems: 'center',
+  marginBottom: 20,
+},
+commentInput: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  width: '100%',
+  padding: 10,
+  marginTop: 10,
+},
+centeredView: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  marginTop: 22
+},
+confirmationModalCenteredView: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: 'rgba(0, 0, 0, 0.6)',
+},
+confirmationModalView: {
+  margin: 20,
+  backgroundColor: "white",
+  padding: 35,
+  alignItems: "flex-start", 
+  width: '80%',
+},
+confirmationModalText: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  marginBottom: 20, 
+},
+confirmationModalButtonContainer: {
+  alignSelf: 'flex-end', 
+  marginTop: 10,
+},
+confirmationModalRatingButton: {
+  flexDirection: 'row',
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+  elevation: 2,
+  alignItems: 'center',
+  borderColor: '#05652D', 
+  borderWidth: 2,
+},
+confirmationModalButtonText: {
+  color: "#05652D",
+  fontWeight: "bold",
+  textAlign: "center",
+  marginLeft: 10,
+},
+confirmationModalIconStyle: {
+  marginTop: 2,
+},
+modalTitle: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  marginBottom: 20, 
+},
+ratingModalContainer: {
+  flex: 1,
+  justifyContent: 'space-between',
+  backgroundColor: '#FFFFFF',
+},
+ratingModalScrollView: {
+  flex: 1,
+},
+ratingModalContent: {
+  flexGrow: 1,
+  padding: 20,
+},
+ratingModalTitle: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  marginBottom: 20,
+},
+ratingItemContainer: {
+  alignItems: 'center',
+  marginBottom: 20,
+},
+ratingProductImage: {
+  width: 100,
+  height: 100,
+  borderRadius: 10,
+},
+ratingProductName: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  marginTop: 5,
+},
+ratingCommentInput: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  width: '100%',
+  padding: 10,
+  marginTop: 10,
+},
+ratingSubmitButton: {
+  backgroundColor: "#4CAF50",
+  padding: 15,
+  position: 'absolute', 
+  bottom: 0,        
+  left: 0,          
+  right: 0,
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderTopWidth: 1,
+  borderColor: '#ccc',
+  width: '100%', 
+},
+ratingButtonText: {
+  color: "#fff",
+  textAlign: 'center',
+  fontWeight: 'bold',
+  fontSize: 16,
+}
 });
 
 export default OrderToReceiveDetails;
