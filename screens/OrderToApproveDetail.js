@@ -9,6 +9,41 @@ import moment from 'moment';
 const OrderToApproveDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
 
+  const cancelOrder = async () => {
+    Alert.alert(
+      "Cancel Order",
+      "Are you sure you want to cancel this order?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        { 
+          text: "Yes", 
+          onPress: async () => {
+            try {
+              const orderRef = doc(db, 'orders', order.id);
+              await updateDoc(orderRef, {
+                status: 'Cancelled',
+              });
+  
+              Alert.alert(
+                "Order Cancelled",
+                "Your order has been cancelled successfully.",
+                [
+                  { text: "OK", onPress: () => navigation.navigate('OrderHistory') }
+                ]
+              );
+            } catch (error) {
+              console.error("Error updating order status: ", error);
+              Alert.alert("Error", "Could not cancel the order at this time.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const approveOrder = async () => {
     Alert.alert(
       "Confirm Approval",
@@ -50,14 +85,15 @@ const OrderToApproveDetails = ({ route, navigation }) => {
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
+    
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.title}>Order Approval Details</Text>
       </View>
-
+      <ScrollView style={styles.container}>
       <View style={styles.orderItemContainer}>
         <View style={styles.buyerHeader}>
             <Icon name="money" size={20} color="#808080" style={styles.shopIcon} />
@@ -70,7 +106,9 @@ const OrderToApproveDetails = ({ route, navigation }) => {
 
               <Image source={{ uri: product.photo }} style={styles.productImage} />
               <View style={styles.productInfo}>
+                <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text>
                 <Text style={styles.productName}>{product.name}</Text>
+                <Text style={styles.productCategory}>{product.category}</Text> 
                 <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
                 <Text style={styles.productPrice}>₱{product.price}</Text>
               </View>
@@ -116,11 +154,22 @@ const OrderToApproveDetails = ({ route, navigation }) => {
           <Text style={styles.orderTotalLabel}>Total:</Text>
           <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
         </View>
+        <View style={styles.actionButtons}>
         <TouchableOpacity style={styles.approveButton} onPress={approveOrder}>
           <Text style={styles.approveButtonText}>Approve Order</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.cancelButton} onPress={cancelOrder}>
+            <Text style={styles.cancelbuttonText}>Cancel Order</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
+    <View style={styles.footer}>
+        <TouchableOpacity style={styles.approveButtonMain} onPress={approveOrder}>
+          <Text style={styles.approveButtonTextMain}>Approve Order</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
@@ -435,31 +484,19 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     shadowOffset: { width: 0, height: -2 },
   },
-  pendingButton: {
-    backgroundColor: '#666',
+  approveButton: {
+    backgroundColor: '#4CAF50',
     padding: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    width: '70%',
-    borderRadius: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 10,
+    elevation: 2,
   },
-  pendingButtonText: {
+  approveButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  approveButton: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  approveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    textAlign: 'center'
   },
   buyerHeader: {
     flexDirection: 'row',
@@ -477,6 +514,28 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'left', 
     marginLeft: 10,
+  },
+  approveButtonMain: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: '80%',
+    borderRadius: 10,
+  },
+  approveButtonTextMain: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  orderId: {
+    color: '#333',
+    fontSize: 12,
+    paddingHorizontal: 6,
+    borderRadius: 4,
+    textAlign: 'right',
+    top: -10,
   },
 });
 

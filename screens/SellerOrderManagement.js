@@ -154,9 +154,9 @@ const SellerOrderManagement = ({ navigation }) => {
 
     const approveToShipOrder = (orderId) => {
       setCurrentOrder(orderId);
-      setDeliveryStart(new Date()); // Reset date to current when opening picker
-      setDeliveryEnd(new Date()); // Reset date to current when opening picker
-      setDeliveryDateModalVisible(true); // Open the modal to set delivery dates
+      setDeliveryStart(new Date()); 
+      setDeliveryEnd(new Date()); 
+      setDeliveryDateModalVisible(true); 
   };
 
     const showStartDatePicker = () => {
