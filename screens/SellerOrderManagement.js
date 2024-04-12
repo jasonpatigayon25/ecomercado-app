@@ -184,37 +184,6 @@ const SellerOrderManagement = ({ navigation }) => {
       setEndDatePickerVisibility(false);
   };
 
-  /* const showDatePicker = (type) => {
-      setDateType(type);
-      setDatePickerVisibility(true);
-  };
-
-  const handleConfirmDate = (date) => {
-      if (dateType === 'start') {
-          setDeliveryStart(date);
-      } else if (dateType === 'end') {
-          setDeliveryEnd(date);
-      }
-      setDatePickerVisibility(false);
-  };
-
-  const handleDeliveryDateSet = async () => {
-      if (currentOrder) {
-          try {
-              const orderRef = doc(db, 'orders', currentOrder);
-              await updateDoc(orderRef, {
-                  deliveryStart: deliveryStart.toISOString(),
-                  deliveryEnd: deliveryEnd.toISOString()
-              });
-              await fetchOrders();  
-              Alert.alert("Success", "Delivery dates updated successfully.");
-          } catch (error) {
-              console.error("Error updating delivery dates: ", error);
-              Alert.alert("Error", "There was an issue updating the delivery dates.");
-          }
-      }
-  }; */
-
   const confirmDeliveryDates = async () => {
     if (currentOrder) {
         Alert.alert(
@@ -284,7 +253,7 @@ const SellerOrderManagement = ({ navigation }) => {
               navigation.navigate('OrderToApproveDetails', { order, products });
             } else if (selectedTab === 'To Ship') {
               navigation.navigate('OrderToShipBySellerDetails', { order, products });
-            } else if (selectedTab === 'To Receive') {
+            } else if (selectedTab === 'Shipped') {
               navigation.navigate('OrderShippedDetails', { order, products });
             } else if (selectedTab === 'Completed') {
               navigation.navigate('OrderCompletedbySellerDetails', { order, products });
