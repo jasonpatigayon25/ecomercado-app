@@ -496,7 +496,6 @@ const Donate = ({ navigation }) => {
     setIsSubPhotoPickerModalVisible(true);
   };
   
-
   const handleChoosePhoto = () => {
     setIsPhotoPickerModalVisible(true);
   };
@@ -565,7 +564,7 @@ const Donate = ({ navigation }) => {
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Weight:</Text> {donationInfo.weight} kg</Text>
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Donation Packaging:</Text> {donationInfo.width} cm x {donationInfo.length} cm x {donationInfo.height} cm</Text>
                   
-                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Sub-Photos:</Text> </Text>
+                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Item Photos:</Text> </Text>
                   <View style={styles.subPhotosContainer}>
                     {donationInfo.subPhotos?.map((photo, index) => (
                         <Image key={index} source={{ uri: photo }} style={styles.modalSubPhotoImage} />
@@ -618,7 +617,7 @@ const Donate = ({ navigation }) => {
           )}
         </TouchableOpacity>
         <Text style={styles.label}>
-          Sub-Photos
+          Item Photos
           {missingFields.subPhotos && <Text style={{ color: 'red' }}> *</Text>}  
         </Text>
       <View style={styles.subPhotosContainer}>
