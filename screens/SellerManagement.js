@@ -207,14 +207,14 @@ const SellerManagement = ({ navigation }) => {
                 <ScrollableItem
                     imageSource={approvedIcon}
                     label="Approved Posts"
-                    onPress={(tabName) => {}}
+                    onPress={(tabName) => navigation.navigate('ProductPosts', { selectedTab: tabName })}
                     tabName="Approved Posts"
                 />
                 <ScrollableItem
                     imageSource={pendingIcon}
                     label="Pending Posts"
-                    onPress={(tabName) => {}}
-                    tabName="Pending Posts"
+                    onPress={(tabName) => navigation.navigate('ProductPosts', { selectedTab: tabName })}
+                    tabName="Pending For Approval"
                 />
                 </ScrollView>
             </View>

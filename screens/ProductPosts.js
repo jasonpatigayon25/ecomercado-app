@@ -20,6 +20,7 @@ import { FlatList } from 'react-native-gesture-handler';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import SellerTab from '../navbars/SellerTab';
+import { useRoute } from '@react-navigation/native';
 
 const window = Dimensions.get("window");
 
@@ -89,9 +90,17 @@ const ProductPosts = ({ navigation }) => {
     backgroundColor
   };
 
+  const route = useRoute(); 
   const tabs = ['Approved Posts', 'Pending For Approval'];
+  const initialTab = route.params?.selectedTab || 'Approved Posts';
+  const [selectedTab, setSelectedTab] = useState(initialTab);
 
-  const [selectedTab, setSelectedTab] = useState('Approved Posts');
+  useEffect(() => {
+      if (route.params?.selectedTab) {
+          setSelectedTab(route.params.selectedTab);
+      }
+  }, [route.params?.selectedTab]);
+
   const scrollRef = useRef();
   const windowWidth = Dimensions.get('window').width;
 
