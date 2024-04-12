@@ -13,9 +13,47 @@ import { Dimensions } from 'react-native';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const SuccessModal = ({ donationName, isVisible, onCancel, navigateToDonate, navigateToDonationPosts }) => {
+  return (
+    <Modal
+      visible={isVisible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onCancel}
+    >
+      <View style={styles.centeredView1}>
+        <View style={styles.modalView1}>
+          <Text style={styles.modalText}>Donation Pending</Text>
+          <Icon name="check-circle" size={60} color="white" />
+          <Text style={styles.pendingText}>Donation successfully submitted!</Text>
+          <Text style={styles.subtext}>
+            The donation is pending approval. You can view your pending donations in your dashboard.
+          </Text>
+          <View style={styles.modalButtonContainer}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonHome]}
+              onPress={navigateToDonate}
+            >
+              <Text style={styles.homeButton}>Add Donation Again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonOrder]}
+              onPress={navigateToDonationPosts}
+            >
+              <Text style={styles.homeButton}>My Donation Posts</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 const screenHeight = Dimensions.get('window').height;
 
 const Donate = ({ navigation }) => {
+
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
 
   const [isSubPhotoPickerModalVisible, setIsSubPhotoPickerModalVisible] = useState(false);
   const MAX_SUB_PHOTOS = 15;
@@ -305,8 +343,8 @@ const Donate = ({ navigation }) => {
         };
   
         await notifySubscribers(userEmail, updatedDonationInfo);
-  
-        Alert.alert(`Donation of ${donationInfo.name} successfully submitted!`);
+        setSuccessModalVisible(true);
+        // Alert.alert(`Donation of ${donationInfo.name} successfully submitted!`);
         resetDonationInfo();
         setShowModal(false);
       } catch (error) {
@@ -728,6 +766,19 @@ const Donate = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+      <SuccessModal 
+        donationName={donationInfo.name}
+        isVisible={successModalVisible}
+        onCancel={() => setSuccessModalVisible(false)}
+        navigateToDonate={() => {
+          setSuccessModalVisible(false);
+          navigation.navigate('Donate');
+        }}
+        navigateToDonationPosts={() => {
+          setSuccessModalVisible(false);
+          navigation.navigate('DonationManagement');
+        }}
+      />
     </View>
   );
 };
@@ -1075,6 +1126,88 @@ const styles = StyleSheet.create({
     modalContainerScroll: {
     flexGrow: 1,
   },
+  centeredView1: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+    // backgroundColor: 'rgba(0, 0, 0, 0.6)',
+
+  },
+  modalView1: {
+    margin: 20,
+    backgroundColor: '#05652D',
+
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    shadowOpacity: 0.25,
+    elevation: 5,
+  },   
+  modalText: {
+    marginBottom: 18,
+    textAlign: "center",
+    color: "white",
+    fontWeight:'bold',
+  },
+  pendingIcon: {
+    textAlign: 'center',
+  },
+  pendingText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  subtext: {
+    fontSize: 14,
+    marginBottom: 20,
+    color: "#ffffff",
+    textAlign: 'center',
+  }, 
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },  
+  modalButtonOrder: {
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  textButton: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  homeButton: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+
+  textStyle1: {
+    color: "#05652D",
+    fontWeight: "bold",
+    textAlign: "center"
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center"
+  }, 
+  modalButtonHome: {
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  modalButton: {
+    borderRadius: 20,
+    padding: 10,
+    marginHorizontal: 10,
+    width: '60%',
+  },     
 });
 
 export default Donate;

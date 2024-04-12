@@ -29,7 +29,7 @@ const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, naviga
           <Icon name="check-circle" size={60} color="white" />
           <Text style={styles.pendingText}>{productName} successfully Added! </Text>
           <Text style={styles.subtext}>
-            The product is pending for approval if it is fit to be sold. Go to My Product Posts for more info.
+            The product is pending for approval.  You can view your pending products in your My Product Posts.
             Pending Product
           </Text>
           <View style={styles.modalButtonContainer}>
