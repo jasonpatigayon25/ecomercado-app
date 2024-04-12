@@ -31,7 +31,7 @@ const OrderToApproveDetails = ({ route, navigation }) => {
                 "Order Cancelled",
                 "Your order has been cancelled successfully.",
                 [
-                  { text: "OK", onPress: () => navigation.navigate('OrderHistory') }
+                  { text: "OK", onPress: () => navigation.navigate('SellerOrderManagement') }
                 ]
               );
             } catch (error) {

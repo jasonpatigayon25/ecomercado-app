@@ -5,20 +5,21 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const windowWidth = Dimensions.get('window').width;
-const tabWidth = windowWidth / 4;
+const tabWidth = windowWidth / 5;
 
 const OrderSellerTab = ({ selectedTab, setSelectedTab }) => {
     const [orderCounts, setOrderCounts] = useState({ Pending: 0, Approved: 0, Receiving: 0, Completed: 0, Cancelled: 0 });
     const indicatorAnim = useRef(new Animated.Value(0)).current;
     const auth = getAuth();
     const currentUser = auth.currentUser;
-    const tabNames = ['To Approve', 'To Ship', 'Shipped', 'Completed'];
+    const tabNames = ['To Approve', 'To Ship', 'Shipped', 'Completed', 'Cancelled'];
 
     const statusMap = {
         'To Approve': 'Pending',
         'To Ship': 'Approved',
         'Shipped': 'Receiving',
-        'Completed': 'Completed'
+        'Completed': 'Completed',
+        'Cancelled': 'Cancelled',
     };
 
     useEffect(() => {
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     tabText: {
-        fontSize: 16,
+        fontSize: 12,
         color: '#888',
         fontWeight: '600',
     },

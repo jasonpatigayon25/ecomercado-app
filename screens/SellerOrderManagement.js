@@ -31,7 +31,7 @@ const SellerOrderManagement = ({ navigation }) => {
     const handleScroll = (event) => {
         const scrollX = event.nativeEvent.contentOffset.x;
         const tabIndex = Math.floor(scrollX / windowWidth);
-        const tabNames = ['To Approve', 'To Ship', 'Shipped', 'Completed'];
+        const tabNames = ['To Approve', 'To Ship', 'Shipped', 'Completed', 'Cancelled'];
         const newSelectedTab = tabNames[tabIndex];
 
         if (newSelectedTab !== selectedTab) {
@@ -99,9 +99,11 @@ const SellerOrderManagement = ({ navigation }) => {
                 'To Approve': ['Pending'],
                 'To Ship': ['Approved'],
                 'Shipped': ['Receiving'],
-                'Completed': ['Completed']
+                'Completed': ['Completed'],
+                'Cancelled': ['Cancelled']
             }[tab];
 
+            if (statusCriteria && statusCriteria.length > 0) {
             const ordersQuery = query(
                 collection(db, 'orders'),
                 where('sellerEmail', '==', user.email),
@@ -122,6 +124,11 @@ const SellerOrderManagement = ({ navigation }) => {
                 console.error("Error fetching orders:", error);
                 setLoading(false);
             });
+        } else {
+            console.error("No valid status criteria found for tab:", tab);
+            setLoading(false);
+            setOrders([]); 
+        }
         }
     }, [user, selectedTab]);
 
@@ -281,14 +288,18 @@ const SellerOrderManagement = ({ navigation }) => {
               navigation.navigate('OrderShippedDetails', { order, products });
             } else if (selectedTab === 'Completed') {
               navigation.navigate('OrderCompletedbySellerDetails', { order, products });
-            }
+            } else if (selectedTab === 'Cancelled') {
+                navigation.navigate('OrderCancelledbySellerDetails', { order, products });
+              }
           };
 
-        if ((selectedTab === 'To Approve' && order.status !== 'Pending') ||
-            (selectedTab === 'To Ship' && order.status !== 'Approved') ||
-            (selectedTab === 'Shipped' && order.status !== 'Receiving')) {
-            return null;
-        }
+          if ((selectedTab === 'To Approve' && order.status !== 'Pending') ||
+          (selectedTab === 'To Ship' && order.status !== 'Approved') ||
+          (selectedTab === 'Shipped' && order.status !== 'Receiving') ||
+          (selectedTab === 'Completed' && order.status !== 'Completed') ||
+          (selectedTab === 'Cancelled' && order.status !== 'Cancelled')) {
+          return null;
+            }
 
         const groupedBySeller = order.productDetails.reduce((acc, productDetail) => {
             const product = products[productDetail.productId];
@@ -370,6 +381,21 @@ const SellerOrderManagement = ({ navigation }) => {
                                     </TouchableOpacity>
                                 </>
                             )}
+                            {selectedTab === 'Completed' && (
+                                <>
+                                    <Text style={styles.hintText}>
+                                        Completed.
+                                    </Text>
+                                
+                                </>
+                            )}
+                            {selectedTab === 'Cancelled' && (
+                                <>
+                                    <Text style={styles.hintText}>
+                                        Cancelled.
+                                    </Text>
+                                </>
+                            )}
                         </View>
                     </View>
                 ))}
@@ -396,7 +422,7 @@ const SellerOrderManagement = ({ navigation }) => {
                 ref={scrollRef}
                 style={styles.scrollView}
             >
-                {['To Approve', 'To Ship', 'Shipped', 'Completed'].map((tab, index) => (
+                {['To Approve', 'To Ship', 'Shipped', 'Completed', 'Cancelled'].map((tab, index) => (
                     <View key={index} style={{ width: windowWidth }}>
                         {loading ? (
                             <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />
@@ -631,7 +657,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   shipButton: {
-    backgroundColor: '#FFA500', 
+    backgroundColor: '#4CAF50', 
     padding: 10,
     borderRadius: 5,
   },
