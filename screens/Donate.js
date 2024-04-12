@@ -33,8 +33,6 @@ const SuccessModal = ({ donationName, isVisible, onCancel, navigateToDonate, nav
             <TouchableOpacity
               style={[styles.modalButton, styles.modalButtonHome]}
               onPress={() => {
-                setSuccessModalVisible(false);
-                resetDonationInfo(); 
                 navigateToDonate();
               }}
             >
