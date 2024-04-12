@@ -271,6 +271,19 @@ const SellerOrderManagement = ({ navigation }) => {
     };
 
     const renderOrderItem = ({ item: order }) => {
+
+        const handlePress = () => {
+            if (selectedTab === 'To Approve') {
+              navigation.navigate('OrderToApproveDetails', { order, products });
+            } else if (selectedTab === 'To Ship') {
+              navigation.navigate('OrderToShipBySellerDetails', { order, products });
+            } else if (selectedTab === 'To Receive') {
+              navigation.navigate('OrderShippedDetails', { order, products });
+            } else if (selectedTab === 'Completed') {
+              navigation.navigate('OrderCompletedbySellerDetails', { order, products });
+            }
+          };
+
         if ((selectedTab === 'To Approve' && order.status !== 'Pending') ||
             (selectedTab === 'To Ship' && order.status !== 'Approved') ||
             (selectedTab === 'Shipped' && order.status !== 'Receiving')) {
@@ -295,7 +308,7 @@ const SellerOrderManagement = ({ navigation }) => {
         }, {});
 
         return (
-            <View style={styles.orderItemContainer}>
+            <TouchableOpacity onPress={handlePress} style={styles.orderItemContainer}>
                 {Object.entries(groupedBySeller).map(([sellerName, productDetails]) => (
                     <View key={sellerName}>
                         <View style={styles.buyerHeader}>
@@ -360,7 +373,7 @@ const SellerOrderManagement = ({ navigation }) => {
                         </View>
                     </View>
                 ))}
-            </View>
+            </TouchableOpacity>
         );
     };
 
