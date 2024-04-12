@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, ActivityIndicator, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { getAuth } from 'firebase/auth';
@@ -7,6 +7,14 @@ import { db } from '../config/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 const SellerManagement = ({ navigation }) => {
+    const toApproveIcon = require('../assets/check-mark.png');
+    const toShipIcon = require('../assets/order.png');
+    const shippedIcon = require('../assets/delivered.png');
+    const completedIcon = require('../assets/box.png');
+    const cancelledIcon = require('../assets/cancel.png');
+    const approvedIcon = require('../assets/validation.png');
+    const pendingIcon = require('../assets/preorder.png');
+
     const [isSeller, setIsSeller] = useState(false);
     const [sellerInfo, setSellerInfo] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -34,6 +42,15 @@ const SellerManagement = ({ navigation }) => {
             return () => unsubscribeSellerInfo();
         }
     }, [user]);
+
+    const ScrollableItem = ({ imageSource, label, onPress }) => {
+        return (
+            <TouchableOpacity style={styles.scrollableItem} onPress={onPress}>
+                <Image source={imageSource} style={styles.scrollableItemImage} />
+                <Text style={styles.scrollableItemText}>{label}</Text>
+            </TouchableOpacity>
+        );
+    };
 
     useEffect(() => {
         Animated.loop(
@@ -155,6 +172,17 @@ const SellerManagement = ({ navigation }) => {
                     </View>
                 )}
             </ScrollView>
+            <View style={styles.scrollableContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <ScrollableItem imageSource={toApproveIcon} label="To Approve" onPress={() => {}} />
+                    <ScrollableItem imageSource={toShipIcon} label="To Ship" onPress={() => {}} />
+                    <ScrollableItem imageSource={shippedIcon} label="Shipped" onPress={() => {}} />
+                    <ScrollableItem imageSource={completedIcon} label="Completed" onPress={() => {}} />
+                    <ScrollableItem imageSource={cancelledIcon} label="Cancelled Orders" onPress={() => {}} />
+                    <ScrollableItem imageSource={approvedIcon} label="Approved Posts" onPress={() => {}} />
+                    <ScrollableItem imageSource={pendingIcon} label="Pending Posts" onPress={() => {}} />
+                </ScrollView>
+            </View>
         </View>
     );
 };
@@ -264,6 +292,32 @@ const styles = StyleSheet.create({
     miniSubText: {
         fontSize: 14,
         marginLeft: 8,
+    },
+    scrollableContainer: {
+        paddingVertical: 15,
+        paddingHorizontal: 15,
+    },
+    scrollableItem: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 15,
+        paddingVertical: 10, 
+        width: 100, 
+        height: 100, 
+        borderRadius: 10,
+        backgroundColor: '#E3FCE9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.22,
+        shadowRadius: 2.22,
+        elevation: 3,
+        marginBottom: 15,
+    },
+    scrollableItemText: {
+        marginTop: 5,
+        fontSize: 12,
+        color: '#05652D',
+        textAlign: 'center',
     },
 });
 
