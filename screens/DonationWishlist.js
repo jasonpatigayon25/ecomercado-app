@@ -165,7 +165,7 @@ const renderItem = ({ item }) => (
 
   const renderSectionList = () => {
     const sections = Object.keys(groupedWishItems).map((key, index) => ({
-        title: `${key}-${index}`,  // Adjust if necessary to ensure uniqueness
+        title: `${key}-${index}`,
         data: groupedWishItems[key]
     }));
 

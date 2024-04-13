@@ -22,19 +22,14 @@ const Home = ({ navigation }) => {
   const [searchText, setSearchText] = useState('');
   const [categorySearchText, setCategorySearchText] = useState('');
   const [cartCount, setCartCount] = useState(0);
-
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
-
   const [locationLevel, setLocationLevel] = useState('city');
-
   const [currentIndex, setCurrentIndex] = useState(0);
-
   const [donations, setDonations] = useState([]);
-
   const carouselRef = useRef(null);
-
   const [isLocationFilterActive, setIsLocationFilterActive] = useState(false);
-
+  const wishlistIcon = require('../assets/wishlist-donation.png');
   const [userCity, setUserCity] = useState('');
   const [locationEnabled, setLocationEnabled] = useState(false);
 
@@ -208,6 +203,35 @@ const Home = ({ navigation }) => {
     setIsModalVisible(!isModalVisible);
   };
 
+  const fetchWishlistCount = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+  
+      if (user && user.email) {
+        const wishlistRef = doc(db, 'wishlists', user.email);
+        const wishlistSnapshot = await getDoc(wishlistRef);
+  
+        if (wishlistSnapshot.exists()) {
+          const wishlistData = wishlistSnapshot.data();
+          const wishItems = wishlistData.wishItems;
+  
+          setWishlistCount(wishItems.length);
+        } else {
+          console.log('No wishlist found for the current user.');
+        }
+      } else {
+        console.log('No user is logged in or email is not available.');
+      }
+    } catch (error) {
+      console.error("Error fetching wishlist count: ", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchWishlistCount();
+  }, []);
+
   const fetchCartCount = async () => {
     try {
       const auth = getAuth();
@@ -337,7 +361,11 @@ const Home = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.mainHeader}>
+      
         <View style={styles.searchContainer}>
+          
+        <View style={styles.inputIconContainer}>
+          <Icon name="search" size={20} color="#A9A9A9" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search Products"
@@ -345,21 +373,31 @@ const Home = ({ navigation }) => {
             onChangeText={setSearchText}
             onFocus={handleSearchFocus}
           />
+        </View>
           <View style={styles.iconsContainer}>
             <TouchableOpacity onPress={() => navigation.navigate('CCC')}>
               <Icon name="comments" size={24} color="#05652D" style={styles.icon} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
+              <View style={{ position: 'relative' }}>
+                <Icon name="shopping-cart" size={24} color="#05652D" style={styles.icon} />
+                {cartCount > 0 && (
+                  <View style={styles.cartCountContainer}>
+                    <Text style={styles.cartCountText}>{cartCount}</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('DonationWishlist')}>
             <View style={{ position: 'relative' }}>
-              <Icon name="shopping-cart" size={24} color="#05652D" style={styles.icon} />
-              {cartCount > 0 && (
+              <Image source={wishlistIcon} style={styles.wishlistIcon} />
+              {wishlistCount > 0 && (
                 <View style={styles.cartCountContainer}>
-                  <Text style={styles.cartCountText}>{cartCount}</Text>
+                  <Text style={styles.cartCountText}>{wishlistCount}</Text>
                 </View>
               )}
             </View>
           </TouchableOpacity>
-
           </View>
         </View>
       </View>
@@ -535,17 +573,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  searchInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#D3D3D3',
+  inputIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
     borderRadius: 25,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    flex: 1,
     marginRight: 10,
     marginLeft: 15,
-    backgroundColor: '#FFF',
+  },
+  
+  searchInput: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 16,
     color: '#000',
+    borderColor: '#D3D3D3',
+  },
+  
+  searchIcon: {
+    paddingLeft: 15,
+    color: '#A9A9A9',
   },
   iconsContainer: {
     flexDirection: 'row',
@@ -891,6 +940,12 @@ searchSuggestions: {
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold'
+  },
+  wishlistIcon: {
+    width: 24,
+    height: 24,
+    marginLeft: 15,
+    resizeMode: 'contain', 
   }
 });
 
