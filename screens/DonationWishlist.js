@@ -13,8 +13,6 @@ const DonationWishlist = ({ navigation }) => {
     const [currentItem, setCurrentItem] = useState(null);
     const auth = getAuth();
     const user = auth.currentUser;
-    const [donationListeners, setDonationListeners] = useState([]);
-    const [donorName, setDonorName] = useState('');
 
   const fetchDonorName = async (donorEmail) => {
     const usersRef = collection(db, 'users');
@@ -57,25 +55,6 @@ const DonationWishlist = ({ navigation }) => {
     console.log("Wish Items: ", wishItems);
 }, [wishItems]);
 
-
-const handleSelectItem = (donationId) => {
-    const newSelectedItems = new Set(selectedItems);
-    if (selectedItems.has(donationId)) {
-      newSelectedItems.delete(donationId);
-    } else {
-      newSelectedItems.add(donationId);
-    }
-    setSelectedItems(newSelectedItems);
-  };
-
-  const handleSelectAll = () => {
-    if (selectedItems.size === wishItems.length) {
-      setSelectedItems(new Set());
-    } else {
-      setSelectedItems(new Set(wishItems.map((item) => item.donationId)));
-    }
-  };
-
 const handleRequest = () => {
     const selectedDonations = wishItems
       .filter(item => selectedItems.has(item.donationId))
@@ -117,29 +96,29 @@ const handleRequest = () => {
 }, [wishItems]);
 
 const renderItem = ({ item }) => (
-<TouchableOpacity
-    style={styles.cartItem}
-    onPress={() => navigation.navigate('DonationDetail', { donation: item })}
-  >
-      <View style={styles.itemLeftSection}>
-        <TouchableOpacity onPress={() => handleSelectItem(item.donationId)}>
-            <Icon
-                name={selectedItems.has(item.donationId) ? 'check-square' : 'square'}
-                size={24}
-                color="#05652D"
-            />
-        </TouchableOpacity>
-        <Image source={{ uri: item.photo }} style={styles.cartImage} />
-      </View>
-      <View style={styles.cartDetails}>
-        <Text style={styles.cartName}>{item.name}</Text>
-        <Text style={styles.cartitemnames}>{item.itemNames && item.itemNames.length > 0 ? `${item.itemNames.join(' · ')}` : ''}</Text>
-        <Text style={styles.cartCategory}>{item.category}</Text>
-        <Text style={styles.cartDescription}>{item.purpose}</Text>
-        <Text style={styles.cartDescription}>{item.message}</Text>
-      </View>
+    <TouchableOpacity
+        style={styles.cartItem}
+        onPress={() => navigation.navigate('DonationDetail', { donation: item })}
+    >
+        <View style={styles.itemLeftSection}>
+            <TouchableOpacity onPress={() => handleSelectItem(item.donationId)}>
+                <Icon
+                    name={selectedItems.has(item.donationId) ? 'check-square' : 'square'}
+                    size={24}
+                    color="#05652D"
+                />
+            </TouchableOpacity>
+            <Image source={{ uri: item.photo }} style={styles.cartImage} />
+        </View>
+        <View style={styles.cartDetails}>
+            <Text style={styles.cartName}>{item.name}</Text>
+            <Text style={styles.cartitemnames}>{item.itemNames && item.itemNames.length > 0 ? `${item.itemNames.join(' · ')}` : ''}</Text>
+            <Text style={styles.cartCategory}>{item.category}</Text>
+            <Text style={styles.cartDescription}>{item.purpose}</Text>
+            <Text style={styles.cartDescription}>{item.message}</Text>
+        </View>
     </TouchableOpacity>
-  );
+);
 
   const renderSectionList = () => {
     const sections = Object.keys(groupedWishItems).map((key) => ({
@@ -160,6 +139,17 @@ const renderItem = ({ item }) => (
   const navigateToUserVisit = (donorEmail) => {
     navigation.navigate('UserVisit', { email: donorEmail });
   };
+
+  const handleSelectItem = (donationId) => {
+    const newSelectedItems = new Set(selectedItems);
+    if (newSelectedItems.has(donationId)) {
+        newSelectedItems.delete(donationId);
+    } else {
+        newSelectedItems.add(donationId);
+    }
+    setSelectedItems(newSelectedItems);
+};
+
 
   const handleSelectDonorItems = (donorEmail) => {
     const newSelectedItems = new Set(selectedItems);
@@ -247,7 +237,7 @@ const renderSectionHeader = ({ section: { title, data } }) => (
       </View>
       {wishItems.length === 0 ? renderEmptyCart() : renderSectionList()}
       <View style={styles.actionBar}>
-        <TouchableOpacity style={styles.selectAllButton} onPress={handleSelectAll}>
+        <TouchableOpacity>
           <Icon name={selectedItems.size === wishItems.length ? "check-square" : "square"} size={24} color="#05652D" />
           <Text style={styles.selectAllText}>Select All</Text>
         </TouchableOpacity>
@@ -480,8 +470,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', 
     padding: 10,
     borderRadius: 20,
-/*     borderWidth: 3,
-    borderColor: '#D32F2F', */
   },
   removeButtonText: {
     color: '#D32F2F',

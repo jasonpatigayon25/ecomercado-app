@@ -72,6 +72,7 @@ import OrderCancelledBySellerDetails from './screens/OrderCancelledBySellerDetai
 import DonationImage from './screens/DonationImage';
 import ProductImage from './screens/ProductImage';
 import DonationWishlist from './screens/DonationWishlist';
+import RequestCheckout from './screens/RequestCheckout';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -278,6 +279,7 @@ const App = () => {
               <Stack.Screen name="SearchDonationScreen" component={SearchDonationScreen} />
               <Stack.Screen name="SearchDonationResults" component={SearchDonationResults} />
               <Stack.Screen name="DonationDetail" component={DonationDetail} />
+              <Stack.Screen name="RequestCheckout" component={RequestCheckout} />
               <Stack.Screen name="DonationImage" component={DonationImage} />
               <Stack.Screen name="RequestDonationScreen" component={RequestDonationScreen} />
               <Stack.Screen name="Wishlist" component={WishlistScreen} />
