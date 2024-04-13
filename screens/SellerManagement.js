@@ -4,9 +4,18 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 
 const SellerManagement = ({ navigation }) => {
+
+    const [toApproveCount, setToApproveCount] = useState(0);
+    const [toShipCount, setToShipCount] = useState(0);
+    const [shippedCount, setShippedCount] = useState(0);
+    const [completedCount, setCompletedCount] = useState(0);
+    const [cancelledCount, setCancelledCount] = useState(0);
+    const [approvedPostsCount, setApprovedPostsCount] = useState(0);
+    const [pendingPostsCount, setPendingPostsCount] = useState(0);    
+
     const toApproveIcon = require('../assets/check-mark.png');
     const toShipIcon = require('../assets/order.png');
     const shippedIcon = require('../assets/delivered.png');
@@ -22,6 +31,56 @@ const SellerManagement = ({ navigation }) => {
     const user = auth.currentUser;
 
     const scaleAnimation = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (!user) return;
+    
+        const fetchOrders = async () => {
+            const ordersRef = collection(db, 'orders');
+            const q = query(ordersRef, where('sellerEmail', '==', user.email));
+    
+            const querySnapshot = await getDocs(q);
+            const statusCounts = { Pending: 0, Approved: 0, Receiving: 0, Completed: 0, Cancelled: 0 };
+    
+            querySnapshot.forEach((doc) => {
+                const { status } = doc.data();
+                if (status in statusCounts) statusCounts[status]++;
+            });
+    
+            setToApproveCount(statusCounts['Pending']);
+            setToShipCount(statusCounts['Approved']);
+            setShippedCount(statusCounts['Receiving']);
+            setCompletedCount(statusCounts['Completed']);
+            setCancelledCount(statusCounts['Cancelled']);
+        };
+    
+        fetchOrders();
+    }, [user]);
+
+    useEffect(() => {
+        if (!user) return;
+    
+        const fetchProductData = async () => {
+            const productsRef = collection(db, 'products');
+            const q = query(productsRef, where('seller_email', '==', user.email));
+            const productSnapshot = await getDocs(q);
+            const productStatusCounts = { approved: 0, pending: 0 };
+    
+            productSnapshot.forEach((doc) => {
+                const { publicationStatus } = doc.data();
+                if (publicationStatus === 'approved') {
+                    productStatusCounts.approved++;
+                } else if (publicationStatus === 'pending') {
+                    productStatusCounts.pending++;
+                }
+            });
+    
+            setApprovedPostsCount(productStatusCounts.approved);
+            setPendingPostsCount(productStatusCounts.pending);
+        };
+    
+        fetchProductData();
+    }, [user]);
 
     useEffect(() => {
         if (user) {
@@ -43,10 +102,15 @@ const SellerManagement = ({ navigation }) => {
         }
     }, [user]);
 
-    const ScrollableItem = ({ imageSource, label, onPress, tabName }) => {
+    const ScrollableItem = ({ imageSource, label, onPress, tabName, count }) => {
         return (
             <TouchableOpacity style={styles.scrollableItem} onPress={() => onPress(tabName)}>
                 <Image source={imageSource} style={styles.scrollableItemImage} />
+                {count > 0 && (
+                    <View style={styles.countBadge}>
+                        <Text style={styles.countText}>{count}</Text>
+                    </View>
+                )}
                 <Text style={styles.scrollableItemText}>{label}</Text>
             </TouchableOpacity>
         );
@@ -179,42 +243,49 @@ const SellerManagement = ({ navigation }) => {
                     label="To Approve"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
                     tabName="To Approve"
+                    count={toApproveCount}
                 />
                 <ScrollableItem
                     imageSource={toShipIcon}
                     label="To Ship"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
                     tabName="To Ship"
+                    count={toShipCount}
                 />
                 <ScrollableItem
                     imageSource={shippedIcon}
                     label="Shipped"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
                     tabName="Shipped"
+                    count={shippedCount}
                 />
                 <ScrollableItem
                     imageSource={completedIcon}
                     label="Completed"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
                     tabName="Completed"
+                    count={completedCount}
                 />
                 <ScrollableItem
                     imageSource={cancelledIcon}
                     label="Cancelled Orders"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
                     tabName="Cancelled"
+                    count={cancelledCount}
                 />
                 <ScrollableItem
                     imageSource={approvedIcon}
                     label="Approved Posts"
                     onPress={(tabName) => navigation.navigate('ProductPosts', { selectedTab: tabName })}
                     tabName="Approved Posts"
+                    count={approvedPostsCount}
                 />
                 <ScrollableItem
                     imageSource={pendingIcon}
                     label="Pending Posts"
                     onPress={(tabName) => navigation.navigate('ProductPosts', { selectedTab: tabName })}
-                    tabName="Pending For Approval"
+                    tabName="Pending Posts"
+                    count={pendingPostsCount}
                 />
                 </ScrollView>
             </View>
@@ -353,6 +424,22 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#05652D',
         textAlign: 'center',
+    },
+    countBadge: {
+        position: 'absolute',
+        right: 10,
+        top: 10,
+        backgroundColor: '#00FF7F',
+        borderRadius: 12,
+        width: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    countText: {
+        color: '#05652D',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
 
