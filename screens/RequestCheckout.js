@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, SafeAreaView, Alert, 
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, SafeAreaView, Alert, Dimensions,
     SectionList, Modal, TextInput, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import Icon1 from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
 import { collection, doc, getDoc, onSnapshot, updateDoc, getDocs, where, query } from 'firebase/firestore';
+import axios from 'axios';
+
+const screenHeight = Dimensions.get('window').height;
 
 const RequestCheckout = ({ navigation, route }) => {
  const [wishItems, setWishItems] = useState([]);
@@ -421,6 +424,27 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#05652D',
+  },
+  modalTextInput: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  searchResultItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  searchResultText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  searchResultsContainer: {
+    maxHeight: screenHeight / 2 - 80, 
   },
 });
 
