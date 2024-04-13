@@ -171,24 +171,18 @@ const DonationDetail = ({ navigation, route }) => {
         </View>
       </ScrollView>
       <View style={styles.navbar}>
-        <TouchableOpacity onPress={handleChatWithDonor}>
-          <View style={styles.navbarIconContainer}>
-            <Icon name="comment" size={24} color="#05652D" style={styles.navbarIcon} />
-            <Text style={styles.navbarLabel}>Chat with Donor</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleAddToWishlist}>
-          <View style={styles.navbarIconContainer}>
-          <Image source={addDonationWishlistIcon2} style={styles.navbarIcon} />
-            <Text style={styles.navbarLabel}>Add to Wishlist</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleRequestNowPress}>
-          <View style={[styles.navbarIconContainer, styles.buyNowButton]}>
-            <Text style={styles.buyNowLabel}>Request Now</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+  <TouchableOpacity onPress={handleChatWithDonor} style={styles.navbarIconContainer}>
+    <Icon name="comment" size={24} color="#05652D" />
+    <Text style={styles.navbarLabel}>Chat with Donor</Text>
+  </TouchableOpacity>
+  <TouchableOpacity onPress={handleAddToWishlist} style={styles.navbarIconContainer}>
+    <Image source={addDonationWishlistIcon2} style={styles.navbarIcon} />
+    <Text style={styles.navbarLabel}>Add to Wishlist</Text>
+  </TouchableOpacity>
+  <TouchableOpacity onPress={handleRequestNowPress} style={[styles.navbarIconContainer, styles.requestNowButton]}>
+    <Text style={styles.requestNowLabel}>Request Now</Text>
+  </TouchableOpacity>
+</View>
     </View>
   );
 };
@@ -273,7 +267,7 @@ const styles = StyleSheet.create({
   },
   navbar: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-around',
     alignItems: 'center',
     paddingVertical: 12,
     backgroundColor: '#FFF',
@@ -281,31 +275,33 @@ const styles = StyleSheet.create({
     borderColor: '#e1e1e1',
   },
   navbarIconContainer: {
+    flex: 1,
     alignItems: 'center',
-    padding: 8,
-    backgroundColor: '#fff',
-    borderRadius: 20,
+    paddingVertical: 10,
   },
   navbarIcon: {
     width: 24,
-    height: 24,
-    color: '#05652D',
+    height: 24,  
     marginBottom: 4,
   },
+  requestNowButton: {
+    backgroundColor: '#05652D',
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  requestNowLabel: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   navbarLabel: {
-    color: '#05652D',
     fontSize: 14,
+    color: '#05652D',
   },
-  buyNowButton: {
-      backgroundColor: '#05652D',
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 20,
-  },
-  buyNowLabel: {
-      color: '#FFF',
-      fontSize: 16,
-      fontWeight: '600',
+  wishlistIcon: {
+    width: 24,
+    height: 24,  
+    marginBottom: 4, 
   },
   icon: {
       color: '#FFF',
