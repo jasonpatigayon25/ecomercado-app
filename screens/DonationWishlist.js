@@ -30,14 +30,18 @@ const DonationWishlist = ({ navigation }) => {
       const unsubscribeWishlist = onSnapshot(wishlistRef, async (docSnapshot) => {
         if (docSnapshot.exists()) {
           const wishlistData = docSnapshot.data().wishItems || [];
-
-          const donations = await Promise.all(wishlistData.map(async (wishItem) => {
+          const donationsWithDonorNames = await Promise.all(wishlistData.map(async (wishItem) => {
             const donationRef = doc(db, 'donation', wishItem.donationId);
             const donationSnap = await getDoc(donationRef);
-            return donationSnap.exists() ? { id: donationSnap.id, ...donationSnap.data() } : null;
+            if (donationSnap.exists()) {
+              const donationData = donationSnap.data();
+              const donorName = await fetchDonorName(donationData.donor_email);
+              return { id: donationSnap.id, ...donationData, donorName }; 
+            }
+            return null;
           }));
   
-          setWishItems(donations.filter(Boolean)); 
+          setWishItems(donationsWithDonorNames.filter(Boolean));
         } else {
           setWishItems([]);
         }
@@ -54,23 +58,23 @@ const DonationWishlist = ({ navigation }) => {
 }, [wishItems]);
 
 
-  const handleSelectItem = (donationId) => {
+const handleSelectItem = (donationId) => {
     const newSelectedItems = new Set(selectedItems);
-    if (newSelectedItems.has(donationId)) {
-        newSelectedItems.delete(donationId);
+    if (selectedItems.has(donationId)) {
+      newSelectedItems.delete(donationId);
     } else {
-        newSelectedItems.add(donationId);
+      newSelectedItems.add(donationId);
     }
     setSelectedItems(newSelectedItems);
-};
+  };
 
-const handleSelectAll = () => {
-    if (selectedItems.size < wishItems.length) {
-        setSelectedItems(new Set(wishItems.map(item => item.donationId)));
+  const handleSelectAll = () => {
+    if (selectedItems.size === wishItems.length) {
+      setSelectedItems(new Set());
     } else {
-        setSelectedItems(new Set());
+      setSelectedItems(new Set(wishItems.map((item) => item.donationId)));
     }
-};
+  };
 
 const handleRequest = () => {
     const selectedDonations = wishItems
@@ -113,30 +117,41 @@ const handleRequest = () => {
 }, [wishItems]);
 
 const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.cartItem}>
-        <View style={styles.itemLeftSection}>
-        <TouchableOpacity>
-            <Icon
-                name={selectedItems.has(item.donationId) ? 'check-square' : 'square'}
-                size={24}
-                color="#05652D"
-            />
-            </TouchableOpacity>
-            <Image source={{ uri: item.photo }} style={styles.cartImage} />
-        </View>
-        <View style={styles.cartDetails}>
-            <Text style={styles.cartName}>{item.name}</Text>
-            <Text style={styles.itemNames}>{item.itemNames?.join(' · ') || ''}</Text>
-            <Text style={styles.cartCategory}>{item.category}</Text>
-            <Text style={styles.cartPurpose}>{item.purpose}</Text>
-            <Text style={styles.cartMessage}>{item.message}</Text>
-        </View>
+    <TouchableOpacity
+    onPress={async () => {
+      const donationRef = doc(db, 'donation', item.donationId);
+      const docSnap = await getDoc(donationRef);
+      if (docSnap.exists()) {
+        const donationData = docSnap.data();
+        navigation.navigate('DonationDetail', { donation: { id: item.donationId, ...donationData } });
+      } else {
+        console.log('No such product!');
+      }
+    }}
+    style={styles.cartItem}
+  >
+      <View style={styles.itemLeftSection}>
+        <TouchableOpacity onPress={() => handleSelectItem(item.donationId)}>
+          <Icon
+            name={selectedItems.has(item.donationId) ? 'check-square' : 'square'}
+            size={24}
+            color="#05652D"
+          />
+        </TouchableOpacity>
+        <Image source={{ uri: item.photo }} style={styles.cartImage} />
+      </View>
+      <View style={styles.cartDetails}>
+        <Text style={styles.cartName}>{item.name}</Text>
+        <Text style={styles.cartCategory}>{item.category}</Text>
+        <Text style={styles.cartDescription}>{item.purpose}</Text>
+        <Text style={styles.cartDescription}>{item.message}</Text>
+      </View>
     </TouchableOpacity>
-);
+  );
 
   const renderSectionList = () => {
-    const sections = Object.keys(groupedWishItems).map((key, index) => ({
-        title: `${key}-${index}`,
+    const sections = Object.keys(groupedWishItems).map((key) => ({
+        title: key, 
         data: groupedWishItems[key]
     }));
 
@@ -168,7 +183,7 @@ const renderItem = ({ item }) => (
     setSelectedItems(newSelectedItems);
 };
   
-  const renderSectionHeader = ({ section: { title, data } }) => (
+const renderSectionHeader = ({ section: { title, data } }) => (
     <View style={styles.sellerHeader}>
       <TouchableOpacity onPress={() => handleSelectDonorItems(data[0]?.donor_email)} style={styles.sectionSelectAllButton}>
         <Icon
@@ -177,7 +192,7 @@ const renderItem = ({ item }) => (
           color="#05652D"
         />
       </TouchableOpacity>
-      <Icon name="store" size={20} color="#808080" style={styles.shopIcon} />
+      <Icon name="heart" size={20} color="#808080" style={styles.shopIcon} />
       <Text style={styles.sellerName}>{title}</Text>
       <TouchableOpacity
         style={styles.visitButton}
