@@ -10,6 +10,49 @@ const DonationDetail = ({ navigation, route }) => {
   const auth = getAuth();
   const user = auth.currentUser;
 
+  const handleVisitDOnor = () => {
+    navigation.navigate('UserVisit', { email: donation.donor_email });
+  };
+
+  const [donorName, setDonorName] = useState('');
+  const donorEmail = donation.donor_email; 
+
+  useEffect(() => {
+    const fetchDonorName = async () => {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', donorEmail));
+      try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          setDonorName(`${userData.firstName} ${userData.lastName}`);
+        } else {
+          console.log('No user found with that email');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    if (donorEmail) {
+      fetchDonorName();
+    }
+  }, [donorEmail]);
+
+  const DonorDetailsCard = () => (
+    <View style={styles.sellerCard}>
+      <Text style={styles.sellerCardHeader}>{donorName}</Text>
+      <Text style={styles.sellerCardSubtext}>{donation.donor_email}</Text>
+      <View style={styles.sellerCardRow}>
+        <Icon name="map-marker" size={16} color="#05652D" />
+        <Text style={styles.sellerCardAddress}>{donation.location}</Text>
+      </View>
+      <TouchableOpacity style={styles.visitButton} onPress={handleVisitDOnor}>
+        <Text style={styles.visitButtonText}>Visit</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const [displayPhoto, setDisplayPhoto] = useState(donation.photo);
 
   const addDonationWishlistIcon = require('../assets/hand.png');
@@ -169,20 +212,21 @@ const DonationDetail = ({ navigation, route }) => {
             <Text style={styles.infoText}>Message: {donation.message}</Text>
           </View>
         </View>
+        <DonorDetailsCard />
       </ScrollView>
       <View style={styles.navbar}>
-  <TouchableOpacity onPress={handleChatWithDonor} style={styles.navbarIconContainer}>
-    <Icon name="comment" size={24} color="#05652D" />
-    <Text style={styles.navbarLabel}>Chat with Donor</Text>
-  </TouchableOpacity>
-  <TouchableOpacity onPress={handleAddToWishlist} style={styles.navbarIconContainer}>
-    <Image source={addDonationWishlistIcon2} style={styles.navbarIcon} />
-    <Text style={styles.navbarLabel}>Add to Wishlist</Text>
-  </TouchableOpacity>
-  <TouchableOpacity onPress={handleRequestNowPress} style={[styles.navbarIconContainer, styles.requestNowButton]}>
-    <Text style={styles.requestNowLabel}>Request Now</Text>
-  </TouchableOpacity>
-</View>
+        <TouchableOpacity onPress={handleChatWithDonor} style={styles.navbarIconContainer}>
+          <Icon name="comment" size={24} color="#05652D" />
+          <Text style={styles.navbarLabel}>Chat with Donor</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleAddToWishlist} style={styles.navbarIconContainer}>
+          <Image source={addDonationWishlistIcon2} style={styles.navbarIcon} />
+          <Text style={styles.navbarLabel}>Add to Wishlist</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleRequestNowPress} style={[styles.navbarIconContainer, styles.requestNowButton]}>
+          <Text style={styles.requestNowLabel}>Request Now</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -374,6 +418,54 @@ const styles = StyleSheet.create({
   wishlistIcon1: {
     width: 24,
     height: 24,
+  },
+  sellerCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  sellerCardHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  sellerCardSubtext: {
+    fontSize: 16,
+    color: '#666',
+  },
+  sellerCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  sellerCardAddress: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+  },
+  visitButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+  },
+  visitButtonText: {
+    color: '#05652D',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
   
