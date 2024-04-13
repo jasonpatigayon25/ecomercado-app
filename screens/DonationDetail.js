@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
-import { collection, query, where, getDocs, addDoc, doc, getDoc, setDoc } from 'firebase/firestore';;
+import { collection, query, where, getDocs, addDoc, doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';;
 import { db } from '../config/firebase';
 
 const DonationDetail = ({ navigation, route }) => {
@@ -74,32 +74,14 @@ const DonationDetail = ({ navigation, route }) => {
     
     try {
       const docSnap = await getDoc(wishlistRef);
+      let updatedWishItems = [];
   
       if (docSnap.exists()) {
         const existingWishItems = docSnap.data().wishItems || [];
         const isItemInWishlist = existingWishItems.some(wishItem => wishItem.donationId === donation.id);
-  
+      
         if (!isItemInWishlist) {
-          await updateDoc(wishlistRef, {
-            wishItems: arrayUnion({
-              donationId: donation.id,
-              name: donation.name,
-              photo: donation.photo,
-              category: donation.category,
-              purpose: donation.purpose,
-              donor_email: donation.donor_email,
-              location: donation.location
-            })
-          });
-          console.log('Donation added to wishlist');
-        } else {
-          console.log('Donation is already in the wishlist');
-          Alert.alert('Donation is already in your wishlist.');
-        }
-      } else {
-        await setDoc(wishlistRef, {
-          userEmail: user.email,
-          wishItems: [{
+          updatedWishItems = [...existingWishItems, {
             donationId: donation.id,
             name: donation.name,
             photo: donation.photo,
@@ -107,7 +89,26 @@ const DonationDetail = ({ navigation, route }) => {
             purpose: donation.purpose,
             donor_email: donation.donor_email,
             location: donation.location
-          }]
+          }];
+          await updateDoc(wishlistRef, { wishItems: updatedWishItems });
+          console.log('Donation added to wishlist');
+        } else {
+          console.log('Donation is already in the wishlist');
+          Alert.alert('Donation is already in your wishlist.');
+        }
+      } else {
+        updatedWishItems = [{
+          donationId: donation.id,
+          name: donation.name,
+          photo: donation.photo,
+          category: donation.category,
+          purpose: donation.purpose,
+          donor_email: donation.donor_email,
+          location: donation.location
+        }];
+        await setDoc(wishlistRef, {
+          userEmail: user.email,
+          wishItems: updatedWishItems
         });
         console.log('Donation added to wishlist');
       }
@@ -116,6 +117,7 @@ const DonationDetail = ({ navigation, route }) => {
       console.error('Error adding to wishlist:', error);
     }
   };
+  
 
 
   useEffect(() => {
