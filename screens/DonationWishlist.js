@@ -117,21 +117,12 @@ const handleRequest = () => {
 }, [wishItems]);
 
 const renderItem = ({ item }) => (
-    <TouchableOpacity
-        onPress={async () => {
-            const donationRef = doc(db, 'donation', item.donationId);
-            const docSnap = await getDoc(donationRef);
-            if (docSnap.exists()) {
-                const donationData = docSnap.data();
-                navigation.navigate('DonationDetail', { donation: { id: item.donationId, ...donationData } });
-            } else {
-                console.log('No such product!');
-            }
-        }}
-        style={styles.cartItem}
-    >
+<TouchableOpacity
+    style={styles.cartItem}
+    onPress={() => navigation.navigate('DonationDetail', { donation: item })}
+  >
       <View style={styles.itemLeftSection}>
-        <TouchableOpacity onPress={() => selectItem(item.donationId)}>
+        <TouchableOpacity onPress={() => handleSelectItem(item.donationId)}>
             <Icon
                 name={selectedItems.has(item.donationId) ? 'check-square' : 'square'}
                 size={24}
@@ -141,16 +132,14 @@ const renderItem = ({ item }) => (
         <Image source={{ uri: item.photo }} style={styles.cartImage} />
       </View>
       <View style={styles.cartDetails}>
-        <Text style={styles.cartName}>
-          {item.name}
-        </Text>
+        <Text style={styles.cartName}>{item.name}</Text>
         <Text style={styles.cartitemnames}>{item.itemNames && item.itemNames.length > 0 ? `${item.itemNames.join(' · ')}` : ''}</Text>
         <Text style={styles.cartCategory}>{item.category}</Text>
         <Text style={styles.cartDescription}>{item.purpose}</Text>
         <Text style={styles.cartDescription}>{item.message}</Text>
       </View>
     </TouchableOpacity>
-);
+  );
 
   const renderSectionList = () => {
     const sections = Object.keys(groupedWishItems).map((key) => ({
