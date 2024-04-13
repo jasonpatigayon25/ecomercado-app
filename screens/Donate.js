@@ -395,21 +395,22 @@ const Donate = ({ navigation }) => {
   };
 
   const resetDonationInfo = () => {
-    setDonationInfo({
-      photo: null,
-      subPhotos: [],
-      name: '',
-      itemNames: [''],
-      category: '',
-      weight: '',
-      width: '',
-      length: '',
-      height: '',
-      location: '',
-      purpose: '',
-      message: '',
-    });
-  };
+    setDonationInfo(prevState => ({
+        ...prevState,
+        photo: null,
+        subPhotos: [],
+        name: '',
+        itemNames: [''],
+        category: '',
+        weight: '',
+        width: '',
+        length: '',
+        height: '',
+        purpose: '',
+        message: '',
+        location: prevState.location, // Uncomment this line if you want to keep the location unchanged
+    }));
+};
 
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
 
