@@ -6,7 +6,7 @@ import ImageZoom from 'react-native-image-pan-zoom';
 
 const ProductImage = ({ route }) => {
   const navigation = useNavigation();
-  const { imageUrl } = route.params; // Ensure that 'imageUrl' is passed correctly through navigation parameters
+  const { imageUrl } = route.params; 
 
   return (
     <View style={styles.container}>
