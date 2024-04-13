@@ -70,6 +70,7 @@ import OrderShippedDetails from './screens/OrderShippedDetails';
 import OrderCompletedBySellerDetails from './screens/OrderCompletedBySellerDetails';
 import OrderCancelledBySellerDetails from './screens/OrderCancelledBySellerDetails';
 import DonationImage from './screens/DonationImage';
+import ProductImage from './screens/ProductImage';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -281,6 +282,7 @@ const App = () => {
               <Stack.Screen name="Wishlist" component={WishlistScreen} />
               <Stack.Screen name="Chat" component={Chat} />
               <Stack.Screen name="ProductDetail" component={ProductDetail} />
+              <Stack.Screen name="ProductImage" component={ProductImage} />
               <Stack.Screen name="RatingReview" component={RatingReview}  options={{ presentation: 'modal' }}/>
               <Stack.Screen name="HelpCenter" component={HelpCenter} />
               <Stack.Screen name="ContactUs" component={ContactUs} />

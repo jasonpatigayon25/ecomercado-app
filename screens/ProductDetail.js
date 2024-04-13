@@ -22,21 +22,43 @@ const ProductDetail = ({ navigation, route }) => {
 
   const [sellerName, setSellerName] = useState('');
   const [product, setProduct] = useState(route.params.product);
+  const [displayPhoto, setDisplayPhoto] = useState(product?.photo || 'default_image_url_here');
   const auth = getAuth();
   const user = auth.currentUser;
 
   useEffect(() => {
     if (product && product.id) {
+
       const productRef = doc(db, 'products', product.id);
       const unsubscribeProduct = onSnapshot(productRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
-          setProduct({ ...docSnapshot.data(), id: docSnapshot.id });
+          const updatedProduct = { ...docSnapshot.data(), id: docSnapshot.id };
+          setProduct(updatedProduct);
+          setDisplayPhoto(updatedProduct.photo);
         }
       });
 
       return () => unsubscribeProduct();
     }
-  }, [product.id]);
+  }, [product?.id]);
+
+  if (!product) {
+    return <View style={styles.container}><Text>Loading...</Text></View>;
+  }
+
+  useEffect(() => {
+    let timer;
+    if (displayPhoto !== product.photo) {
+      timer = setTimeout(() => {
+        setDisplayPhoto(product.photo);
+      }, 10000);
+    }
+    return () => clearTimeout(timer);
+  }, [displayPhoto, product.photo]);
+
+  const handleSelectSubPhoto = (photo) => {
+    setDisplayPhoto(photo);
+  };
 
   const fetchSellerName = async (email) => {
     try {
@@ -395,60 +417,6 @@ const ProductDetail = ({ navigation, route }) => {
     navigation.navigate('CheckOutScreen', { selectedProduct });
   };
 
-  const [modalVisible, setModalVisible] = React.useState(false);
-  const [ratingModalVisible, setRatingModalVisible] = useState(false);
-  const [userRating, setUserRating] = useState('');
-  const [userMessage, setUserMessage] = useState('');
-
-  const rateUser = async (ratedUserEmail, rating, message = '') => {
-    if (!user) {
-      console.log('User not authenticated');
-      return;
-    }
-    const raterEmail = user.email;
-
-    const ratingsRef = collection(db, 'userRatings');
-    const q = query(ratingsRef, where('userEmail', '==', ratedUserEmail), where('raterEmail', '==', raterEmail));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      Alert.alert("Error", "You have already rated this user.");
-      return;
-    }
-
-    const newRating = {
-      userEmail: ratedUserEmail,
-      raterEmail,
-      rating,
-      message,
-      ratedAt: new Date(),
-    };
-    await addDoc(ratingsRef, newRating);
-
-    updateAverageRating(ratedUserEmail);
-    Alert.alert("Success", "User has been rated successfully.");
-  };
-  
-  const updateAverageRating = async (userEmail) => {
-    const ratingsRef = collection(db, 'userRatings');
-    const q = query(ratingsRef, where('userEmail', '==', userEmail));
-    const querySnapshot = await getDocs(q);
-  
-    let totalRating = 0;
-    querySnapshot.forEach((doc) => {
-      totalRating += doc.data().rating;
-    });
-  
-    const averageRating = querySnapshot.size > 0 ? totalRating / querySnapshot.size : 0;
-  
-    const userAvgRatingRef = doc(db, 'userAverageRating', userEmail);
-  
-    await setDoc(userAvgRatingRef, {
-      email: userEmail,
-      averageRating: averageRating
-    });
-  };
-
   const SellerDetailsCard = () => (
     <View style={styles.sellerCard}>
       <Text style={styles.sellerCardHeader}>{sellerDetails.sellerName}</Text>
@@ -462,14 +430,6 @@ const ProductDetail = ({ navigation, route }) => {
       </TouchableOpacity>
     </View>
   );
-
-  const handleRateUserOpen = () => {
-    if (user && product.seller_email === user.email) {
-      Alert.alert("Error", "You cannot rate your own product.");
-      return;
-    }
-    setRatingModalVisible(true);
-  };
 
   const handleVisitSeller = () => {
     navigation.navigate('UserVisit', { email: product.seller_email });
@@ -492,10 +452,21 @@ const ProductDetail = ({ navigation, route }) => {
       </View>
       <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.imageContainer}>
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <Image source={{ uri: product.photo }} style={styles.productImage} />
+       <TouchableOpacity onPress={() => navigation.navigate('DonationImage', { imageUrl: displayPhoto })}>
+            <Image source={{ uri: displayPhoto }} style={styles.productImage} />
           </TouchableOpacity>
         </View>
+        {product.subPhotos && product.subPhotos.length > 0 && (
+          <View style={styles.subPhotosContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {product.subPhotos.map((photo, index) => (
+                <TouchableOpacity key={index} onPress={() => handleSelectSubPhoto(photo)}>
+                  <Image source={{ uri: photo }} style={styles.subPhoto} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
         <View style={styles.infoContainer}>
           <View style={styles.infoItem}>
             <Text           
@@ -576,73 +547,6 @@ const ProductDetail = ({ navigation, route }) => {
           </View>
         </TouchableOpacity>
       </View>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(!modalVisible)}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Image source={{ uri: product.photo }} style={styles.fullImage} />
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(!modalVisible)}
-            >
-              <Icon name="close" size={24} color="#05652D" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={ratingModalVisible}
-        onRequestClose={() => setRatingModalVisible(false)}
-      >
-        <View style={styles.ratingCenteredView}>
-          <View style={styles.ratingModalView}>
-            <Rating
-              type="star"
-              ratingCount={5}
-              imageSize={40}
-              showRating  
-              onFinishRating={(rating) => setUserRating(rating.toString())} 
-              style={{ paddingVertical: 10 }}
-            />
-            <TextInput
-              placeholder="Enter a message for the user"
-              value={userMessage}
-              onChangeText={setUserMessage}
-              multiline
-              numberOfLines={4}
-              style={styles.ratingMessageInput}
-            />
-            <TouchableOpacity
-              style={styles.ratingSubmitButton}
-              onPress={() => {
-                const rating = parseInt(userRating);
-                if (!isNaN(rating) && rating >= 1 && rating <= 5) {
-                  rateUser(product.seller_email, rating, userMessage);
-                  setRatingModalVisible(false);
-                  setUserRating('');
-                  setUserMessage('');
-                } else {
-                  Alert.alert('Invalid Rating', 'Please enter a valid rating between 1 and 5.');
-                }
-              }}
-            >
-              <Text style={styles.buttonTextStyle}>Submit Rating</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.ratingCancelButton}
-              onPress={() => setRatingModalVisible(false)}
-            >
-              <Text style={styles.buttonTextStyle}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -1011,6 +915,18 @@ const styles = StyleSheet.create({
     color: '#05652D',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  subPhotosContainer: {
+    flexDirection: 'row', 
+    marginTop: 10,
+    paddingBottom: 20, 
+  },
+  subPhoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginRight: 10, 
+    resizeMode: 'cover', 
   },
 });
 

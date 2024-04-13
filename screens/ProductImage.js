@@ -4,9 +4,9 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import ImageZoom from 'react-native-image-pan-zoom'; 
 
-const DonationImage = ({ route }) => {
+const ProductImage = ({ route }) => {
   const navigation = useNavigation();
-  const { imageUrl } = route.params;
+  const { imageUrl } = route.params; // Ensure that 'imageUrl' is passed correctly through navigation parameters
 
   return (
     <View style={styles.container}>
@@ -48,4 +48,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default DonationImage;
+export default ProductImage;
