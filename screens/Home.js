@@ -4,7 +4,7 @@ import { ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { FlatList } from 'react-native-gesture-handler';
 import { db } from '../config/firebase';
-import { collection, getDocs, query, orderBy, limit, getDoc, doc, where, documentId } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, getDoc, doc, where, documentId, onSnapshot } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -203,62 +203,58 @@ const Home = ({ navigation }) => {
     setIsModalVisible(!isModalVisible);
   };
 
-  const fetchWishlistCount = async () => {
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
+  const fetchWishlistCount = () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
   
-      if (user && user.email) {
-        const wishlistRef = doc(db, 'wishlists', user.email);
-        const wishlistSnapshot = await getDoc(wishlistRef);
-  
-        if (wishlistSnapshot.exists()) {
-          const wishlistData = wishlistSnapshot.data();
+    if (user && user.email) {
+      const wishlistRef = doc(db, 'wishlists', user.email);
+      const unsubscribe = onSnapshot(wishlistRef, (doc) => {
+        if (doc.exists()) {
+          const wishlistData = doc.data();
           const wishItems = wishlistData.wishItems;
-  
           setWishlistCount(wishItems.length);
         } else {
           console.log('No wishlist found for the current user.');
+          setWishlistCount(0);
         }
-      } else {
-        console.log('No user is logged in or email is not available.');
-      }
-    } catch (error) {
-      console.error("Error fetching wishlist count: ", error);
+      }, (error) => {
+        console.error("Error fetching wishlist count: ", error);
+      });
+      return unsubscribe; 
     }
   };
-
+  
   useEffect(() => {
-    fetchWishlistCount();
+    const unsubscribe = fetchWishlistCount();
+    return unsubscribe; 
   }, []);
 
-  const fetchCartCount = async () => {
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
+  const fetchCartCount = () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
   
-      if (user && user.email) {
-        const cartRef = doc(db, 'carts', user.email);
-        const cartSnapshot = await getDoc(cartRef);
-  
-        if (cartSnapshot.exists()) {
-          const cartData = cartSnapshot.data();
-          const cartItems = cartData.cartItems; 
-  
+    if (user && user.email) {
+      const cartRef = doc(db, 'carts', user.email);
+      const unsubscribe = onSnapshot(cartRef, (doc) => {
+        if (doc.exists()) {
+          const cartData = doc.data();
+          const cartItems = cartData.cartItems;
           setCartCount(Object.keys(cartItems).length);
         } else {
           console.log('No cart found for the current user.');
+          setCartCount(0);
         }
-      } else {
-        console.log('No user is logged in or email is not available.');
-      }
-    } catch (error) {
-      console.error("Error fetching cart count: ", error);
+      }, (error) => {
+        console.error("Error fetching cart count: ", error);
+      });
+      return unsubscribe; 
     }
   };
-
+  
   useEffect(() => {
-    fetchCartCount();
+    const unsubscribe = fetchCartCount();
+    return unsubscribe; 
   }, []);
 
   useEffect(() => {

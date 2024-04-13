@@ -53,53 +53,21 @@ const DonationWishlist = ({ navigation }) => {
     console.log("Wish Items: ", wishItems);
 }, [wishItems]);
 
-  const setupDonationListeners = (wishItems) => {
-    productListeners.forEach(unsubscribe => unsubscribe());
-    const newListeners = wishItems.map((wishItem) => {
-      const donationRef = doc(db, 'donation', wishItem.donationId);
-      const unsubscribe = onSnapshot(donationRef, async (docSnapshot) => {
-        if (docSnapshot.exists()) {
-          const updatedDonation = docSnapshot.data();
-          const donorName = await fetchDonorName(updatedDonation.donor_email);
-          setWishItems((currentItems) =>
-            currentItems.map((item) =>
-              item.donationId === wishItem.donationId
-                ? {
-                    ...item,
-                    name: updatedDonation.name,
-                    category: updatedDonation.category,
-                    donorName: donorName, 
-                    photo: updatedDonation.photo,
-                    location: updatedDonation.location
-                  }
-                : item
-            )
-          );
-        }
-      });
-  
-      return unsubscribe;
-    });
-    setProductListeners(newListeners);
-  };
 
   const handleSelectItem = (donationId) => {
     const newSelectedItems = new Set(selectedItems);
-    if (selectedItems.has(donationId)) {
-      newSelectedItems.delete(donationId);
+    if (newSelectedItems.has(donationId)) {
+        newSelectedItems.delete(donationId);
     } else {
-      newSelectedItems.add(donationId);
+        newSelectedItems.add(donationId);
     }
     setSelectedItems(newSelectedItems);
 };
 
 const handleSelectAll = () => {
     if (selectedItems.size < wishItems.length) {
-
-        const allIds = new Set(wishItems.map(item => item.donationId));
-        setSelectedItems(allIds);
+        setSelectedItems(new Set(wishItems.map(item => item.donationId)));
     } else {
-
         setSelectedItems(new Set());
     }
 };
@@ -145,18 +113,15 @@ const handleRequest = () => {
 }, [wishItems]);
 
 const renderItem = ({ item }) => (
-    <TouchableOpacity
-        onPress={() => {
-            handleSelectItem(item.donationId);
-        }}
-        style={styles.cartItem}
-    >
+    <TouchableOpacity style={styles.cartItem}>
         <View style={styles.itemLeftSection}>
+        <TouchableOpacity>
             <Icon
                 name={selectedItems.has(item.donationId) ? 'check-square' : 'square'}
                 size={24}
                 color="#05652D"
             />
+            </TouchableOpacity>
             <Image source={{ uri: item.photo }} style={styles.cartImage} />
         </View>
         <View style={styles.cartDetails}>
@@ -192,16 +157,16 @@ const renderItem = ({ item }) => (
   const handleSelectDonorItems = (donorEmail) => {
     const newSelectedItems = new Set(selectedItems);
     wishItems.forEach((item) => {
-      if (item.donor_email === donorEmail) {
-        if (newSelectedItems.has(item.donationId)) {
-          newSelectedItems.delete(item.donationId);
-        } else {
-          newSelectedItems.add(item.donationId);
+        if (item.donor_email === donorEmail) {
+            if (newSelectedItems.has(item.donationId)) {
+                newSelectedItems.delete(item.donationId);
+            } else {
+                newSelectedItems.add(item.donationId);
+            }
         }
-      }
     });
     setSelectedItems(newSelectedItems);
-  };
+};
   
   const renderSectionHeader = ({ section: { title, data } }) => (
     <View style={styles.sellerHeader}>
