@@ -94,10 +94,13 @@ const DonationWishlist = ({ navigation }) => {
 };
 
 const handleSelectAll = () => {
-    if (selectedItems.size === wishItems.length) {
-      setSelectedItems(new Set());
+    if (selectedItems.size < wishItems.length) {
+
+        const allIds = new Set(wishItems.map(item => item.donationId));
+        setSelectedItems(allIds);
     } else {
-      setSelectedItems(new Set(wishItems.map((item) => item.donationId)));
+
+        setSelectedItems(new Set());
     }
 };
 
@@ -106,12 +109,10 @@ const handleRequest = () => {
       .filter(item => selectedItems.has(item.donationId))
       .map(item => ({
         ...item,
-        requestedQuantity: 1  // Assuming quantity isn't a factor, but keeping structure for potential future use
+        requestedQuantity: 1 
       }));
 
-    // Check if any of the selected donations are unavailable
-    // This part may not be necessary if your donations don't have an 'availability' status, but keeping for structure
-    const isUnavailable = selectedDonations.some(item => item.isDonated); // Assuming 'isDonated' tracks availability
+    const isUnavailable = selectedDonations.some(item => item.isDonated); 
 
     if (isUnavailable) {
       Alert.alert("Unavailable", "Cannot proceed because one or more selected donations are no longer available.");
@@ -145,23 +146,28 @@ const handleRequest = () => {
 
 const renderItem = ({ item }) => (
     <TouchableOpacity
-      onPress={() => {
-        navigation.navigate('DonationDetail', { donationId: item.donationId });
-      }}
-      style={styles.cartItem}
+        onPress={() => {
+            handleSelectItem(item.donationId);
+        }}
+        style={styles.cartItem}
     >
-      <View style={styles.itemLeftSection}>
-        <Image source={{ uri: item.photo }} style={styles.cartImage} />
-      </View>
-      <View style={styles.cartDetails}>
-        <Text style={styles.cartName}>{item.name}</Text>
-        <Text style={styles.itemNames}>{item.itemNames.join(' · ')}</Text>
-        <Text style={styles.cartCategory}>{item.category}</Text>
-        <Text style={styles.cartPurpose}>{item.purpose}</Text>
-        <Text style={styles.cartMessage}>{item.message}</Text>
-      </View>
+        <View style={styles.itemLeftSection}>
+            <Icon
+                name={selectedItems.has(item.donationId) ? 'check-square' : 'square'}
+                size={24}
+                color="#05652D"
+            />
+            <Image source={{ uri: item.photo }} style={styles.cartImage} />
+        </View>
+        <View style={styles.cartDetails}>
+            <Text style={styles.cartName}>{item.name}</Text>
+            <Text style={styles.itemNames}>{item.itemNames?.join(' · ') || ''}</Text>
+            <Text style={styles.cartCategory}>{item.category}</Text>
+            <Text style={styles.cartPurpose}>{item.purpose}</Text>
+            <Text style={styles.cartMessage}>{item.message}</Text>
+        </View>
     </TouchableOpacity>
-  );
+);
 
   const renderSectionList = () => {
     const sections = Object.keys(groupedWishItems).map((key, index) => ({
@@ -422,8 +428,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', 
     padding: 10,
     borderRadius: 20,
-/*     borderWidth: 3,
-    borderColor: '#05652D', */
   },
   selectAllText: {
     color: '#05652D',
