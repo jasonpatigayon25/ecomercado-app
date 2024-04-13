@@ -415,8 +415,8 @@ const handleSubmit = async () => {
   }
 };
 
-  const resetProductInfo = () => {
-    setProductInfo({
+const resetProductInfo = () => {
+  setProductInfo(prevState => ({
       photo: null,
       subPhotos: [],
       name: '',
@@ -424,9 +424,9 @@ const handleSubmit = async () => {
       category: '',
       description: '',
       quantity: 1,
-      location: '',
-    });
-  };
+      location: prevState.location, 
+  }));
+};
 
   const handleCancel = () => {
     setShowModal(false);

@@ -408,7 +408,7 @@ const Donate = ({ navigation }) => {
         height: '',
         purpose: '',
         message: '',
-        location: prevState.location, // Uncomment this line if you want to keep the location unchanged
+        location: prevState.location, 
     }));
 };
 

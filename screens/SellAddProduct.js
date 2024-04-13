@@ -29,7 +29,7 @@ const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, naviga
           <Icon name="check-circle" size={60} color="white" />
           <Text style={styles.pendingText}>{productName} successfully Added! </Text>
           <Text style={styles.subtext}>
-            The product is pending for approval if it is fit to be sold. Go to My Product Posts for more info.
+            The product is pending for approval.  You can view your pending products in your My Product Posts.
             Pending Product
           </Text>
           <View style={styles.modalButtonContainer}>
@@ -54,6 +54,10 @@ const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, naviga
 
 const SellAddProduct = ({ navigation }) => {
 
+  const [subPhotos, setSubPhotos] = useState([]);
+  const MAX_SUB_PHOTOS = 15;
+  const [isSubPhotoPickerModalVisible, setIsSubPhotoPickerModalVisible] = useState(false);
+
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [productName, setProductName] = useState('');
 
@@ -64,6 +68,7 @@ const SellAddProduct = ({ navigation }) => {
   const [userEmail, setUserEmail] = useState(null);
   const [productInfo, setProductInfo] = useState({
     photo: null,
+    subPhotos: [], 
     name: '',
     price: '',
     category: '',
@@ -161,9 +166,49 @@ const SellAddProduct = ({ navigation }) => {
     }
   };  
 
+  const handleChooseSubPhoto = () => {
+    setIsSubPhotoPickerModalVisible(true);
+  };
+
   const handleChoosePhoto = () => {
     setIsPhotoPickerModalVisible(true);
   };  
+
+  const removeSubPhoto = (indexToRemove) => {
+    if (Array.isArray(productInfo.subPhotos)) {
+      const updatedSubPhotos = productInfo.subPhotos.filter((_, index) => index !== indexToRemove);
+      setProductInfo({ ...productInfo, subPhotos: updatedSubPhotos });
+    }
+  };
+
+  const handleSubPhotoPickImage = async (type) => {
+    let result;
+    if (type === 'camera') {
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    } else {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    }
+  
+    if (result && !result.cancelled && result.assets && result.assets.length > 0) {
+      const uploadUrl = await uploadImageAsync(result.assets[0].uri);
+      setProductInfo({
+        ...productInfo,
+        subPhotos: [...productInfo.subPhotos, uploadUrl]
+      });
+    }
+  
+    setIsSubPhotoPickerModalVisible(false);
+  };
 
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
 
@@ -204,7 +249,46 @@ const SellAddProduct = ({ navigation }) => {
         </View>
       </View>
     </Modal>
-  );  
+  );
+  
+  const SubPhotoPickerModal = ({ isVisible, onCancel }) => (
+    <Modal
+      visible={isVisible}
+      onRequestClose={onCancel}
+      animationType="slide"
+      transparent={true}
+    >
+      <View style={styles.modalOverlayPhoto}>
+        <View style={styles.modalContainerPhoto}>
+          <TouchableOpacity style={styles.cancelButtonTopRight} onPress={onCancel}>
+            <Icon name="times" size={24} color="#05652D" />
+          </TouchableOpacity>
+          <Text style={styles.modalHeader}>Select Sub-Photo</Text>
+          <Text style={styles.modalSubHeader}>Choose a photo from the gallery or take a new one.</Text>
+          <View style={styles.photoOptionsContainer}>
+            <TouchableOpacity
+              style={[styles.photoOption, styles.separateBorder]}
+              onPress={async () => {
+                await handleSubPhotoPickImage('library');
+                onCancel();
+              }}
+            >
+              <Icon name="photo" size={80} color="#05652D" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.photoOption, styles.separateBorder]}
+              onPress={async () => {
+                await handleSubPhotoPickImage('camera');
+                onCancel();
+              }}
+            >
+              <Icon name="camera" size={80} color="#05652D" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
   
   const pickImage = async (type) => {
     let result;
@@ -287,11 +371,13 @@ const notifySubscribers = async (sellerEmail, updatedProductInfo) => {
 const handleSubmit = async () => {
   if (!validateForm()) return;
 
+  if (Array.isArray(productInfo.subPhotos)) {
   try {
     const createdAt = Timestamp.fromDate(new Date());
 
     const productDocRef = await addDoc(productsCollection, {
       photo: productInfo.photo,
+      subPhotos: productInfo.subPhotos,
       name: productInfo.name,
       price: productInfo.price,
       category: productInfo.category,
@@ -324,19 +410,23 @@ const handleSubmit = async () => {
   } catch (error) {
     console.error("Error adding document: ", error);
   }
+  } else {
+    console.error('An error occurred: subPhotos or itemNames is not an array.');
+  }
 };
 
-  const resetProductInfo = () => {
-    setProductInfo({
+const resetProductInfo = () => {
+  setProductInfo(prevState => ({
       photo: null,
+      subPhotos: [],
       name: '',
       price: '',
       category: '',
       description: '',
       quantity: 1,
-      location: '',
-    });
-  };
+      location: prevState.location, 
+  }));
+};
 
   const handleCancel = () => {
     setShowModal(false);
@@ -348,7 +438,6 @@ const handleSubmit = async () => {
       "Volume and weight determine the cost of the delivery fee."
     );
   };
-  
 
   const validateForm = () => {
     const missing = {
@@ -471,6 +560,11 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
             {productInfo.photo && (
               <Image source={{ uri: productInfo.photo }} style={styles.productImage} />
             )}
+                  <View style={styles.subPhotosContainer}>
+                    {productInfo.subPhotos?.map((photo, index) => (
+                        <Image key={index} source={{ uri: photo }} style={styles.modalSubPhotoImage} />
+                    ))}
+                  </View>
             <View style={styles.productDetails}>
               <Text style={styles.productDetailText}>
                 <Text style={styles.productDetailLabel}>Name: </Text>
@@ -522,6 +616,8 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
     </Modal>
   );
 };
+
+
 
   const [quantity, setQuantity] = useState(1);
 
@@ -591,6 +687,10 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
         isVisible={isPhotoPickerModalVisible}
         onCancel={() => setIsPhotoPickerModalVisible(false)}
       />
+        <SubPhotoPickerModal
+          isVisible={isSubPhotoPickerModalVisible}
+          onCancel={() => setIsSubPhotoPickerModalVisible(false)}
+        />
       <ProductModal 
         productInfo={productInfo}
         isVisible={showModal}
@@ -616,6 +716,34 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
             <Icon name="camera" size={24} color="#D3D3D3" style={styles.addPhotoIcon} />
           )}
         </TouchableOpacity>
+        <Text style={styles.label}>
+          Additional Photos  
+        </Text>
+        <View style={styles.subPhotosContainer}>
+        {Array.isArray(productInfo.subPhotos) && productInfo.subPhotos.map((photo, index) => (
+          <View key={index} style={styles.subPhotoContainer}>
+            {photo ? (
+              <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
+                <Image source={{ uri: photo }} style={styles.subPhotoImage} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
+                <Icon name="camera" size={24} color="#D3D3D3" />
+              </TouchableOpacity>
+            )}
+            {photo && (
+              <TouchableOpacity style={styles.removePhotoIconContainer} onPress={() => removeSubPhoto(index)}>
+                <Icon name="times-circle" size={24} color="#FF0000" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+        {Array.isArray(productInfo.subPhotos) && productInfo.subPhotos.length < MAX_SUB_PHOTOS && (
+          <TouchableOpacity onPress={handleChooseSubPhoto} style={[styles.subPhoto, styles.cameraIconContainer]}>
+            <Icon name="camera" size={24} color="#D3D3D3" />
+          </TouchableOpacity>
+        )}
+      </View>
         <Text style={styles.label}>
           Product Name:
           {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>}
@@ -1195,7 +1323,57 @@ const styles = StyleSheet.create({
     padding: 10,
     marginHorizontal: 10,
     width: '60%',
-  },                            
+  },    
+  subPhotosContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  subPhotoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  subPhoto: {
+    width: 120,
+    height: 120,
+    backgroundColor: '#EFEFEF',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  cameraIconContainer: {
+    width: 120,
+    height: 120,
+    backgroundColor: '#EFEFEF',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removePhotoIconContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  subPhotoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+  },  
+  modalSubPhotoImage: {
+    width: 100,
+    height: 100,
+    marginRight: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },                                  
 });
 
 export default SellAddProduct;
