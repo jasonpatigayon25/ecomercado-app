@@ -82,14 +82,12 @@ const DonationDetail = ({ navigation, route }) => {
       Alert.alert("Unavailable", "This donation has already been donated.");
       return;
     }
-  
-    // Check if the current user is trying to request their own donation
+
     if (donation.donor_email === user.email) {
       Alert.alert("Error", "You can't request your own donation.");
       return;
     }
-  
-    // Navigate to the RequestDonationScreen if the user is not requesting their own donation
+
     navigation.navigate('RequestDonationScreen', { donation });
   };
 
@@ -111,26 +109,39 @@ const DonationDetail = ({ navigation, route }) => {
             <Image source={{ uri: donation.photo }} style={styles.donationImage} />
           </TouchableOpacity>
         </View>
+        <View style={styles.subPhotosContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {donation.subPhotos.map((photo, index) => (
+              <TouchableOpacity key={index} onPress={() => console.log('Sub-photo tapped')}>
+                <Image source={{ uri: photo }} style={styles.subPhoto} />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
         <View style={styles.infoContainer}>
-          <View style={styles.infoItem}>
+        <View style={styles.infoItem}>
             <Text style={styles.infoName}>{donation.name}</Text>
           </View>
           <View style={styles.infoItem}>
-            <Icon name="map-marker" size={20} color="#05652D" style={styles.infoIcon} />
-            <Text style={styles.infoText}>{donation.location}</Text>
+          <Text style={styles.itemNames}>{donation.itemNames.join(' · ')}</Text>
           </View>
           <View style={styles.infoItem}>
-            <Icon name="user" size={20} color="#05652D" style={styles.infoIcon} />
-            <Text style={styles.infoText}>{donation.donor_email}</Text>
+            <Icon name="bookmark-o" size={20} color="#05652D" />
+            <Text style={styles.infoCategory}>{donation.category} Bundle</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Icon name="balance-scale" size={20} color="#05652D" />
+            <Text style={styles.infoText}>Weight: {donation.weight} kg</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Icon name="heart" size={20} color="#05652D" />
+            <Text style={styles.infoText}>Purpose: {donation.purpose}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.infoItem}>
-            <Icon name="info-circle" size={20} color="#05652D" style={styles.infoIcon} />
-            <Text style={[styles.infoLabel, styles.boldText]}>Message:</Text>
+            <Icon name="commenting" size={20} color="#05652D" />
+            <Text style={styles.infoText}>Message: {donation.message}</Text>
           </View>
-          <Text style={styles.descriptionText}>
-            {donation.message}
-          </Text>
         </View>
       </ScrollView>
       <View style={styles.navbar}>
@@ -167,143 +178,132 @@ const DonationDetail = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
+  container: {
       flex: 1,
-      backgroundColor: '#f2f2f2',
-    },
-    header: {
+      backgroundColor: '#f9f9f9', 
+  },
+  header: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: 10,
+      paddingVertical: 15,
       paddingHorizontal: 20,
-      width: '100%',
       backgroundColor: '#05652D',
-    },
-    backIcon: {
-      color: '#FFF', 
-    },
-    iconsContainer: {
+  },
+  backIcon: {
+      color: '#FFF',
+  },
+  iconsContainer: {
       flexDirection: 'row',
-    },
-    content: {
+  },
+  content: {
       flexGrow: 1,
-      padding: 16,
-    },
-    donationImage: {
+      paddingVertical: 20,
+      paddingHorizontal: 16,
+  },
+  donationImage: {
       width: '100%',
-      height: 250,
-      borderRadius: 8,
+      height: 300, 
+      borderRadius: 10,
       resizeMode: 'cover',
-      marginBottom: 16,
-    },
-    infoContainer: {
-      backgroundColor: '#FFF',
-      borderRadius: 8,
-      padding: 16,
+      marginBottom: 20,
+  },
+  infoContainer: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: 10,
+      padding: 20,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.2,
-      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 6,
       elevation: 3,
-      marginBottom: 16,
-    },
-    infoItem: {
+      marginBottom: 20,
+  },
+  infoItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 8,
-    },
-    infoIcon: {
-      marginRight: 8,
-      color: '#05652D', 
-    },
-    infoLabel: {
+      marginBottom: 10,
+  },
+  infoIcon: {
+      marginRight: 10,
+      color: '#05652D',
+      fontSize: 24, // Larger icons for better visibility
+  },
+  infoLabel: {
       fontSize: 16,
-      fontWeight: '600',
-      color: '#333', 
-    },
-    infoText: {
-      fontSize: 14,
-      color: '#666',
-    },
-    infoPrice: {
-      fontSize: 20,
       fontWeight: 'bold',
-      color: '#05652D', 
-    },
-    infoCategory: {
-      fontSize: 18,
+      color: '#333',
+  },
+  infoText: {
+      fontSize: 16, 
       color: '#666',
-    },
-    infoName: {
+      flex: 1, 
+      marginLeft: 5,
+  },
+  infoName: {
       fontSize: 24,
       fontWeight: 'bold',
       color: '#333',
-    },
-    divider: {
+      marginBottom: 5,
+  },
+  itemNames: {
+      fontSize: 16,
+      color: '#000',
+  },
+  divider: {
       height: 1,
       backgroundColor: '#e1e1e1',
-      marginVertical: 12,
-    },
-    descriptionText: {
-      fontSize: 16,
-      color: '#666',
-    },
-    navbar: {
+      marginVertical: 15,
+  },
+  navbar: {
       flexDirection: 'row',
-      justifyContent: 'space-evenly',
+      justifyContent: 'space-around',
       alignItems: 'center',
       paddingVertical: 12,
       backgroundColor: '#FFF',
       borderTopWidth: 1,
       borderColor: '#e1e1e1',
-    },
-    navbarIconContainer: {
+  },
+  navbarIconContainer: {
       alignItems: 'center',
-      padding: 8,
-      backgroundColor: '#fff',
-      borderRadius: 20,
-    },
-    navbarIcon: {
-      color: '#05652D',
-    },
-    navbarLabel: {
-      color: '#05652D',
-      fontSize: 12,
-      marginTop: 4,
-    },
-    buyNowButton: {
-      backgroundColor: '#05652D',
-      paddingVertical: 15,
-      paddingHorizontal: 30,
+      padding: 10,
       borderRadius: 30,
-    },
-    buyNowLabel: {
+  },
+  navbarIcon: {
+      color: '#05652D',
+      marginBottom: 4,
+  },
+  navbarLabel: {
+      color: '#05652D',
+      fontSize: 14,
+  },
+  buyNowButton: {
+      backgroundColor: '#05652D',
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 20,
+  },
+  buyNowLabel: {
       color: '#FFF',
       fontSize: 16,
       fontWeight: '600',
-    },
-    icon: {
-      color: '#FFF', 
+  },
+  icon: {
+      color: '#FFF',
       marginLeft: 15,
-    },
-    fullImage: {
-      width: 340,
-      height: 340,
+  },
+  fullImage: {
+      width: '100%',
+      height: '100%',
       resizeMode: 'contain',
-    },
-    closeButton: {
+  },
+  closeButton: {
       position: 'absolute',
       top: 10,
       right: 10,
       color: '#05652D',
-    },
-    textStyle: {
-      color: 'white',
-      fontWeight: 'bold',
-      textAlign: 'center',
-    },
-    modalView: {
+  },
+  modalView: {
       margin: 20,
       backgroundColor: 'white',
       borderRadius: 20,
@@ -311,119 +311,46 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       shadowColor: '#000',
       shadowOffset: {
-        width: 0,
-        height: 2,
+          width: 0,
+          height: 2,
       },
       shadowOpacity: 0.25,
       shadowRadius: 4,
       elevation: 5,
-      width: '100%', 
-      height: '60%',
-    },
-    centeredView: {
+      width: '90%', 
+      height: '70%',
+  },
+  centeredView: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: 22,
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    },
-    ratingModalContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: 22,
-    },
-    ratingModalView: {
-      width: '100%',
-      height: '100%',
-      backgroundColor: 'white',
-      paddingTop: 20, 
-      paddingBottom: 20, 
-      paddingHorizontal: 20, 
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      elevation: 5,
-    },
-    ratingInput: {
-      borderBottomWidth: 1,
-      borderBottomColor: '#f2f2f2',
-      width: '100%',
-      padding: 10,
-      marginBottom: 20,
-    },
-    ratingMessageInput: {
-      width: '100%',
-      height: 100,
-      padding: 10,
-      borderWidth: 1,
-      borderColor: '#f2f2f2',
-      marginBottom: 20,
-      textAlignVertical: 'top',
-    },
-    ratingSubmitButton: {
-      borderRadius: 20,
-      padding: 10,
-      elevation: 2,
-      backgroundColor: "#05652D",
-    },
-    ratingCancelButton: {
-      borderRadius: 20,
-      padding: 10,
-      elevation: 2,
-      backgroundColor: "#cccccc",
-      marginTop: 10,
-    },
-    buttonTextStyle: {
-      color: "white",
-      fontWeight: "bold",
-      textAlign: "center"
-    },
-    ratingCenteredView: {
-      flex: 1,
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    rateSellerButton: {
-      position: 'absolute',
-      top: 10,
-      right: 10,
-      backgroundColor: '#FFD700',
-      paddingVertical: 5,
-      paddingHorizontal: 10,
-      borderRadius: 5,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.2,
-      shadowRadius: 1,
-      elevation: 2,
-    },
-    rateSellerButtonText: {
-      color: '#fff',
-      fontSize: 14,
-      fontWeight: '600',
-      marginLeft: 5,
-    },
-    rateIcon: {
-      color: '#fff',
-    },
-      productNameWithRate: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    imageContainer: {
-      position: 'relative',
-    },
-  });
-  
+  },
+  infoCategory: {
+    fontSize: 16,
+    color: '#666',
+    backgroundColor: '#ECECEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    alignSelf: 'flex-start', 
+    overflow: 'hidden', 
+    marginVertical: 4, 
+    marginHorizontal: 2, 
+    textAlign: 'center',
+  },
+  subPhotosContainer: {
+    flexDirection: 'row', 
+    marginTop: 10,
+    paddingBottom: 20, 
+  },
+  subPhoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginRight: 10, 
+    resizeMode: 'cover', 
+  },
+});
   
   export default DonationDetail;
