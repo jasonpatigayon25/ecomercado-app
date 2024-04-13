@@ -12,6 +12,15 @@ const DonationDetail = ({ navigation, route }) => {
 
   const [displayPhoto, setDisplayPhoto] = useState(donation.photo);
 
+  const addDonationWishlistIcon = require('../assets/hand.png');
+  const addDonationWishlistIcon2 = require('../assets/hand1.png');
+
+  const handleAddToWishlist = () => {
+    Alert.alert("Add to Wishlist", "This feature is under development.");
+    // 
+  };
+
+
   useEffect(() => {
     let timer;
     if (displayPhoto !== donation.photo) {
@@ -115,6 +124,9 @@ const DonationDetail = ({ navigation, route }) => {
             <TouchableOpacity onPress={handleChatWithDonor}>
                 <Icon name="comment" size={24} color="#05652D" style={styles.icon} />
             </TouchableOpacity>
+            <TouchableOpacity onPress={handleAddToWishlist}>
+            <Image source={addDonationWishlistIcon} style={styles.wishlistIcon} />
+          </TouchableOpacity>
             </View>
         </View>
       <ScrollView contentContainerStyle={styles.content}>
@@ -159,15 +171,23 @@ const DonationDetail = ({ navigation, route }) => {
         </View>
       </ScrollView>
       <View style={styles.navbar}>
-         <TouchableOpacity onPress={handleChatWithDonor}>
+        <TouchableOpacity onPress={handleChatWithDonor}>
           <View style={styles.navbarIconContainer}>
             <Icon name="comment" size={24} color="#05652D" style={styles.navbarIcon} />
             <Text style={styles.navbarLabel}>Chat with Donor</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleRequestNowPress} style={[styles.navbarIconContainer, styles.buyNowButton]}>
-        <Text style={styles.buyNowLabel}>Request Now</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={handleAddToWishlist}>
+          <View style={styles.navbarIconContainer}>
+          <Image source={addDonationWishlistIcon2} style={styles.navbarIcon} />
+            <Text style={styles.navbarLabel}>Add to Wishlist</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleRequestNowPress}>
+          <View style={[styles.navbarIconContainer, styles.buyNowButton]}>
+            <Text style={styles.buyNowLabel}>Request Now</Text>
+          </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -252,26 +272,29 @@ const styles = StyleSheet.create({
       marginVertical: 15,
   },
   navbar: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      paddingVertical: 12,
-      backgroundColor: '#FFF',
-      borderTopWidth: 1,
-      borderColor: '#e1e1e1',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    paddingVertical: 12,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderColor: '#e1e1e1',
   },
   navbarIconContainer: {
-      alignItems: 'center',
-      padding: 10,
-      borderRadius: 30,
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: '#fff',
+    borderRadius: 20,
   },
   navbarIcon: {
-      color: '#05652D',
-      marginBottom: 4,
+    width: 24,
+    height: 24,
+    color: '#05652D',
+    marginBottom: 4,
   },
   navbarLabel: {
-      color: '#05652D',
-      fontSize: 14,
+    color: '#05652D',
+    fontSize: 14,
   },
   buyNowButton: {
       backgroundColor: '#05652D',
@@ -346,6 +369,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 10, 
     resizeMode: 'cover', 
+  },
+  wishlistIcon: {
+    width: 32,
+    height: 32,
+    marginLeft: 15,
+  },
+  wishlistIcon1: {
+    width: 24,
+    height: 24,
   },
 });
   
