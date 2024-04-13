@@ -118,36 +118,39 @@ const handleRequest = () => {
 
 const renderItem = ({ item }) => (
     <TouchableOpacity
-    onPress={async () => {
-      const donationRef = doc(db, 'donation', item.donationId);
-      const docSnap = await getDoc(donationRef);
-      if (docSnap.exists()) {
-        const donationData = docSnap.data();
-        navigation.navigate('DonationDetail', { donation: { id: item.donationId, ...donationData } });
-      } else {
-        console.log('No such product!');
-      }
-    }}
-    style={styles.cartItem}
-  >
+        onPress={async () => {
+            const donationRef = doc(db, 'donation', item.donationId);
+            const docSnap = await getDoc(donationRef);
+            if (docSnap.exists()) {
+                const donationData = docSnap.data();
+                navigation.navigate('DonationDetail', { donation: { id: item.donationId, ...donationData } });
+            } else {
+                console.log('No such product!');
+            }
+        }}
+        style={styles.cartItem}
+    >
       <View style={styles.itemLeftSection}>
-        <TouchableOpacity onPress={() => handleSelectItem(item.donationId)}>
-          <Icon
-            name={selectedItems.has(item.donationId) ? 'check-square' : 'square'}
-            size={24}
-            color="#05652D"
-          />
+        <TouchableOpacity onPress={() => selectItem(item.donationId)}>
+            <Icon
+                name={selectedItems.has(item.donationId) ? 'check-square' : 'square'}
+                size={24}
+                color="#05652D"
+            />
         </TouchableOpacity>
         <Image source={{ uri: item.photo }} style={styles.cartImage} />
       </View>
       <View style={styles.cartDetails}>
-        <Text style={styles.cartName}>{item.name}</Text>
+        <Text style={styles.cartName}>
+          {item.name}
+        </Text>
+        <Text style={styles.cartitemnames}>{item.itemNames && item.itemNames.length > 0 ? `${item.itemNames.join(' · ')}` : ''}</Text>
         <Text style={styles.cartCategory}>{item.category}</Text>
         <Text style={styles.cartDescription}>{item.purpose}</Text>
         <Text style={styles.cartDescription}>{item.message}</Text>
       </View>
     </TouchableOpacity>
-  );
+);
 
   const renderSectionList = () => {
     const sections = Object.keys(groupedWishItems).map((key) => ({
@@ -226,14 +229,14 @@ const renderSectionHeader = ({ section: { title, data } }) => (
   };
   
   const removeItems = () => {
-    // Assuming wishItems is the state containing all wishlist items
+
     const newWishItems = wishItems.filter(item => !selectedItems.has(item.donationId));
   
-    const wishlistRef = doc(db, 'wishlists', user.email); // Reference to the user's wishlist
-    updateDoc(wishlistRef, { wishItems: newWishItems }) // Update the document
+    const wishlistRef = doc(db, 'wishlists', user.email);
+    updateDoc(wishlistRef, { wishItems: newWishItems }) 
       .then(() => {
-        setWishItems(newWishItems); // Update local state
-        setSelectedItems(new Set()); // Clear selection
+        setWishItems(newWishItems);
+        setSelectedItems(new Set()); 
         Alert.alert('Success', 'Selected donations have been removed from your wishlist.');
       })
       .catch(error => {
@@ -358,6 +361,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     backgroundColor: '#ECECEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    alignSelf: 'flex-start', 
+    overflow: 'hidden', 
+    marginVertical: 4, 
+    marginHorizontal: 2, 
+    textAlign: 'center',
+  },
+  cartitemnames: {
+    fontSize: 12,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
