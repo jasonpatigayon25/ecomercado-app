@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
@@ -10,7 +10,21 @@ const DonationDetail = ({ navigation, route }) => {
   const auth = getAuth();
   const user = auth.currentUser;
 
-  const [modalVisible, setModalVisible] = React.useState(false);
+  const [displayPhoto, setDisplayPhoto] = useState(donation.photo);
+
+  useEffect(() => {
+    let timer;
+    if (displayPhoto !== donation.photo) {
+      timer = setTimeout(() => {
+        setDisplayPhoto(donation.photo);
+      }, 10000);
+    }
+    return () => clearTimeout(timer);
+  }, [displayPhoto, donation.photo]);
+
+  const handleSelectSubPhoto = (photo) => {
+    setDisplayPhoto(photo);
+  };
 
   const handleBackPress = () => {
     navigation.goBack();
@@ -104,15 +118,15 @@ const DonationDetail = ({ navigation, route }) => {
             </View>
         </View>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.imageContainer}>
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <Image source={{ uri: donation.photo }} style={styles.donationImage} />
-          </TouchableOpacity>
+      <View style={styles.imageContainer}>
+      <TouchableOpacity onPress={() => navigation.navigate('DonationImage', { imageUrl: displayPhoto })}>
+        <Image source={{ uri: displayPhoto }} style={styles.donationImage} />
+      </TouchableOpacity>
         </View>
         <View style={styles.subPhotosContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {donation.subPhotos.map((photo, index) => (
-              <TouchableOpacity key={index} onPress={() => console.log('Sub-photo tapped')}>
+              <TouchableOpacity key={index} onPress={() => handleSelectSubPhoto(photo)}>
                 <Image source={{ uri: photo }} style={styles.subPhoto} />
               </TouchableOpacity>
             ))}
@@ -155,24 +169,6 @@ const DonationDetail = ({ navigation, route }) => {
         <Text style={styles.buyNowLabel}>Request Now</Text>
       </TouchableOpacity>
       </View>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(!modalVisible)}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Image source={{ uri: donation.photo }} style={styles.fullImage} />
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(!modalVisible)}
-            >
-              <Icon name="close" size={24} color="#05652D" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -227,7 +223,7 @@ const styles = StyleSheet.create({
   infoIcon: {
       marginRight: 10,
       color: '#05652D',
-      fontSize: 24, // Larger icons for better visibility
+      fontSize: 24, 
   },
   infoLabel: {
       fontSize: 16,
