@@ -80,8 +80,8 @@ const handleRequest = () => {
   
   const renderEmptyCart = () => (
     <View style={styles.emptyCartContainer}>
-      <Icon name="shopping-cart" size={50} color="#ccc" />
-      <Text style={styles.emptyCartText}>No Cart Yet</Text>
+      <Icon name="heart" size={50} color="#ccc" />
+      <Text style={styles.emptyCartText}>No Wishlist Yet</Text>
     </View>
   );
 
