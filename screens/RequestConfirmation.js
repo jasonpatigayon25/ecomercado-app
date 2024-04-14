@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 const RequestConfirmation = ({ navigation, route }) => {
   const { address, donationDetails, deliveryFeeSubtotal, disposalFeeSubtotal, totalFee, message } = route.params;
 
-  const renderItem = ({ item }) => (
-    <View style={styles.cartItem}>
+  const renderItem = ({ item, sectionIndex, itemIndex }) => (
+    <View style={styles.cartItem} key={`item-${sectionIndex}-${itemIndex}`}>
       <Image source={{ uri: item.photo }} style={styles.cartImage} />
       <View style={styles.cartDetails}>
         <Text style={styles.cartName}>{item.name}</Text>
@@ -16,65 +16,67 @@ const RequestConfirmation = ({ navigation, route }) => {
     </View>
   );
 
-  const renderSection = ({ item }) => (
-    <View style={styles.sectionContainer}>
+  const renderSection = (item, sectionIndex) => (
+    <View style={styles.sectionContainer} key={`section-${sectionIndex}`}>
       <Text style={styles.sectionTitle}>{item.title}</Text>
-      <FlatList
-        data={item.data}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => `donation-${index}`}
-      />
+      {item.data.map((subItem, itemIndex) => renderItem({ item: subItem, sectionIndex, itemIndex }))}
       <View style={styles.sectionFooter}>
-        <Text style={styles.footerText}>Total Bundles: {item.itemCount}</Text>
-        <Text style={styles.footerText}>Delivery Fee: ₱{item.deliveryFee.toFixed(2)}</Text>
-        <Text style={styles.footerText}>Disposal Fee ({item.totalWeight.toFixed(1)}kg): ₱{item.disposalFee.toFixed(2)}</Text>
+        <Text style={styles.footerText}>Total Bundles:</Text>
+        <Text style={styles.footerValue}>{item.itemCount}</Text>
+      </View>
+      <View style={styles.sectionFooter}>
+        <Text style={styles.footerText}>Delivery Fee:</Text>
+        <Text style={styles.footerValue}>₱{item.deliveryFee.toFixed(2)}</Text>
+      </View>
+      <View style={styles.sectionFooter}>
+        <Text style={styles.footerText}>Disposal Fee ({item.totalWeight.toFixed(1)}kg):</Text>
+        <Text style={styles.footerValue}>₱{item.disposalFee.toFixed(2)}</Text>
       </View>
     </View>
   );
 
   return (
-    <FlatList
-      ListHeaderComponent={
-        <>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Icon name="arrow-left" size={20} color="#FFF" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Request Confirmation</Text>
-          </View>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Delivery Address:</Text>
-            <Text style={styles.infoContent}>{address}</Text>
-          </View>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Message for Request:</Text>
-            <Text style={styles.infoContent}>{message}</Text>
-          </View>
-        </>
-      }
-      ListFooterComponent={
-        <>
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Delivery Fee Subtotal:</Text>
-            <Text style={styles.totalAmount}>₱{deliveryFeeSubtotal.toFixed(2)}</Text>
-          </View>
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Disposal Fee Subtotal:</Text>
-            <Text style={styles.totalAmount}>₱{disposalFeeSubtotal.toFixed(2)}</Text>
-          </View>
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Total Fee:</Text>
-            <Text style={styles.totalAmount}>₱{totalFee.toFixed(2)}</Text>
-          </View>
-          <TouchableOpacity style={styles.proceedButton}>
-            <Text style={styles.proceedButtonText}>Proceed</Text>
-          </TouchableOpacity>
-        </>
-      }
-      data={donationDetails}
-      renderItem={renderSection}
-      keyExtractor={(item, index) => `section-${index}`}
-    />
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="arrow-left" size={20} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Request Confirmation</Text>
+      </View>
+      <ScrollView style={styles.scrollContainer}>
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoLabel}>Delivery Address:</Text>
+          <Text style={styles.infoContent}>{address}</Text>
+        </View>
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoLabel}>Message for Request:</Text>
+          <Text style={styles.infoContent}>{message}</Text>
+        </View>
+        {donationDetails.map(renderSection)}
+        <View style={styles.totalContainer}>
+          <Text style={styles.totalLabel}>Delivery Fee Subtotal:</Text>
+          <Text style={styles.totalAmount}>₱{deliveryFeeSubtotal.toFixed(2)}</Text>
+        </View>
+        <View style={styles.totalContainer}>
+          <Text style={styles.totalLabel}>Disposal Fee Subtotal:</Text>
+          <Text style={styles.totalAmount}>₱{disposalFeeSubtotal.toFixed(2)}</Text>
+        </View>
+        <View style={styles.totalContainer}>
+          <Text style={styles.totalLabel}>Total Fee:</Text>
+          <Text style={styles.totalAmount}>₱{totalFee.toFixed(2)}</Text>
+        </View>
+      </ScrollView>
+      <View style={styles.navbar}>
+        <View style={styles.totalPaymentButton}>
+          <Text style={styles.totalPaymentLabel}>Total Fee</Text>
+          <Text style={styles.totalPaymentAmount}>₱{totalFee.toFixed(2)}</Text>
+        </View>
+      <TouchableOpacity style={styles.proceedButton}>
+        <Text style={styles.proceedButtonText}>Proceed</Text>
+      </TouchableOpacity>
+      
+      </View>
+    </View>
   );
 };
 
@@ -86,21 +88,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#05652D',
-    paddingVertical: 20,
+    paddingVertical: 10,
     paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
   },
   backButton: {
     marginRight: 10,
   },
   headerTitle: {
-    color: '#FFF',
     fontSize: 22,
     fontWeight: 'bold',
     flex: 1,
@@ -146,12 +140,16 @@ const styles = StyleSheet.create({
   },
   cartCategory: {
     fontSize: 12,
-    color: '#64748B',
-    backgroundColor: '#E2E8F0',
+    color: '#666',
+    backgroundColor: '#ECECEC',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
-    marginTop: 5,
+    alignSelf: 'flex-start', 
+    overflow: 'hidden', 
+    marginVertical: 4, 
+    marginHorizontal: 2, 
+    textAlign: 'center',
   },
   cartitemnames: {
     fontSize: 12,
@@ -178,10 +176,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
+    alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
     color: '#64748B',
+    flex: 1, 
+  },
+  footerValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    flex: 1, 
+    textAlign: 'right', 
   },
   totalContainer: {
     flexDirection: 'row',
@@ -202,16 +208,42 @@ const styles = StyleSheet.create({
     color: '#10B981',
   },
   proceedButton: {
-    backgroundColor: '#10B981',
-    padding: 15,
-    borderRadius: 30,
-    alignItems: 'center',
-    margin: 20,
+    backgroundColor: '#05652D',
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 5,
   },
   proceedButtonText: {
     color: '#FFF',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderColor: '#D3D3D3',
+    backgroundColor: '#FFF',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+  },
+  totalPaymentButton: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginRight: 80,
+  },
+  totalPaymentLabel: {
+    fontSize: 14,
+    color: '#000',
+  },
+  totalPaymentAmount: {
+    fontSize: 24,
+    color: '#05652D',
   },
 });
 
