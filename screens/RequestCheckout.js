@@ -8,6 +8,31 @@ import { db } from '../config/firebase';
 import { collection, doc, getDoc, onSnapshot, updateDoc, getDocs, where, query } from 'firebase/firestore';
 import axios from 'axios';
 
+const getDistanceAndCalculateFee = async (origin, destination) => {
+  const API_KEY = 'AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g';
+  const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(destination)}&key=${API_KEY}`;
+
+  try {
+    const response = await axios.get(url);
+    if (response.data.rows[0] && response.data.rows[0].elements[0].distance) {
+      const distanceMeters = response.data.rows[0].elements[0].distance.value;
+      const distanceKm = distanceMeters / 1000; 
+
+      const baseFee = 15;
+      const additionalFeePerHalfKm = 5;
+      const additionalFee = Math.floor(distanceKm / 0.5) * additionalFeePerHalfKm;
+      const totalFee = baseFee + additionalFee;
+      return totalFee;
+    } else {
+      //console.error('No distance data available');
+      return 0;
+    }
+  } catch (error) {
+    console.error('Error fetching distance:', error);
+    return 0;
+  }
+};
+
 const screenHeight = Dimensions.get('window').height;
 
 const RequestCheckout = ({ navigation, route }) => {
@@ -81,51 +106,56 @@ const RequestCheckout = ({ navigation, route }) => {
   };
 
 
-  useEffect(() => {
-    const fetchDonationsWithDonorNames = async () => {
-      const donationsWithDonorInfo = [];
+  const fetchDonationsWithDonorNames = async () => {
+    const donationsWithDonorInfo = [];
   
-      for (const donation of selectedDonations) {
-        const donorEmail = donation.donor_email;
-        const usersQuery = query(collection(db, 'users'), where('email', '==', donorEmail));
-        const userSnapshot = await getDocs(usersQuery);
+    for (const donation of selectedDonations) {
+      const donorEmail = donation.donor_email;
+      const usersQuery = query(collection(db, 'users'), where('email', '==', donorEmail));
+      const userSnapshot = await getDocs(usersQuery);
   
-        if (!userSnapshot.empty) {
-          const donorData = userSnapshot.docs[0].data();
+      if (!userSnapshot.empty) {
+        const donorData = userSnapshot.docs[0].data();
+        const donorAddress = donorData.address; // Assuming 'address' field exists
+  
+        if (donorAddress && address) { // Ensure both addresses are available
+          const deliveryFee = await getDistanceAndCalculateFee(donorAddress, address); // Calculate delivery fee dynamically
   
           donationsWithDonorInfo.push({
             ...donation,
             donorFirstName: donorData.firstName,
             donorLastName: donorData.lastName,
+            deliveryFee, // Add calculated fee to the donation info
           });
         }
       }
+    }
   
-      const groupedDonations = donationsWithDonorInfo.reduce((grouped, donation) => {
-        const donorName = `${donation.donorFirstName} ${donation.donorLastName}`;
-        if (!grouped[donorName]) {
-          grouped[donorName] = { donations: [], count: 0 };
-        }
-        grouped[donorName].donations.push(donation);
-        grouped[donorName].count += 1; 
-        return grouped;
-      }, {});
+    // Group donations by donor and prepare sections for SectionList
+    const groupedDonations = donationsWithDonorInfo.reduce((grouped, donation) => {
+      const donorName = `${donation.donorFirstName} ${donation.donorLastName}`;
+      if (!grouped[donorName]) {
+        grouped[donorName] = { donations: [], count: 0, totalDeliveryFee: 0 };
+      }
+      grouped[donorName].donations.push(donation);
+      grouped[donorName].count += 1;
+      grouped[donorName].totalDeliveryFee += donation.deliveryFee;
+      return grouped;
+    }, {});
   
-      const sectionListData = Object.keys(groupedDonations).map(donorName => ({
-        title: donorName,
-        data: groupedDonations[donorName].donations,
-        itemCount: groupedDonations[donorName].count
-      }));
+    const sectionListData = Object.keys(groupedDonations).map(donorName => ({
+      title: donorName,
+      data: groupedDonations[donorName].donations,
+      itemCount: groupedDonations[donorName].count,
+      deliveryFee: groupedDonations[donorName].totalDeliveryFee
+    }));
   
-      setSections(sectionListData);
-    };
+    setSections(sectionListData);
+  };
   
-    fetchDonationsWithDonorNames();
-  }, [selectedDonations]);
-
   useEffect(() => {
-    console.log("Wish Items detected");
-}, [wishItems]);
+    fetchDonationsWithDonorNames();
+  }, [selectedDonations, address]);
 
 const renderSectionHeader = ({ section: { title } }) => (
     <View style={styles.sectionHeader}>
@@ -134,16 +164,12 @@ const renderSectionHeader = ({ section: { title } }) => (
   );
   
 
-  const renderSectionFooter = ({ section: { itemCount } }) => (
-    <View style={styles.section}>
+  const renderSectionFooter = ({ section: { itemCount, deliveryFee } }) => (
     <View style={styles.sectionFooter}>
       <Text style={styles.labelText}>Total Bundles:</Text>
       <Text style={styles.productsubText}>{itemCount}</Text>
-    </View>
-    <View style={styles.sectionFooter}>
       <Text style={styles.labelText}>Delivery Fee:</Text>
-      <Text style={styles.productsubText}>{itemCount}</Text>
-    </View>
+      <Text style={styles.productsubText}>₱{deliveryFee}</Text>
     </View>
   );
 
