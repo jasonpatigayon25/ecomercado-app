@@ -34,6 +34,8 @@ const getDistanceAndCalculateFee = async (origin, destination) => {
 
 const screenHeight = Dimensions.get('window').height;
 
+
+
 const RequestCheckout = ({ navigation, route }) => {
  const [wishItems, setWishItems] = useState([]);
  const [currentItem, setCurrentItem] = useState(null);
@@ -104,11 +106,40 @@ const RequestCheckout = ({ navigation, route }) => {
     setLocationSearchModalVisible(false);
   };
 
+  const FeeSummary = ({ sections }) => {
+
+    const deliveryFeeSubtotal = sections.reduce((sum, section) => sum + (section.deliveryFee || 0), 0);
+    const disposalFeeSubtotal = sections.reduce((sum, section) => sum + (section.disposalFee || 0), 0);
+    const totalFee = deliveryFeeSubtotal + disposalFeeSubtotal;
+  
+    return (
+      <View style={styles.cardContainer}>
+        <Text style={styles.cardTitle}>Fee Details</Text>
+  
+        <View style={styles.cardItem}>
+          <Text style={styles.productDetail}>Delivery Fee SubTotal</Text>
+          <Text style={styles.priceTextGreen}>₱{deliveryFeeSubtotal.toFixed(2)}</Text>
+        </View>
+  
+        <View style={styles.cardItem}>
+          <Text style={styles.productDetail}>Disposal Fee SubTotal</Text>
+          <Text style={styles.priceTextGreen}>₱{disposalFeeSubtotal.toFixed(2)}</Text>
+        </View>
+  
+        <View style={styles.divider} />
+  
+        <View style={styles.cardItem}>
+          <Text style={styles.productDetail2}>Total Fee</Text>
+          <Text style={styles.priceTextGreen2}>₱{totalFee.toFixed(2)}</Text>
+        </View>
+      </View>
+    );
+  };
 
   const fetchDonationsWithDonorNames = async () => {
     const donationsWithDonorInfo = [];
-  
     const deliveryFeesCache = {};
+    const weightCache = {};
   
     for (const donation of selectedDonations) {
       const donorEmail = donation.donor_email;
@@ -122,33 +153,52 @@ const RequestCheckout = ({ navigation, route }) => {
         let deliveryFee = deliveryFeesCache[donorEmail];
         if (!deliveryFee && donorAddress && address) { 
           deliveryFee = await getDistanceAndCalculateFee(donorAddress, address);
-          deliveryFeesCache[donorEmail] = deliveryFee; 
+          deliveryFeesCache[donorEmail] = deliveryFee;
+        }
+  
+        const itemWeight = parseFloat(donation.weight) || 0;
+        if (weightCache[donorEmail]) {
+          weightCache[donorEmail] += itemWeight;
+        } else {
+          weightCache[donorEmail] = itemWeight;
         }
   
         donationsWithDonorInfo.push({
           ...donation,
           donorFirstName: donorData.firstName,
           donorLastName: donorData.lastName,
-          deliveryFee, 
+          deliveryFee,
+          weight: itemWeight
         });
       }
     }
-
+  
     const groupedDonations = donationsWithDonorInfo.reduce((grouped, donation) => {
       const donorName = `${donation.donorFirstName} ${donation.donorLastName}`;
       if (!grouped[donorName]) {
-        grouped[donorName] = { donations: [], count: 0, deliveryFee: donation.deliveryFee };
+        grouped[donorName] = { donations: [], count: 0, deliveryFee: donation.deliveryFee, totalWeight: 0 };
       }
       grouped[donorName].donations.push(donation);
       grouped[donorName].count += 1;
+      grouped[donorName].totalWeight += donation.weight;
       return grouped;
     }, {});
+  
+    Object.values(groupedDonations).forEach(group => {
+      const weight = group.totalWeight;
+      group.disposalFee = 0;
+      if (weight > 5) {
+        group.disposalFee = Math.ceil((weight - 5) / 5) * 20;
+      }
+    });
   
     const sectionListData = Object.keys(groupedDonations).map(donorName => ({
       title: donorName,
       data: groupedDonations[donorName].donations,
       itemCount: groupedDonations[donorName].count,
-      deliveryFee: groupedDonations[donorName].deliveryFee
+      deliveryFee: groupedDonations[donorName].deliveryFee,
+      disposalFee: groupedDonations[donorName].disposalFee,
+      totalWeight: groupedDonations[donorName].totalWeight 
     }));
   
     setSections(sectionListData);
@@ -164,19 +214,33 @@ const renderSectionHeader = ({ section: { title } }) => (
     </View>
   );
 
-  const renderSectionFooter = ({ section: { itemCount, deliveryFee } }) => (
-    <View style={styles.footer}>
-    <View style={styles.sectionFooter}>
-      <Text style={styles.labelText}>Total Bundles:</Text>
-      <Text style={styles.productsubText}>{itemCount}</Text>
-    </View>
-    <View style={styles.sectionFooter}>
-      <Text style={styles.labelText}>Delivery Fee:</Text>
-        <Text style={styles.productsubText}>₱{Number(deliveryFee).toFixed(2)}</Text>
-      </View>
-    </View>
-  );
+  const renderSectionFooter = ({ section }) => {
 
+    const { itemCount, deliveryFee, disposalFee, totalWeight } = section;
+
+    const weightText = totalWeight ? `${totalWeight.toFixed(1)}kg` : '0kg';
+
+    const formattedDeliveryFee = deliveryFee ? `₱${Number(deliveryFee).toFixed(2)}` : '₱0.00';
+    const formattedDisposalFee = disposalFee ? `₱${Number(disposalFee).toFixed(2)}` : '₱0.00';
+  
+    return (
+      <View style={styles.footer}>
+        <View style={styles.sectionFooter}>
+          <Text style={styles.labelText}>Total Bundles:</Text>
+          <Text style={styles.productsubText}>{itemCount}</Text>
+        </View>
+        <View style={styles.sectionFooter}>
+          <Text style={styles.labelText}>Delivery Fee:</Text>
+          <Text style={styles.productsubText}>{formattedDeliveryFee}</Text>
+        </View>
+        <View style={styles.sectionFooter}>
+          <Text style={styles.labelText}>Disposal Fee: ({weightText})</Text>
+          <Text style={styles.productsubText}>{formattedDisposalFee}</Text>
+        </View>
+      </View>
+    );
+  };
+  
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.cartItem}>
       <View style={styles.itemLeftSection}>
@@ -191,7 +255,13 @@ const renderSectionHeader = ({ section: { title } }) => (
       </View>
     </TouchableOpacity>
   );
-  
+
+  const FeeSummarySection = useMemo(() => <FeeSummary sections={sections} />, [sections]);
+
+  const feeSummary = useMemo(() => {
+    return sections.length > 0 ? <FeeSummary sections={sections} /> : null;
+  }, [sections]);
+
 
   return (
     <View style={styles.container}>
@@ -218,15 +288,19 @@ const renderSectionHeader = ({ section: { title } }) => (
             </TouchableOpacity>
           </View>
         }
-        ListFooterComponent={<View style={{ height: 70 }} />} 
-        contentContainerStyle={{ paddingBottom: 70 }} 
+        ListFooterComponent={<>
+          {feeSummary}
+          <View style={{ height: 10 }} />
+        </>
+      } 
+        contentContainerStyle={{ paddingBottom: 10 }} 
       />
     <View style={styles.navbar}>
     <View style={styles.totalPaymentContainer}>
           <Text style={styles.totalPaymentLabel}>Delivery Fee:</Text>
           <Text style={styles.totalPaymentAmount}>0</Text>
         </View>
-      <TouchableOpacity style={styles.placeRequestButton} onPress={() => {/* ... function to handle request */}}>
+      <TouchableOpacity style={styles.placeRequestButton} onPress={() => {/* ...  */}}>
         <Text style={styles.placeRequestButtonText}>Place Request</Text>
       </TouchableOpacity>
       </View>
@@ -520,6 +594,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#05652D',
     fontWeight: 'bold',
+    textAlign: 'right',
+  },
+  cardContainer: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 30,
+  },
+  cardItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+    alignItems: 'center',
+  },
+  productDetail: {
+    fontSize: 14,
+    color: 'gray',
+    textAlign: 'left',
+  },
+  priceTextGreen: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#05652D',
+    textAlign: 'right',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e1e1e1',
+    marginVertical: 5,
+  },
+  productDetail2: {
+    fontSize: 16,
+    color: 'gray',
+    textAlign: 'left',
+  },
+  priceTextGreen2: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#05652D',
     textAlign: 'right',
   },
 });
