@@ -271,6 +271,29 @@ const renderSectionHeader = ({ section: { title } }) => (
   const handleMessageChange = (message) => {
     setRequestMessage(message);
   };
+
+  const handlePlaceRequest = async () => {
+    if (address === 'Search Location') {
+      Alert.alert("Missing Information", "Please input your address.");
+      return;
+    }
+
+    const deliveryFeeSubtotal = sections.reduce((sum, section) => sum + (section.deliveryFee || 0), 0);
+    const disposalFeeSubtotal = sections.reduce((sum, section) => sum + (section.disposalFee || 0), 0);
+    const totalFee = deliveryFeeSubtotal + disposalFeeSubtotal;
+
+    const orderInfo = {
+      address,
+      donationDetails: sections,
+      deliveryFeeSubtotal,
+      disposalFeeSubtotal,
+      totalFee,
+      message: requestMessage,
+    };
+
+    navigation.navigate('RequestConfirmation', orderInfo);
+  };
+
   
   return (
     <View style={styles.container}>
@@ -317,7 +340,7 @@ const renderSectionHeader = ({ section: { title } }) => (
           <Text style={styles.totalPaymentLabel}>Total Fee</Text>
           <Text style={styles.totalPaymentAmount}>₱{totalFee.toFixed(2)}</Text>
         </View>
-      <TouchableOpacity style={styles.placeRequestButton} onPress={() => {/* ...  */}}>
+      <TouchableOpacity style={styles.placeRequestButton} onPress={handlePlaceRequest}>
         <Text style={styles.placeRequestButtonText}>Place Request</Text>
       </TouchableOpacity>
       </View>
