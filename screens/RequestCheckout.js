@@ -240,6 +240,10 @@ const renderSectionHeader = ({ section: { title } }) => (
       </View>
     );
   };
+
+  const deliveryFeeSubtotal = sections.reduce((sum, section) => sum + (section.deliveryFee || 0), 0);
+  const disposalFeeSubtotal = sections.reduce((sum, section) => sum + (section.disposalFee || 0), 0);
+  const totalFee = deliveryFeeSubtotal + disposalFeeSubtotal;
   
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.cartItem}>
@@ -295,8 +299,8 @@ const renderSectionHeader = ({ section: { title } }) => (
       />
     <View style={styles.navbar}>
     <View style={styles.totalPaymentContainer}>
-          <Text style={styles.totalPaymentLabel}>Delivery Fee:</Text>
-          <Text style={styles.totalPaymentAmount}>0</Text>
+          <Text style={styles.totalPaymentLabel}>Total Fee</Text>
+          <Text style={styles.totalPaymentAmount}>₱{totalFee.toFixed(2)}</Text>
         </View>
       <TouchableOpacity style={styles.placeRequestButton} onPress={() => {/* ...  */}}>
         <Text style={styles.placeRequestButtonText}>Place Request</Text>
