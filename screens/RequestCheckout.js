@@ -84,17 +84,15 @@ const RequestCheckout = ({ navigation, route }) => {
   useEffect(() => {
     const fetchDonationsWithDonorNames = async () => {
       const donationsWithDonorInfo = [];
-
+  
       for (const donation of selectedDonations) {
         const donorEmail = donation.donor_email;
-  
         const usersQuery = query(collection(db, 'users'), where('email', '==', donorEmail));
         const userSnapshot = await getDocs(usersQuery);
   
-
         if (!userSnapshot.empty) {
           const donorData = userSnapshot.docs[0].data();
-
+  
           donationsWithDonorInfo.push({
             ...donation,
             donorFirstName: donorData.firstName,
@@ -102,26 +100,28 @@ const RequestCheckout = ({ navigation, route }) => {
           });
         }
       }
-
+  
       const groupedDonations = donationsWithDonorInfo.reduce((grouped, donation) => {
         const donorName = `${donation.donorFirstName} ${donation.donorLastName}`;
         if (!grouped[donorName]) {
-          grouped[donorName] = [];
+          grouped[donorName] = { donations: [], count: 0 };
         }
-        grouped[donorName].push(donation);
+        grouped[donorName].donations.push(donation);
+        grouped[donorName].count += 1; 
         return grouped;
       }, {});
-
+  
       const sectionListData = Object.keys(groupedDonations).map(donorName => ({
         title: donorName,
-        data: groupedDonations[donorName],
+        data: groupedDonations[donorName].donations,
+        itemCount: groupedDonations[donorName].count
       }));
-
+  
       setSections(sectionListData);
     };
   
     fetchDonationsWithDonorNames();
-  }, [selectedDonations]); // 
+  }, [selectedDonations]);
 
   useEffect(() => {
     console.log("Wish Items detected");
@@ -130,6 +130,20 @@ const RequestCheckout = ({ navigation, route }) => {
 const renderSectionHeader = ({ section: { title } }) => (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionHeaderText}>From: {title}</Text>
+    </View>
+  );
+  
+
+  const renderSectionFooter = ({ section: { itemCount } }) => (
+    <View style={styles.section}>
+    <View style={styles.sectionFooter}>
+      <Text style={styles.labelText}>Total Bundles:</Text>
+      <Text style={styles.productsubText}>{itemCount}</Text>
+    </View>
+    <View style={styles.sectionFooter}>
+      <Text style={styles.labelText}>Delivery Fee:</Text>
+      <Text style={styles.productsubText}>{itemCount}</Text>
+    </View>
     </View>
   );
 
@@ -163,6 +177,7 @@ const renderSectionHeader = ({ section: { title } }) => (
         keyExtractor={(item, index) => item.id + index}
         renderItem={renderItem}
         renderSectionHeader={renderSectionHeader}
+        renderSectionFooter={renderSectionFooter} 
         ListHeaderComponent={
           <View style={styles.infoContainer}>
             <Text style={styles.addresslabel}>Delivery Address:</Text>
@@ -324,7 +339,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   sectionHeader: {
-    backgroundColor: '#f4f4f4',
+    backgroundColor: '#50C878',
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderTopWidth: 1,
@@ -445,6 +460,37 @@ const styles = StyleSheet.create({
   },
   searchResultsContainer: {
     maxHeight: screenHeight / 2 - 80, 
+  },
+  sectionFooter: {
+    backgroundColor: '#ECFFDC',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  sectionFooterText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center', 
+  },
+
+  labelText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+
+  },
+  infoText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  productsubText: {
+    fontSize: 16,
+    color: '#05652D',
+    fontWeight: 'bold',
+    textAlign: 'right',
   },
 });
 
