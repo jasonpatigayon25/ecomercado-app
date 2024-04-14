@@ -1,9 +1,55 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import { collection, addDoc, doc, updateDoc, getDoc, runTransaction, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { db } from '../config/firebase';
 
 const RequestConfirmation = ({ navigation, route }) => {
   const { address, donationDetails, deliveryFeeSubtotal, disposalFeeSubtotal, totalFee, message } = route.params;
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
+
+  const handleProceed = async () => {
+    Alert.alert(
+      "Confirm Request",
+      "Do you want to proceed with this request?",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Yes",
+          onPress: async () => {
+            const donorEmails = await fetchDonorEmails(donationDetails);
+            if (donorEmails.includes(null)) {
+              console.error("Error: Some donor emails could not be retrieved.");
+              return;
+            }
+
+            try {
+              const requestDoc = {
+                donorEmail: donorEmails,
+                requesterEmail: currentUser?.email,
+                donationDetails: donationDetails.map(detail => ({ donationId: detail.donationId })),
+                dateRequested: serverTimestamp(),
+                message: message,
+                status: 'pending',
+                deliveryFee: deliveryFeeSubtotal,
+                disposalFee: disposalFeeSubtotal,
+                totalFee: totalFee
+              };
+
+              const docRef = await addDoc(collection(db, "requests"), requestDoc);
+              console.log("Request confirmed with ID:", docRef.id);
+              navigation.goBack();
+            } catch (error) {
+              console.error("Error adding document:", error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
 
   const renderItem = ({ item, sectionIndex, itemIndex }) => (
     <View style={styles.cartItem} key={`item-${sectionIndex}-${itemIndex}`}>
@@ -15,6 +61,19 @@ const RequestConfirmation = ({ navigation, route }) => {
       </View>
     </View>
   );
+
+  const fetchDonorEmails = async (donationDetails) => {
+    return Promise.all(donationDetails.map(async (detail) => {
+      const donationRef = doc(db, "donation", detail.donationId);
+      const docSnap = await getDoc(donationRef);
+      if (docSnap.exists()) {
+        return docSnap.data().donor_email;
+      } else {
+        console.log("No document found for donation ID:", detail.donationId);
+        return null;
+      }
+    }));
+  };
 
   const renderSection = (item, sectionIndex) => (
     <View style={styles.sectionContainer} key={`section-${sectionIndex}`}>
@@ -71,7 +130,7 @@ const RequestConfirmation = ({ navigation, route }) => {
           <Text style={styles.totalPaymentLabel}>Total Fee</Text>
           <Text style={styles.totalPaymentAmount}>₱{totalFee.toFixed(2)}</Text>
         </View>
-      <TouchableOpacity style={styles.proceedButton}>
+        <TouchableOpacity style={styles.proceedButton} onPress={handleProceed}>
         <Text style={styles.proceedButtonText}>Proceed</Text>
       </TouchableOpacity>
       
