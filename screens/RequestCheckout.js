@@ -24,7 +24,6 @@ const getDistanceAndCalculateFee = async (origin, destination) => {
       const totalFee = baseFee + additionalFee;
       return totalFee;
     } else {
-      //console.error('No distance data available');
       return 0;
     }
   } catch (error) {
@@ -109,6 +108,8 @@ const RequestCheckout = ({ navigation, route }) => {
   const fetchDonationsWithDonorNames = async () => {
     const donationsWithDonorInfo = [];
   
+    const deliveryFeesCache = {};
+  
     for (const donation of selectedDonations) {
       const donorEmail = donation.donor_email;
       const usersQuery = query(collection(db, 'users'), where('email', '==', donorEmail));
@@ -116,30 +117,30 @@ const RequestCheckout = ({ navigation, route }) => {
   
       if (!userSnapshot.empty) {
         const donorData = userSnapshot.docs[0].data();
-        const donorAddress = donorData.address; // Assuming 'address' field exists
+        const donorAddress = donorData.address;
   
-        if (donorAddress && address) { // Ensure both addresses are available
-          const deliveryFee = await getDistanceAndCalculateFee(donorAddress, address); // Calculate delivery fee dynamically
-  
-          donationsWithDonorInfo.push({
-            ...donation,
-            donorFirstName: donorData.firstName,
-            donorLastName: donorData.lastName,
-            deliveryFee, // Add calculated fee to the donation info
-          });
+        let deliveryFee = deliveryFeesCache[donorEmail];
+        if (!deliveryFee && donorAddress && address) { 
+          deliveryFee = await getDistanceAndCalculateFee(donorAddress, address);
+          deliveryFeesCache[donorEmail] = deliveryFee; 
         }
+  
+        donationsWithDonorInfo.push({
+          ...donation,
+          donorFirstName: donorData.firstName,
+          donorLastName: donorData.lastName,
+          deliveryFee, 
+        });
       }
     }
-  
-    // Group donations by donor and prepare sections for SectionList
+
     const groupedDonations = donationsWithDonorInfo.reduce((grouped, donation) => {
       const donorName = `${donation.donorFirstName} ${donation.donorLastName}`;
       if (!grouped[donorName]) {
-        grouped[donorName] = { donations: [], count: 0, totalDeliveryFee: 0 };
+        grouped[donorName] = { donations: [], count: 0, deliveryFee: donation.deliveryFee };
       }
       grouped[donorName].donations.push(donation);
       grouped[donorName].count += 1;
-      grouped[donorName].totalDeliveryFee += donation.deliveryFee;
       return grouped;
     }, {});
   
@@ -147,7 +148,7 @@ const RequestCheckout = ({ navigation, route }) => {
       title: donorName,
       data: groupedDonations[donorName].donations,
       itemCount: groupedDonations[donorName].count,
-      deliveryFee: groupedDonations[donorName].totalDeliveryFee
+      deliveryFee: groupedDonations[donorName].deliveryFee
     }));
   
     setSections(sectionListData);
@@ -162,14 +163,17 @@ const renderSectionHeader = ({ section: { title } }) => (
       <Text style={styles.sectionHeaderText}>From: {title}</Text>
     </View>
   );
-  
 
   const renderSectionFooter = ({ section: { itemCount, deliveryFee } }) => (
+    <View style={styles.footer}>
     <View style={styles.sectionFooter}>
       <Text style={styles.labelText}>Total Bundles:</Text>
       <Text style={styles.productsubText}>{itemCount}</Text>
+    </View>
+    <View style={styles.sectionFooter}>
       <Text style={styles.labelText}>Delivery Fee:</Text>
-      <Text style={styles.productsubText}>₱{deliveryFee}</Text>
+        <Text style={styles.productsubText}>₱{Number(deliveryFee).toFixed(2)}</Text>
+      </View>
     </View>
   );
 
@@ -488,7 +492,7 @@ const styles = StyleSheet.create({
     maxHeight: screenHeight / 2 - 80, 
   },
   sectionFooter: {
-    backgroundColor: '#ECFFDC',
+    backgroundColor: '#fff',
     paddingVertical: 10,
     paddingHorizontal: 15,
     flexDirection: 'row', 
