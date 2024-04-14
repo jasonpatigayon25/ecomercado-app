@@ -290,10 +290,8 @@ const renderSectionHeader = ({ section: { title } }) => (
         }
         ListFooterComponent={<>
           {feeSummary}
-          <View style={{ height: 10 }} />
         </>
       } 
-        contentContainerStyle={{ paddingBottom: 10 }} 
       />
     <View style={styles.navbar}>
     <View style={styles.totalPaymentContainer}>
@@ -598,6 +596,7 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     backgroundColor: '#f9f9f9',
+    marginTop: 20,
     borderRadius: 10,
     padding: 15,
     shadowColor: '#000',
@@ -639,6 +638,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#05652D',
     textAlign: 'right',
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
   },
 });
 
