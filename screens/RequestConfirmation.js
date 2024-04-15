@@ -23,50 +23,32 @@ const RequestConfirmation = ({ navigation, route }) => {
           text: "Yes",
           onPress: async () => {
             try {
-              // Extracting sections and other details from the route params
-              const {
-                address,
-                sections,
-                deliveryFeeSubtotal,
-                disposalFeeSubtotal,
-                totalFee,
-                message,
-              } = route.params;
-  
-              // Map through the sections to construct an array of donationDetails
-              // where each donation is associated with the donor's email.
-              const donationDetailsWithDonorEmails = sections.map((section) => ({
-                donorEmail: section.donorEmail, // Email per group
-                donations: section.data.map((donation) => ({
-                  donationId: donation.id, // Make sure to use the correct property for the donation ID
-                  // Include any other relevant details from the donation object
+              const { address, sections, message } = route.params;
+              const requests = sections.map((section) => ({
+                donorDetails: section.data.map((donation) => ({
+                  donorEmail: section.donorEmail,
+                  donationId: donation.id,
+                  // Include other donation details as needed
                 })),
-                deliveryFee: section.deliveryFee,
-                disposalFee: section.disposalFee,
-                // You can include other details from the section if needed
-              }));
-  
-              // Building the request document to add to Firestore
-              const requestDoc = {
-                donorDetails: donationDetailsWithDonorEmails,
                 requesterEmail: currentUser?.email,
                 address,
                 message,
                 status: 'pending',
-                deliveryFeeSubtotal,
-                disposalFeeSubtotal,
-                totalFee,
                 dateRequested: serverTimestamp(),
-              };
+              }));
   
-              // Adding the request document to Firestore
-              const docRef = await addDoc(collection(db, "requests"), requestDoc);
+              const batch = writeBatch(db);
+              requests.forEach((request) => {
+                const docRef = doc(collection(db, "requests"));
+                batch.set(docRef, request);
+              });
   
-              // Handle the success, such as navigating back or to a success page
+              // Commit the batch write to Firestore
+              await batch.commit();
+  
               navigation.goBack();
-              Alert.alert("Success", "Your request has been submitted successfully.");
+              Alert.alert("Success", "Your requests have been submitted successfully.");
             } catch (error) {
-              // Handle any errors that occur during the process
               console.error("Error processing the request:", error);
               Alert.alert("Error", "An error occurred while processing your request. Please try again.");
             }
