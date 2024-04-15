@@ -7,6 +7,8 @@ import { db } from '../config/firebase';
 
 const RequestConfirmation = ({ navigation, route }) => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [requestPlaced, setRequestPlaced] = useState(false);
   const { address, donationDetails, deliveryFeeSubtotal, disposalFeeSubtotal, totalFee, message } = route.params;
   const auth = getAuth();
   const currentUser = auth.currentUser;
@@ -60,15 +62,14 @@ const RequestConfirmation = ({ navigation, route }) => {
           batch.set(donorNotificationRef, donorNotificationData);
         });
       });
-  
-      // Commit the batch write to Firestore
+
       await batch.commit();
-      Alert.alert("Success", "Your requests have been submitted successfully.");
-      navigation.goBack(); // Navigate back or to another screen as necessary
+      setSuccessModalVisible(true);
+      setRequestPlaced(true);
     } catch (error) {
       console.error("Error processing the request:", error);
       Alert.alert("Error", "An error occurred while processing your request. Please try again.");
-      setConfirmModalVisible(true); // Optionally reopen the modal if the transaction fails
+      setConfirmModalVisible(true); 
     }
   };
   
@@ -83,27 +84,6 @@ const RequestConfirmation = ({ navigation, route }) => {
       </View>
     </View>
   );
-
-  const fetchDonorEmails = async (donationDetails) => {
-    try {
-      const donorInfo = await Promise.all(donationDetails.map(async (detail) => {
-        const donationRef = doc(db, "donation", detail.donationId);
-        const docSnap = await getDoc(donationRef);
-        if (docSnap.exists()) {
-          // Include both the donor's email and the donationId
-          return { email: docSnap.data().donor_email, donationId: detail.donationId };
-        } else {
-          console.log("No document found for donation ID:", detail.donationId);
-          return null;
-        }
-      }));
-      // Remove any null values from the array of donor information
-      return donorInfo.filter(info => info !== null);
-    } catch (error) {
-      console.error("Error fetching donor emails:", error);
-      throw error;
-    }
-  };
 
   const renderSection = (item, sectionIndex) => (
     <View style={styles.sectionContainer} key={`section-${sectionIndex}`}>
@@ -160,10 +140,10 @@ const RequestConfirmation = ({ navigation, route }) => {
           <Text style={styles.totalPaymentLabel}>Total Fee</Text>
           <Text style={styles.totalPaymentAmount}>₱{totalFee.toFixed(2)}</Text>
         </View>
-        <TouchableOpacity style={styles.proceedButton} onPress={() => setConfirmModalVisible(true)}>
-        <Text style={styles.proceedButtonText}>Proceed</Text>
-      </TouchableOpacity>
-      
+        <TouchableOpacity style={[styles.proceedButton, requestPlaced ? styles.disabledButton : {}]} 
+        onPress={() => setConfirmModalVisible(true)} disabled={requestPlaced}>
+          <Text style={styles.proceedButtonText}>{requestPlaced ? 'Pending' : 'Proceed'}</Text>
+        </TouchableOpacity>
       </View>
       <Modal
         animationType="slide"
@@ -189,6 +169,41 @@ const RequestConfirmation = ({ navigation, route }) => {
             >
               <Text style={styles.textStyle}>Cancel</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={successModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setSuccessModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Request Has Been Placed!</Text>
+            <Icon name="check-circle" size={60} color="white" />
+            <Text style={styles.pendingText}>Pending for Donor Approval</Text>
+            <Text style={styles.subtext}>Go to Request Transaction for more info.</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonHome]}
+                onPress={() => {
+                  setSuccessModalVisible(false);
+                  navigation.navigate('Home');
+                }}
+              >
+                <Text style={styles.homeButton}>Home</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonOrder]}
+                onPress={() => {
+                  setSuccessModalVisible(false);
+                  navigation.navigate('RequestApproval');
+                }}
+              >
+                <Text style={styles.textButton}>My Request Transactions</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -412,6 +427,48 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     marginBottom: 70,
+  },
+  pendingText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  subtext: {
+    fontSize: 14,
+    marginBottom: 20,
+    color: "#ffffff",
+    textAlign: 'center',
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    borderRadius: 20,
+    padding: 10,
+    marginHorizontal: 10,
+    width: '50%',
+  },
+  modalButtonHome: {
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  modalButtonOrder: {
+    borderColor: '#FFFFFF',
+    borderWidth: 1,
+  },
+  textButton: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  homeButton: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 
