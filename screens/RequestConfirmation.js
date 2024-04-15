@@ -1,63 +1,77 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { collection, addDoc, doc, updateDoc, getDoc, runTransaction, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
 
 const RequestConfirmation = ({ navigation, route }) => {
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const { address, donationDetails, deliveryFeeSubtotal, disposalFeeSubtotal, totalFee, message } = route.params;
   const auth = getAuth();
   const currentUser = auth.currentUser;
 
   const handleProceed = async () => {
-    Alert.alert(
-      "Confirm Request",
-      "Do you want to proceed with this request?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          onPress: async () => {
-            try {
-              const { address, sections, message } = route.params;
-              const requests = sections.map((section) => ({
-                donorDetails: section.data.map((donation) => ({
-                  donorEmail: section.donorEmail,
-                  donationId: donation.id,
-                  // Include other donation details as needed
-                })),
-                requesterEmail: currentUser?.email,
-                address,
-                message,
-                status: 'pending',
-                dateRequested: serverTimestamp(),
-              }));
+    setConfirmModalVisible(false); 
+    try {
+      const { sections, address, message } = route.params;
+      const batch = writeBatch(db);
   
-              const batch = writeBatch(db);
-              requests.forEach((request) => {
-                const docRef = doc(collection(db, "requests"));
-                batch.set(docRef, request);
-              });
+      sections.forEach((section) => {
+        const requestDoc = {
+          donorDetails: section.data.map((donation) => ({
+            donorEmail: section.donorEmail,
+            donationId: donation.id,
+          })),
+          requesterEmail: currentUser?.email,
+          address,
+          message,
+          deliveryFee: section.deliveryFee,
+          disposalFee: section.disposalFee,
+          status: 'pending',
+          dateRequested: serverTimestamp(),
+        };
+        const requestDocRef = doc(collection(db, "requests"));
+        batch.set(requestDocRef, requestDoc);
   
-              // Commit the batch write to Firestore
-              await batch.commit();
+        // Notification for the requester
+        const requesterNotificationData = {
+          email: currentUser?.email,
+          text: "Your request has been submitted successfully.",
+          timestamp: serverTimestamp(),
+          type: 'request_submitted',
+          requestId: requestDocRef.id
+        };
+        const requesterNotificationRef = doc(collection(db, "notifications"));
+        batch.set(requesterNotificationRef, requesterNotificationData);
   
-              navigation.goBack();
-              Alert.alert("Success", "Your requests have been submitted successfully.");
-            } catch (error) {
-              console.error("Error processing the request:", error);
-              Alert.alert("Error", "An error occurred while processing your request. Please try again.");
-            }
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+        // Notification for each donor
+        section.data.forEach((donation) => {
+          const donorNotificationMessage = `Your donation is requested by ${currentUser?.email}.`;
+          const donorNotificationData = {
+            email: donation.donorEmail,
+            text: donorNotificationMessage,
+            timestamp: serverTimestamp(),
+            type: 'donation_requested',
+            requestId: requestDocRef.id,
+            donationId: donation.id
+          };
+          const donorNotificationRef = doc(collection(db, "notifications"));
+          batch.set(donorNotificationRef, donorNotificationData);
+        });
+      });
+  
+      // Commit the batch write to Firestore
+      await batch.commit();
+      Alert.alert("Success", "Your requests have been submitted successfully.");
+      navigation.goBack(); // Navigate back or to another screen as necessary
+    } catch (error) {
+      console.error("Error processing the request:", error);
+      Alert.alert("Error", "An error occurred while processing your request. Please try again.");
+      setConfirmModalVisible(true); // Optionally reopen the modal if the transaction fails
+    }
   };
+  
 
   const renderItem = ({ item, sectionIndex, itemIndex }) => (
     <View style={styles.cartItem} key={`item-${sectionIndex}-${itemIndex}`}>
@@ -146,11 +160,38 @@ const RequestConfirmation = ({ navigation, route }) => {
           <Text style={styles.totalPaymentLabel}>Total Fee</Text>
           <Text style={styles.totalPaymentAmount}>₱{totalFee.toFixed(2)}</Text>
         </View>
-        <TouchableOpacity style={styles.proceedButton} onPress={handleProceed}>
+        <TouchableOpacity style={styles.proceedButton} onPress={() => setConfirmModalVisible(true)}>
         <Text style={styles.proceedButtonText}>Proceed</Text>
       </TouchableOpacity>
       
       </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={confirmModalVisible}
+        onRequestClose={() => setConfirmModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Confirm your request?</Text>
+            <TouchableOpacity
+              style={{ ...styles.openButton2, backgroundColor: "#fff" }}
+              onPress={() => {
+                setConfirmModalVisible(!confirmModalVisible);
+                handleProceed();
+              }}
+            >
+              <Text style={styles.textStyle1}>Yes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ ...styles.openButton2, backgroundColor: "#05652D", borderWidth: 1,borderColor: "white" }}
+              onPress={() => setConfirmModalVisible(!confirmModalVisible)}
+            >
+              <Text style={styles.textStyle}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -319,6 +360,58 @@ const styles = StyleSheet.create({
   totalPaymentAmount: {
     fontSize: 24,
     color: '#05652D',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+    // backgroundColor: 'rgba(0, 0, 0, 0.6)',
+
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: '#05652D',
+
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    shadowOpacity: 0.25,
+    elevation: 5,
+  },
+  modalText: {
+    marginBottom: 18,
+    textAlign: "center",
+    color: "white",
+    fontWeight:'bold',
+  },
+  disabledButton: {
+    backgroundColor: '#CCCCCC',
+  },
+  openButton2: {
+    backgroundColor: "#F194FF",
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20, 
+    elevation: 2,
+    marginTop: 15,
+    minWidth: 100, 
+    justifyContent: 'center' 
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center"
+  },
+  textStyle1: {
+    color: "#05652D",
+    fontWeight: "bold",
+    textAlign: "center"
+  },
+  scrollContainer: {
+    marginBottom: 70,
   },
 });
 
