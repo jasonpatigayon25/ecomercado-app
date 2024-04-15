@@ -213,17 +213,17 @@ const SellAddProduct = ({ navigation }) => {
   const handleWeightChange = (text) => {
     const newText = text.replace(/[^0-9.]/g, '');
     if (newText === '') {
-      setProductInfo({ ...productInfo, weight: '' });
-      setMissingFields({ ...missingFields, weightError: false });
+        setProductInfo({ ...productInfo, weight: '' });
+        setMissingFields({ ...missingFields, weightError: false });
     } else if (parseFloat(newText) > 0 && parseFloat(newText) <= 30) {
-      setProductInfo({ ...productInfo, weight: newText });
-      setMissingFields({ ...missingFields, weightError: false });
+        setProductInfo({ ...productInfo, weight: newText });
+        setMissingFields({ ...missingFields, weightError: false });
     } else {
-
-      setProductInfo({ ...productInfo, weight: '' });
-      setMissingFields({ ...missingFields, weightError: true });
+        setProductInfo({ ...productInfo, weight: '' });
+        setMissingFields({ ...missingFields, weightError: true });
+        Alert.alert('Invalid Entry', 'Please enter a weight between 1-30 kg.');
     }
-  };
+};
   
   const incrementWeight = () => {
     let weight = parseFloat(productInfo.weight) || 0;
@@ -469,7 +469,7 @@ const resetProductInfo = () => {
   const handleShippingInfoPress = () => {
     Alert.alert(
       "Note:",
-      "Volume and weight determine the cost of the delivery fee."
+      "Volume and weight also determine the cost of the delivery fee."
     );
   };
 
@@ -651,8 +651,6 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
   );
 };
 
-
-
   const [quantity, setQuantity] = useState(1);
 
   const incrementQuantity = () => {
@@ -676,6 +674,22 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
     } else {
       setProductInfo({ ...productInfo, quantity: '' });
     }
+  };
+
+  const handleDimensionChange = (dimension, value) => {
+    let valid = true;
+    let maxDimension = (dimension === 'length') ? 90 : 60;
+    if (value === '') {
+      setProductInfo({ ...productInfo, [dimension]: value });
+      setMissingFields(prev => ({ ...prev, [dimension + 'Error']: false }));
+    } else if (parseFloat(value) > 0 && parseFloat(value) <= maxDimension) {
+      setProductInfo({ ...productInfo, [dimension]: value });
+      setMissingFields(prev => ({ ...prev, [dimension + 'Error']: false }));
+    } else {
+      setProductInfo({ ...productInfo, [dimension]: '' });
+      setMissingFields(prev => ({ ...prev, [dimension + 'Error']: true }));
+      Alert.alert('Invalid Entry', `Please enter a ${dimension} up to ${maxDimension} cm.`);
+      }
   };
 
   const handleLocationSearch = async (query) => {
@@ -859,56 +873,66 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
         <View style={styles.shippingContainer}>
           <Text style={styles.shippingLabel}>Packaging</Text>
           <View style={styles.dimensionsContainer}>
-            <TextInput
-              style={[styles.input, styles.dimensionInput, missingFields.width && styles.missingField]}
-              placeholder="Width (cm)"
-              keyboardType="numeric"
-              value={productInfo.width}
-              onChangeText={(text) => setProductInfo({ ...productInfo, width: text })}
-            />
-            <TextInput
-              style={[styles.input, styles.dimensionInput, missingFields.length && styles.missingField]}
-              placeholder="Length (cm)"
-              keyboardType="numeric"
-              value={productInfo.length}
-              onChangeText={(text) => setProductInfo({ ...productInfo, length: text })}
-            />
-            <TextInput
-              style={[styles.input, styles.dimensionInput, missingFields.height && styles.missingField]}
-              placeholder="Height (cm)"
-              keyboardType="numeric"
-              value={productInfo.height}
-              onChangeText={(text) => setProductInfo({ ...productInfo, height: text })}
-            />
-          </View>
+          <TextInput
+            style={[styles.dimensionInput, missingFields.widthError && styles.missingField]}
+            placeholder="Width (max 60 cm)"
+            keyboardType="numeric"
+            value={productInfo.width}
+            onChangeText={(text) => handleDimensionChange('width', text)}
+          />
+          <TextInput
+            style={[styles.dimensionInput, missingFields.heightError && styles.missingField]}
+            placeholder="Height (max 60 cm)"
+            keyboardType="numeric"
+            value={productInfo.height}
+            onChangeText={(text) => handleDimensionChange('height', text)}
+          />
+          <TextInput
+            style={[styles.dimensionInput, missingFields.lengthError && styles.missingField]}
+            placeholder="Length (max 90 cm)"
+            keyboardType="numeric"
+            value={productInfo.length}
+            onChangeText={(text) => handleDimensionChange('length', text)}
+          />
+
+        </View>
+        {missingFields.widthError && (
+          <Text style={styles.validationText}>Please enter a width up to 60 cm.</Text>
+        )}
+        {missingFields.heightError && (
+          <Text style={styles.validationText}>Please enter a height up to 60 cm.</Text>
+        )}
+        {missingFields.lengthError && (
+          <Text style={styles.validationText}>Please enter a length up to 90 cm.</Text>
+        )}
         </View>
 
         <View style={styles.shippingContainer}>
-  <Text style={styles.shippingLabel}>Weight (kg):</Text>
-  <View style={styles.weightControlContainer}>
-    <TouchableOpacity style={styles.weightControlButton} onPress={decrementWeight}>
-      <Text style={styles.weightControlButtonText}>-</Text>
-    </TouchableOpacity>
-    <TextInput
-      style={[styles.weightInput, missingFields.weightError && styles.missingField]}
-      placeholder="Enter Weight (1-30 kg)"
-      keyboardType="numeric"
-      value={productInfo.weight}
-      onChangeText={handleWeightChange}
-      onBlur={() => {
-        if (!productInfo.weight) {
-          setProductInfo({ ...productInfo, weight: '1.00' });
-        }
-      }}
-    />
-    <TouchableOpacity style={styles.weightControlButton} onPress={incrementWeight}>
-      <Text style={styles.weightControlButtonText}>+</Text>
-    </TouchableOpacity>
-  </View>
-  {missingFields.weightError && (
-    <Text style={styles.validationText}>Please enter a weight between 1-30 kg.</Text>
-  )}
-</View>
+          <Text style={styles.shippingLabel}>Weight (kg):</Text>
+          <View style={styles.weightControlContainer}>
+            <TouchableOpacity style={styles.weightControlButton} onPress={decrementWeight}>
+              <Text style={styles.weightControlButtonText}>-</Text>
+            </TouchableOpacity>
+            <TextInput
+              style={[styles.weightInput, missingFields.weightError && styles.missingField]}
+              placeholder="Enter Weight (1-30 kg)"
+              keyboardType="numeric"
+              value={productInfo.weight}
+              onChangeText={handleWeightChange}
+              onBlur={() => {
+                if (!productInfo.weight) {
+                  setProductInfo({ ...productInfo, weight: '1' });
+                }
+              }}
+            />
+            <TouchableOpacity style={styles.weightControlButton} onPress={incrementWeight}>
+              <Text style={styles.weightControlButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+          {missingFields.weightError && (
+            <Text style={styles.validationText}>Please enter a weight between 1-30 kg.</Text>
+          )}
+        </View>
 
         <Text style={styles.label}>
           Product Description:
@@ -1289,6 +1313,17 @@ const styles = StyleSheet.create({
   dimensionInput: {
     flex: 1,
     marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
+  validationText: {
+    color: 'red',
+    fontSize: 14,
+    marginTop: 5,
+    textAlign: 'center',
   },
   weightInput: {
     width: '100%',
