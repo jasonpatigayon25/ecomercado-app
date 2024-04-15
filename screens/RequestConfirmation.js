@@ -9,7 +9,7 @@ const RequestConfirmation = ({ navigation, route }) => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [requestPlaced, setRequestPlaced] = useState(false);
-  const { address, donationDetails, deliveryFeeSubtotal, disposalFeeSubtotal, totalFee, message } = route.params;
+  const { address, donationDetails, deliveryFeeSubtotal, disposalFeeSubtotal, totalFee, message, paymentMethod } = route.params;
   const auth = getAuth();
   const currentUser = auth.currentUser;
 
@@ -32,6 +32,7 @@ const RequestConfirmation = ({ navigation, route }) => {
           disposalFee: section.disposalFee,
           status: 'Pending',
           dateRequested: serverTimestamp(),
+          paymentMethod,
         };
         const requestDocRef = doc(collection(db, "requests"));
         batch.set(requestDocRef, requestDoc);
@@ -120,6 +121,10 @@ const RequestConfirmation = ({ navigation, route }) => {
         <View style={styles.infoContainer}>
           <Text style={styles.infoLabel}>Message for Request:</Text>
           <Text style={styles.infoContent}>{message}</Text>
+        </View>
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoLabel}>Payment Method:</Text>
+          <Text style={styles.infoPayment}>{paymentMethod}</Text>
         </View>
         {donationDetails.map(renderSection)}
         <View style={styles.totalContainer}>
@@ -246,6 +251,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#475569',
     marginTop: 5,
+  },
+  infoPayment: {
+    fontSize: 16,
+    color: '#475569',
+    marginTop: 5,
+    textAlign: 'right',
   },
   cartItem: {
     flexDirection: 'row',

@@ -37,6 +37,7 @@ const screenHeight = Dimensions.get('window').height;
 
 
 const RequestCheckout = ({ navigation, route }) => {
+  const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
  const [wishItems, setWishItems] = useState([]);
  const [currentItem, setCurrentItem] = useState(null);
  const auth = getAuth();
@@ -302,6 +303,7 @@ const RequestCheckout = ({ navigation, route }) => {
       totalFee,
       message: requestMessage,
       donorEmails, 
+      paymentMethod 
     };
   
     navigation.navigate('RequestConfirmation', orderInfo);
@@ -335,6 +337,20 @@ const RequestCheckout = ({ navigation, route }) => {
         }
         ListFooterComponent={<>
           {feeSummary}
+          <View style={styles.infoItem}>
+          <Text style={styles.labelText}>Payment Option:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.paymentMethodContainer}>
+            <TouchableOpacity onPress={() => setPaymentMethod('Cash on Delivery')} style={styles.paymentOption}>
+              <Text style={styles.radioLabel}>Cash on Delivery</Text>
+              <Icon1
+                name={paymentMethod === 'Cash on Delivery' ? 'dot-circle-o' : 'circle-o'}
+                size={24}
+                color="#05652D"
+                style={styles.radioIcon}
+              />
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
           <View style={styles.messageContainer}>
           <Text style={styles.labelText}>Message for Request:</Text>
           <TextInput
@@ -717,6 +733,19 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 10,
   },
+  radioLabel: {
+    fontSize: 16,
+    marginLeft: 10,
+    color: '#05652D',
+  },
+  paymentOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    flex: 1,
+  },
   messageInput: {
     fontSize: 16,
     padding: 10,
@@ -724,6 +753,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     minHeight: 100,
+  },
+  infoItem: {
+    marginLeft: 20,
+  },
+  radioIcon: {
+    marginLeft: 10,
   },
 });
 
