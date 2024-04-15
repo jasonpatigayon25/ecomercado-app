@@ -368,9 +368,9 @@ const Donate = ({ navigation }) => {
       photo: !donationInfo.photo,
       name: !donationInfo.name,
       location: !donationInfo.location,
-      width: donationInfo.width === '',
-      length: donationInfo.length === '',
-      height: donationInfo.height === '',
+      // width: donationInfo.width === '',
+      // length: donationInfo.length === '',
+      // height: donationInfo.height === '',
       weight: donationInfo.weight === '',
       purpose: donationInfo.purpose === '',
       category: donationInfo.category === '' || donationInfo.category === 'Select a Category',
@@ -403,9 +403,9 @@ const Donate = ({ navigation }) => {
         itemNames: [''],
         category: '',
         weight: '',
-        width: '',
-        length: '',
-        height: '',
+        // width: '',
+        // length: '',
+        // height: '',
         purpose: '',
         message: '',
         location: prevState.location, 
@@ -549,7 +549,7 @@ const Donate = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <ScrollView contentContainerStyle={styles.modalContainerScroll}>
             <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Donate Confirmation</Text>
+              <Text style={styles.modalTitle}>Donations Confirmation</Text>
               <View style={styles.modalContent}>
                 {donationInfo.photo && (
                   <Image source={{ uri: donationInfo.photo }} style={styles.modalProductImage} />
@@ -563,7 +563,7 @@ const Donate = ({ navigation }) => {
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Message:</Text> {donationInfo.message}</Text>
                   
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Weight:</Text> {donationInfo.weight} kg</Text>
-                  <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Donation Packaging:</Text> {donationInfo.width} cm x {donationInfo.length} cm x {donationInfo.height} cm</Text>
+                  {/* <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Donation Packaging:</Text> {donationInfo.width} cm x {donationInfo.length} cm x {donationInfo.height} cm</Text> */}
                   
                   <Text style={styles.modalDetail}><Text style={styles.modalLabel}>Item Photos:</Text> </Text>
                   <View style={styles.subPhotosContainer}>
@@ -698,7 +698,7 @@ const Donate = ({ navigation }) => {
           onChangeText={(weight) => setDonationInfo({ ...donationInfo, weight })}
         />
 
-        <Text style={styles.label}>Donation Packaging (cm)</Text>
+        {/* <Text style={styles.label}>Donation Packaging (cm)</Text>
         <View style={styles.dimensionsContainer}>
         <TextInput
             style={[styles.input, styles.dimensionInput, missingFields.width && styles.missingField]}
@@ -721,7 +721,7 @@ const Donate = ({ navigation }) => {
             value={donationInfo.height}
             onChangeText={(text) => setDonationInfo({ ...donationInfo, height: text })}
           />
-        </View>
+        </View> */}
 
         <Text style={styles.label}>Purpose</Text>
         <TextInput
