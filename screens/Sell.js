@@ -210,6 +210,40 @@ const Sell = ({ navigation }) => {
     setIsSubPhotoPickerModalVisible(false);
   };
 
+  const handleWeightChange = (text) => {
+    const newText = text.replace(/[^0-9.]/g, '');
+    if (newText === '') {
+      setProductInfo({ ...productInfo, weight: '' });
+      setMissingFields({ ...missingFields, weightError: false });
+    } else if (parseFloat(newText) > 0 && parseFloat(newText) <= 30) {
+      setProductInfo({ ...productInfo, weight: newText });
+      setMissingFields({ ...missingFields, weightError: false });
+    } else {
+
+      setProductInfo({ ...productInfo, weight: '' });
+      setMissingFields({ ...missingFields, weightError: true });
+    }
+  };
+  
+  const incrementWeight = () => {
+    let weight = parseFloat(productInfo.weight) || 0;
+    if (weight < 30) {
+      weight = (weight + 1).toFixed(2);
+      setProductInfo({ ...productInfo, weight });
+      setMissingFields({ ...missingFields, weightError: false });
+    }
+  };
+  
+  const decrementWeight = () => {
+    let weight = parseFloat(productInfo.weight) || 0;
+    if (weight > 1) {
+      weight = (weight - 1).toFixed(2);
+      setProductInfo({ ...productInfo, weight });
+    } else {
+      setMissingFields({ ...missingFields, weightError: true });
+    }
+  };
+
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
 
   const PhotoPickerModal = ({ isVisible, onCancel }) => (
@@ -850,15 +884,32 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
         </View>
 
         <View style={styles.shippingContainer}>
-          <Text style={styles.shippingLabel}>Weight (kg):</Text>
-          <TextInput
-            style={[styles.input, styles.weightInput, missingFields.weight && styles.missingField]}
-            placeholder="Enter Weight (kg)"
-            keyboardType="numeric"
-            value={productInfo.weight}
-            onChangeText={(text) => setProductInfo({ ...productInfo, weight: text })}
-          />
-        </View>
+  <Text style={styles.shippingLabel}>Weight (kg):</Text>
+  <View style={styles.weightControlContainer}>
+    <TouchableOpacity style={styles.weightControlButton} onPress={decrementWeight}>
+      <Text style={styles.weightControlButtonText}>-</Text>
+    </TouchableOpacity>
+    <TextInput
+      style={[styles.weightInput, missingFields.weightError && styles.missingField]}
+      placeholder="Enter Weight (1-30 kg)"
+      keyboardType="numeric"
+      value={productInfo.weight}
+      onChangeText={handleWeightChange}
+      onBlur={() => {
+        if (!productInfo.weight) {
+          setProductInfo({ ...productInfo, weight: '1.00' });
+        }
+      }}
+    />
+    <TouchableOpacity style={styles.weightControlButton} onPress={incrementWeight}>
+      <Text style={styles.weightControlButtonText}>+</Text>
+    </TouchableOpacity>
+  </View>
+  {missingFields.weightError && (
+    <Text style={styles.validationText}>Please enter a weight between 1-30 kg.</Text>
+  )}
+</View>
+
         <Text style={styles.label}>
           Product Description:
           {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>}
@@ -1373,7 +1424,38 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginBottom: 10,
     borderRadius: 5,
-  },                                  
+  },
+  weightControlContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  weightControlButton: {
+    padding: 10,
+    backgroundColor: '#D3D3D3',
+    borderRadius: 5,
+  },
+  weightControlButtonText: {
+    fontSize: 18,
+    color: '#333',
+  },
+  weightInput: {
+    flex: 1,
+    textAlign: 'center',
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 8,
+    paddingVertical: 8,
+    marginHorizontal: 5,
+  },
+  validationText: {
+    fontSize: 14,
+    color: 'red',
+    marginTop: 5,
+    textAlign: 'center',
+  },
+                                  
 });
 
 export default Sell;

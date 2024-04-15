@@ -327,9 +327,9 @@ const DonateAddDonation = ({ navigation }) => {
           category: donationInfo.category,
           itemNames: donationInfo.itemNames,
           weight: donationInfo.weight,
-          width: donationInfo.width,
-          length: donationInfo.length,
-          height: donationInfo.height,
+          // width: donationInfo.width,
+          // length: donationInfo.length,
+          // height: donationInfo.height,
           location: donationInfo.location,
           purpose: donationInfo.purpose,
           message: donationInfo.message,
@@ -410,6 +410,34 @@ const DonateAddDonation = ({ navigation }) => {
         message: '',
         location: prevState.location, 
     }));
+};
+
+const handleWeightChange = (weight) => {
+  if (weight === '') {
+    setDonationInfo({ ...donationInfo, weight });
+    setMissingFields({ ...missingFields, weightError: false });
+  } else if (Number(weight) > 0 && Number(weight) <= 30) {
+    setDonationInfo({ ...donationInfo, weight });
+    setMissingFields({ ...missingFields, weightError: false });
+  } else {
+    setDonationInfo({ ...donationInfo, weight: '' });
+    setMissingFields({ ...missingFields, weightError: true });
+  }
+};
+
+const incrementWeight = () => {
+  const currentWeight = Number(donationInfo.weight) || 0;
+  if (currentWeight < 30) {
+    setDonationInfo({ ...donationInfo, weight: String(currentWeight + 1) });
+    setMissingFields({ ...missingFields, weightError: false });
+  }
+};
+
+const decrementWeight = () => {
+  const currentWeight = Number(donationInfo.weight) || 0;
+  if (currentWeight > 1) {
+    setDonationInfo({ ...donationInfo, weight: String(currentWeight - 1) });
+  }
 };
 
   const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false);
@@ -690,13 +718,24 @@ const DonateAddDonation = ({ navigation }) => {
         </Picker>
         </View>
         <Text style={styles.label}>Weight (kg)</Text>
-        <TextInput
-          style={[styles.input, missingFields.weight && styles.missingField]}
-          placeholder="Enter total weight"
-          value={donationInfo.weight}
-          keyboardType="numeric"
-          onChangeText={(weight) => setDonationInfo({ ...donationInfo, weight })}
-        />
+        <View style={styles.weightControlContainer}>
+  <TouchableOpacity style={styles.weightControlButton} onPress={decrementWeight}>
+    <Text style={styles.weightControlButtonText}>-</Text>
+  </TouchableOpacity>
+  <TextInput
+    style={[styles.weightInput, missingFields.weightError && styles.missingField]}
+    placeholder="Enter total weight (1-30 kg)"
+    value={donationInfo.weight}
+    keyboardType="numeric"
+    onChangeText={handleWeightChange}
+  />
+  <TouchableOpacity style={styles.weightControlButton} onPress={incrementWeight}>
+    <Text style={styles.weightControlButtonText}>+</Text>
+  </TouchableOpacity>
+</View>
+{missingFields.weightError && (
+  <Text style={styles.validationText}>Please do not exceed 30kg.</Text>
+)}
 
         {/* <Text style={styles.label}>Donation Packaging (cm)</Text>
         <View style={styles.dimensionsContainer}>
@@ -1239,6 +1278,38 @@ const styles = StyleSheet.create({
   missingField: {
     borderColor: 'red',
   },   
+  weightControlContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weightControlButton: {
+    padding: 10,
+    backgroundColor: '#D3D3D3',
+    borderRadius: 5,
+  },
+  weightControlButtonText: {
+    fontSize: 20,
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  weightInput: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    textAlign: 'center',
+    marginHorizontal: 5,
+    flex: 1,
+  },
+  validationText: {
+    fontSize: 14,
+    color: 'red',
+    marginTop: 5,
+    textAlign: 'center',
+  },
+
 });
 
 export default DonateAddDonation;
