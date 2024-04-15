@@ -75,6 +75,11 @@ import DonationWishlist from './screens/DonationWishlist';
 import RequestCheckout from './screens/RequestCheckout';
 import RequestConfirmation from './screens/RequestConfirmation';
 import RequestHistory from './screens/RequestHistory';
+import RequestToApproveDetails from './screens/RequestToApproveDetails';
+import RequestToDeliverDetails from './screens/RequestToDeliverDetails';
+import RequestToReceiveDetails from './screens/RequestToReceiveDetails';
+import RequestCompletedDetails from './screens/RequestCompletedDetails';
+import RequestDeclinedDetails from './screens/RequestDeclinedDetails';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -317,6 +322,11 @@ const App = () => {
               <Stack.Screen name="SuspendedProducts" component={SuspendedProducts} />
               <Stack.Screen name="RequestApproval" component={RequestApproval} />
               <Stack.Screen name="RequestHistory" component={RequestHistory} />
+              <Stack.Screen name="RequestToApproveDetails" component={RequestToApproveDetails} />
+              <Stack.Screen name="RequestToDeliverDetails" component={RequestToDeliverDetails} />
+              <Stack.Screen name="RequestToReceiveDetails" component={RequestToReceiveDetails} />
+              <Stack.Screen name="RequestCompletedDetails" component={RequestCompletedDetails} />
+              <Stack.Screen name="RequestDeclinedDetails" component={RequestDeclinedDetails} />
               <Stack.Screen name="CheckOutScreen" component={CheckOutScreen} />
               <Stack.Screen name="CheckoutProducts" component={CheckoutProducts} />
               <Stack.Screen name="Cart" component={Cart} />
