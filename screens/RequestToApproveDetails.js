@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import moment from 'moment';
 
 const RequestToApproveDetails = ({ route, navigation }) => {
   const { request, donations, users } = route.params;
@@ -31,12 +32,12 @@ const RequestToApproveDetails = ({ route, navigation }) => {
     <ScrollView style={styles.container}>
         <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Icon name="arrow-left" size={24} color="#FFFFFF" />
+                <Icon name="arrow-left" size={24} />
             </TouchableOpacity>
             <Text style={styles.title}>Request Details</Text>
         </View>
         <View key={request.id} style={styles.requestCard}>
-            <Text style={styles.requestTitle}>#{request.id}</Text>
+            {/* <Text style={styles.requestTitle}>#{request.id}</Text> */}
             {request.donorDetails.map((detail, idx) => {
                 const donation = donations[detail.donationId];
                 if (!donation) return null;
@@ -54,9 +55,44 @@ const RequestToApproveDetails = ({ route, navigation }) => {
                     </View>
                 );
             })}
-            <View style={styles.feeContainer}>
+            {/* <View style={styles.feeContainer}>
                 <Text style={styles.feeLabel}>Total Fee:</Text>
                 <Text style={styles.feeValue}>₱{(request.disposalFee + request.deliveryFee).toFixed(2)}</Text>
+            </View> */}
+              <View style={styles.paymentMethodContainer}>
+                <Text style={styles.paymentMethodLabel}>Payment Method:</Text>
+                <Text style={styles.paymentMethodValue}>{request.paymentMethod}</Text>
+            </View>
+            <View style={styles.orderTotalSection}>
+                <Text style={styles.orderTotalLabel}>FEES</Text>
+                <View style={styles.orderTotalDetails}>
+                <View style={styles.orderTotalRow}>
+                <Text style={styles.orderTotalText}>
+                    Delivery Fee Subtotal:
+                </Text>
+                    <Text style={styles.orderTotalValue}>₱{request.disposalFee.toFixed(2)}</Text>
+                </View>
+                <View style={styles.orderTotalRow}>
+                    <Text style={styles.orderTotalText}>Disposal Fee Subtotal:</Text>
+                    <Text style={styles.orderTotalValue}>₱{request.deliveryFee.toFixed(2)}</Text>
+                </View>
+                <View style={styles.orderTotalRow}>
+                    <Text style={styles.orderTotalTextFinal}>Total Fee:</Text>
+                    <Text style={styles.orderTotalValueFinal}>₱{(request.disposalFee + request.deliveryFee).toFixed(2)}</Text>
+                </View>
+                </View>
+            </View>
+            <View style={styles.orderInfo}>
+            <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Order ID:</Text>
+                <Text style={styles.detailValue}>{request.id.toUpperCase()}</Text>
+            </View>
+            <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Order Time:</Text>
+                <Text style={styles.detailValue}>
+                {moment(request.dateRequested.toDate()).format('DD-MM-YYYY HH:mm')}
+                </Text>
+            </View>
             </View>
             <View style={styles.actionButtons}>
                 <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
@@ -79,12 +115,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#05652D',
     paddingVertical: 15,
     paddingHorizontal: 10,
+    backgroundColor: '#FFFFFF',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
   },
   title: {
-    color: '#FFF',
     fontSize: 20,
     fontWeight: 'bold',
     marginLeft: 20,
@@ -185,7 +225,7 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     borderTopWidth: 1,
-    borderColor: '#ECECEC',
+    borderColor: '#ccc',
     paddingTop: 20,
     marginTop: 20,
     flexDirection: 'row',
@@ -219,6 +259,98 @@ const styles = StyleSheet.create({
     color: '#ff0000',
     textAlign: 'center',
   },
+  orderTotalSection: {
+    marginTop: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderTopWidth: 1, 
+    borderBottomWidth: 1,  
+    borderColor: '#ccc',
+  },
+  orderTotalDetails: {
+    marginTop: 10,
+  },
+  orderTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 5,
+  },
+  orderTotalText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  orderTotalTextFinal: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  orderTotalValue: {
+    fontSize: 14,
+    color: '#666',
+  },
+  orderTotalValueFinal: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+orderTotalLabel: {
+  fontSize: 16,
+  color: '#000', 
+  marginBottom: 10,
+},
+orderTotalPrice: {
+  fontWeight: 'bold',
+  fontSize: 18,
+  color: '#05652D', 
+  marginBottom: 10,
+},
+paymentMethodContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginTop: 20,
+  paddingHorizontal: 10,
+  paddingTop: 10,
+},
+paymentMethodLabel: {
+  fontSize: 14,
+  color: '#666',
+},
+paymentMethodValue: {
+  fontSize: 14,
+  fontWeight: 'bold',
+  color: '#333',
+},
+orderInfo: {
+  marginTop: 10,
+  paddingVertical: 10,
+  paddingHorizontal: 15,
+},
+orderLabel: {
+  fontSize: 14,
+  color: '#666',
+},
+orderValue: {
+  fontSize: 14,
+  fontWeight: 'bold',
+  color: '#333',
+  marginBottom: 5,
+},
+detailRow: { 
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingVertical: 5,
+},
+detailLabel: { 
+  fontSize: 14,
+  color: '#666',
+},
+detailValue: {
+  fontSize: 14,
+  fontWeight: 'bold',
+  color: '#333',
+},
 });
 
 export default RequestToApproveDetails;

@@ -162,7 +162,7 @@ const RequestHistory = ({ navigation }) => {
   
     return (
       <TouchableOpacity onPress={() => handlePress(item)} style={styles.requestCard}>
-        <Text style={styles.requestTitle}>#{item.id}</Text>
+        {/* <Text style={styles.requestTitle}>#{item.id}</Text> */}
         <FlatList
           data={item.donorDetails}
           renderItem={({ item: detail }) => {
