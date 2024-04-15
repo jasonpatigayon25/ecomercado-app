@@ -109,9 +109,9 @@ const RequestHistory = ({ navigation }) => {
     const totalFee = item.disposalFee + item.deliveryFee;
     const uniqueDonorNames = {};
 
-    const handlePress = () => {
+    const handlePress = (request) => {
         if (selectedTab === 'To Approve') {
-          navigation.navigate('RequestToApproveDetails', { requests, donations, users });
+          navigation.navigate('RequestToApproveDetails', { request: request, donations: donations, users: users });
         } else if (selectedTab === 'To Deliver') {
           navigation.navigate('RequestToDeliverDetails', { requests, donations });
         } else if (selectedTab === 'To Receive') {
@@ -161,7 +161,7 @@ const RequestHistory = ({ navigation }) => {
     };
   
     return (
-      <TouchableOpacity onPress={handlePress} style={styles.requestCard}>
+      <TouchableOpacity onPress={() => handlePress(item)} style={styles.requestCard}>
         <Text style={styles.requestTitle}>#{item.id}</Text>
         <FlatList
           data={item.donorDetails}

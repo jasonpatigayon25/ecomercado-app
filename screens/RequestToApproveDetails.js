@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'rea
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const RequestToApproveDetails = ({ route, navigation }) => {
-  const { requests, donations, users } = route.params;
+  const { request, donations, users } = route.params;
 
   const GroupHeader = ({ donorEmail }) => {
     if (!users || !users[donorEmail]) {
@@ -29,46 +29,44 @@ const RequestToApproveDetails = ({ route, navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Request Details</Text>
-      </View>
-      {requests.map((request, index) => (
-        <View key={index} style={styles.requestCard}>
-          <Text style={styles.requestTitle}>#{request.id}</Text>
-          {request.donorDetails.map((detail, idx) => {
-            const donation = donations[detail.donationId];
-            if (!donation) return null;
-            return (
-              <View key={idx}>
-                <GroupHeader donorEmail={donation.donor_email} />
-                <View style={styles.donationItem}>
-                  <Image source={{ uri: donation.photo }} style={styles.donationImage} />
-                  <View style={styles.donationDetails}>
-                    <Text style={styles.donationName}>{donation.name}</Text>
-                    <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
-                    <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
-                  </View>
-                </View>
-              </View>
-            );
-          })}
-          <View style={styles.feeContainer}>
-            <Text style={styles.feeLabel}>Total Fee:</Text>
-            <Text style={styles.feeValue}>₱{(request.disposalFee + request.deliveryFee).toFixed(2)}</Text>
-          </View>
-          <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
-            <Text style={styles.contactbuttonText}>Contact Seller</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelButton} onPress={cancelRequest}>
-            <Text style={styles.cancelbuttonText}>Cancel Request</Text>
-          </TouchableOpacity>
+        <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Icon name="arrow-left" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.title}>Request Details</Text>
         </View>
+        <View key={request.id} style={styles.requestCard}>
+            <Text style={styles.requestTitle}>#{request.id}</Text>
+            {request.donorDetails.map((detail, idx) => {
+                const donation = donations[detail.donationId];
+                if (!donation) return null;
+                return (
+                    <View key={idx}>
+                        <GroupHeader donorEmail={donation.donor_email} />
+                        <View style={styles.donationItem}>
+                            <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+                            <View style={styles.donationDetails}>
+                                <Text style={styles.donationName}>{donation.name}</Text>
+                                <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
+                                <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                            </View>
+                        </View>
+                    </View>
+                );
+            })}
+            <View style={styles.feeContainer}>
+                <Text style={styles.feeLabel}>Total Fee:</Text>
+                <Text style={styles.feeValue}>₱{(request.disposalFee + request.deliveryFee).toFixed(2)}</Text>
+            </View>
+            <View style={styles.actionButtons}>
+                <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
+                    <Text style={styles.contactbuttonText}>Contact Seller</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.cancelButton} onPress={cancelRequest}>
+                    <Text style={styles.cancelbuttonText}>Cancel Request</Text>
+                </TouchableOpacity>
+            </View>
         </View>
-      ))}
     </ScrollView>
   );
 };
