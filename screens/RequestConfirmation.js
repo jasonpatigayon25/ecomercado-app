@@ -30,7 +30,7 @@ const RequestConfirmation = ({ navigation, route }) => {
           message,
           deliveryFee: section.deliveryFee,
           disposalFee: section.disposalFee,
-          status: 'pending',
+          status: 'Pending',
           dateRequested: serverTimestamp(),
         };
         const requestDocRef = doc(collection(db, "requests"));
