@@ -83,7 +83,7 @@ const Account = ({ navigation }) => {
   };
 
   const handleRequestApproval = () => {
-    navigation.navigate('RequestApproval');
+    navigation.navigate('RequestHistory');
   };
 
   const handleLogout = () => {

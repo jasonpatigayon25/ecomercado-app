@@ -201,7 +201,7 @@ const RequestApproval = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>Order Transactions</Text>
+        <Text style={styles.title}>Request Transactions</Text>
       </View>
       <RequesterTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       {loading ? (
