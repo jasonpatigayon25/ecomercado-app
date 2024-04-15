@@ -80,46 +80,116 @@ const RequestApproval = ({ navigation }) => {
     return (
       <View style={styles.groupHeader}>
         <Icon name="heart" size={16} color="#FF0000" style={styles.heartIcon} />
-        <Text style={styles.fullName}>{fullName}</Text>
+        <Text style={styles.fullName}>From: {fullName}</Text>
       </View>
     );
   };
 
-  const renderDonationItem = ({ item }) => {
-    const donation = donations[item.donationId];
-    if (!donation) return null;
+  // const renderDonationItem = ({ item }) => {
+  //   const donation = donations[item.donationId];
+  //   if (!donation) return null;
   
-    const donationItems = donation.itemNames.join(' · '); 
-    return (
-      <View>
-        <GroupHeader donorEmail={donation.donor_email} />
-        <TouchableOpacity style={styles.donationItem}>
-          <Image source={{ uri: donation.photo }} style={styles.donationImage} />
-          <View style={styles.donationDetails}>
-            <Text style={styles.donationName}>{donation.name}</Text>
-            <Text style={styles.donationItems}>{donationItems}</Text>
-            <Text style={styles.donationCategory}>{donation.category} Bundles</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-    );
-  };
+  //   const donationItems = donation.itemNames.join(' · '); 
+  //   return (
+  //     <View>
+  //       <GroupHeader donorEmail={donation.donor_email} />
+  //       <TouchableOpacity style={styles.donationItem}>
+  //         <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+  //         <View style={styles.donationDetails}>
+  //           <Text style={styles.donationName}>{donation.name}</Text>
+  //           <Text style={styles.donationItems}>{donationItems}</Text>
+  //           <Text style={styles.donationCategory}>{donation.category} Bundles</Text>
+  //         </View>
+  //       </TouchableOpacity>
+  //     </View>
+  //   );
+  // };
 
   const renderRequestItem = ({ item }) => {
-
     const totalFee = item.disposalFee + item.deliveryFee;
+    const uniqueDonorNames = {};
+
+    const renderButton = (status) => {
+      switch (status) {
+        case 'To Approve':
+          return (
+            <View style={styles.noteButtonContainer}>
+              <Text style={styles.noteText}>Waiting for Donor Approval</Text>
+              <TouchableOpacity disabled style={styles.pendingButton}>
+                <Text style={styles.pendingButtonText}>Pending</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        case 'To Deliver':
+          return (
+            <View style={styles.noteButtonContainer}>
+              <TouchableOpacity style={styles.shipButton}>
+                <Text style={styles.confirmButtonText}>Contact Donor</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        case 'To Receive':
+          return (
+            <View style={styles.noteButtonContainer}>
+              <TouchableOpacity style={styles.confirmButton}>
+                <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        case 'Completed':
+          return <Text style={styles.completedText}>Donations Acquired</Text>;
+        case 'Taken/Declined':
+          return <Text style={styles.declinedText}>Donation Already Taken</Text>;
+        default:
+          return null;
+      }
+    };
   
     return (
       <View style={styles.requestCard}>
         <Text style={styles.requestTitle}>#{item.id}</Text>
         <FlatList
           data={item.donorDetails}
-          renderItem={renderDonationItem}
-          keyExtractor={(donation, index) => `${donation.donationId}-${index}`}
+          renderItem={({ item: detail }) => {
+            const donation = donations[detail.donationId];
+            if (!donation) return null;
+  
+            if (!uniqueDonorNames[donation.donor_email]) {
+              uniqueDonorNames[donation.donor_email] = true;
+              return (
+                <View>
+                  <GroupHeader donorEmail={donation.donor_email} />
+                  <TouchableOpacity style={styles.donationItem}>
+                    <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+                    <View style={styles.donationDetails}>
+                      <Text style={styles.donationName}>{donation.name}</Text>
+                      <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
+                      <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              );
+            } else {
+              return (
+                <TouchableOpacity style={styles.donationItem}>
+                  <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+                  <View style={styles.donationDetails}>
+                    <Text style={styles.donationName}>{donation.name}</Text>
+                    <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
+                    <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }
+          }}
+          keyExtractor={(detail) => detail.donationId}
         />
         <View style={styles.feeContainer}>
           <Text style={styles.feeLabel}>Total Fee:</Text>
           <Text style={styles.feeValue}>₱{totalFee.toFixed(2)}</Text>
+        </View>
+        <View style={styles.buttonContainer}>
+          {renderButton(selectedTab)}
         </View>
       </View>
     );
@@ -252,6 +322,76 @@ const styles = StyleSheet.create({
     marginVertical: 4, 
     marginHorizontal: 2, 
     textAlign: 'center',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderColor: '#ECECEC',
+  },
+  button: {
+    backgroundColor: '#05652D',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginLeft: 10,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  completedText: {
+    color: '#05652D',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  declinedText: {
+    color: '#FF0000',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  pendingButton: {
+    backgroundColor: '#ccc',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  pendingButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  confirmButton: {
+    backgroundColor: '#05652D', 
+    padding: 10,
+    borderRadius: 5,
+  },
+  shipButton: {
+    backgroundColor: '#0096FF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  noteButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    marginTop: 10,
+  },
+  noteText: {
+    textAlign: 'left',
+    color: '#666', 
+    marginRight: 30,
   },
 });
 
