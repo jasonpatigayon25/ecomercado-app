@@ -167,6 +167,7 @@ const RequestCheckout = ({ navigation, route }) => {
           ...donation,
           donorFirstName: donorData.firstName,
           donorLastName: donorData.lastName,
+          donorEmail: donorEmail,
           deliveryFee,
           weight: itemWeight
         });
@@ -176,7 +177,13 @@ const RequestCheckout = ({ navigation, route }) => {
     const groupedDonations = donationsWithDonorInfo.reduce((grouped, donation) => {
       const donorName = `${donation.donorFirstName} ${donation.donorLastName}`;
       if (!grouped[donorName]) {
-        grouped[donorName] = { donations: [], count: 0, deliveryFee: donation.deliveryFee, totalWeight: 0 };
+        grouped[donorName] = { 
+          donations: [], 
+          count: 0, 
+          deliveryFee: donation.deliveryFee, 
+          totalWeight: 0,
+          donorEmail: donation.donorEmail // Keep track of donor's email
+        };
       }
       grouped[donorName].donations.push(donation);
       grouped[donorName].count += 1;
@@ -194,11 +201,12 @@ const RequestCheckout = ({ navigation, route }) => {
   
     const sectionListData = Object.keys(groupedDonations).map(donorName => ({
       title: donorName,
+      donorEmail: groupedDonations[donorName].donorEmail,
       data: groupedDonations[donorName].donations,
       itemCount: groupedDonations[donorName].count,
       deliveryFee: groupedDonations[donorName].deliveryFee,
       disposalFee: groupedDonations[donorName].disposalFee,
-      totalWeight: groupedDonations[donorName].totalWeight 
+      totalWeight: groupedDonations[donorName].totalWeight,
     }));
   
     setSections(sectionListData);
@@ -208,11 +216,12 @@ const RequestCheckout = ({ navigation, route }) => {
     fetchDonationsWithDonorNames();
   }, [selectedDonations, address]);
 
-const renderSectionHeader = ({ section: { title } }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionHeaderText}>From: {title}</Text>
-    </View>
-  );
+  const renderSectionHeader = ({ section: { title, donorEmail } }) => ( // Include donorEmail here
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionHeaderText}>From: {title} ({donorEmail})</Text> 
+  </View>
+);
+
 
   const renderSectionFooter = ({ section }) => {
 
@@ -277,20 +286,25 @@ const renderSectionHeader = ({ section: { title } }) => (
       Alert.alert("Missing Information", "Please input your address.");
       return;
     }
-
+  
     const deliveryFeeSubtotal = sections.reduce((sum, section) => sum + (section.deliveryFee || 0), 0);
     const disposalFeeSubtotal = sections.reduce((sum, section) => sum + (section.disposalFee || 0), 0);
     const totalFee = deliveryFeeSubtotal + disposalFeeSubtotal;
-
+  
+    // Extracting donor emails from sections
+    const donorEmails = sections.map(section => section.donorEmail);
+  
     const orderInfo = {
       address,
+      sections,
       donationDetails: sections,
       deliveryFeeSubtotal,
       disposalFeeSubtotal,
       totalFee,
       message: requestMessage,
+      donorEmails, // Including the donorEmails array in orderInfo
     };
-
+  
     navigation.navigate('RequestConfirmation', orderInfo);
   };
 

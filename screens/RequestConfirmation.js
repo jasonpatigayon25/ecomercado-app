@@ -15,41 +15,67 @@ const RequestConfirmation = ({ navigation, route }) => {
       "Confirm Request",
       "Do you want to proceed with this request?",
       [
-        { text: "No", style: "cancel" },
+        {
+          text: "No",
+          style: "cancel",
+        },
         {
           text: "Yes",
           onPress: async () => {
-            const donorEmails = await fetchDonorEmails(donationDetails);
-            if (donorEmails.includes(null)) {
-              console.error("Error: Some donor emails could not be retrieved.");
-              return;
-            }
-
             try {
+              // Extracting sections and other details from the route params
+              const {
+                address,
+                sections,
+                deliveryFeeSubtotal,
+                disposalFeeSubtotal,
+                totalFee,
+                message,
+              } = route.params;
+  
+              // Map through the sections to construct an array of donationDetails
+              // where each donation is associated with the donor's email.
+              const donationDetailsWithDonorEmails = sections.map((section) => ({
+                donorEmail: section.donorEmail, // Email per group
+                donations: section.data.map((donation) => ({
+                  donationId: donation.id, // Make sure to use the correct property for the donation ID
+                  // Include any other relevant details from the donation object
+                })),
+                deliveryFee: section.deliveryFee,
+                disposalFee: section.disposalFee,
+                // You can include other details from the section if needed
+              }));
+  
+              // Building the request document to add to Firestore
               const requestDoc = {
-                donorEmail: donorEmails,
+                donorDetails: donationDetailsWithDonorEmails,
                 requesterEmail: currentUser?.email,
-                donationDetails: donationDetails.map(detail => ({ donationId: detail.donationId })),
-                dateRequested: serverTimestamp(),
-                message: message,
+                address,
+                message,
                 status: 'pending',
-                deliveryFee: deliveryFeeSubtotal,
-                disposalFee: disposalFeeSubtotal,
-                totalFee: totalFee
+                deliveryFeeSubtotal,
+                disposalFeeSubtotal,
+                totalFee,
+                dateRequested: serverTimestamp(),
               };
-
+  
+              // Adding the request document to Firestore
               const docRef = await addDoc(collection(db, "requests"), requestDoc);
-              console.log("Request confirmed with ID:", docRef.id);
+  
+              // Handle the success, such as navigating back or to a success page
               navigation.goBack();
+              Alert.alert("Success", "Your request has been submitted successfully.");
             } catch (error) {
-              console.error("Error adding document:", error);
+              // Handle any errors that occur during the process
+              console.error("Error processing the request:", error);
+              Alert.alert("Error", "An error occurred while processing your request. Please try again.");
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
+      { cancelable: false }
     );
   };
-
 
   const renderItem = ({ item, sectionIndex, itemIndex }) => (
     <View style={styles.cartItem} key={`item-${sectionIndex}-${itemIndex}`}>
@@ -63,16 +89,24 @@ const RequestConfirmation = ({ navigation, route }) => {
   );
 
   const fetchDonorEmails = async (donationDetails) => {
-    return Promise.all(donationDetails.map(async (detail) => {
-      const donationRef = doc(db, "donation", detail.donationId);
-      const docSnap = await getDoc(donationRef);
-      if (docSnap.exists()) {
-        return docSnap.data().donor_email;
-      } else {
-        console.log("No document found for donation ID:", detail.donationId);
-        return null;
-      }
-    }));
+    try {
+      const donorInfo = await Promise.all(donationDetails.map(async (detail) => {
+        const donationRef = doc(db, "donation", detail.donationId);
+        const docSnap = await getDoc(donationRef);
+        if (docSnap.exists()) {
+          // Include both the donor's email and the donationId
+          return { email: docSnap.data().donor_email, donationId: detail.donationId };
+        } else {
+          console.log("No document found for donation ID:", detail.donationId);
+          return null;
+        }
+      }));
+      // Remove any null values from the array of donor information
+      return donorInfo.filter(info => info !== null);
+    } catch (error) {
+      console.error("Error fetching donor emails:", error);
+      throw error;
+    }
   };
 
   const renderSection = (item, sectionIndex) => (
