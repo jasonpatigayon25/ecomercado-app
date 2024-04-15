@@ -74,6 +74,7 @@ import ProductImage from './screens/ProductImage';
 import DonationWishlist from './screens/DonationWishlist';
 import RequestCheckout from './screens/RequestCheckout';
 import RequestConfirmation from './screens/RequestConfirmation';
+import RequestHistory from './screens/RequestHistory';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -315,6 +316,7 @@ const App = () => {
               <Stack.Screen name="SellerOrderManagement" component={SellerOrderManagement} />
               <Stack.Screen name="SuspendedProducts" component={SuspendedProducts} />
               <Stack.Screen name="RequestApproval" component={RequestApproval} />
+              <Stack.Screen name="RequestHistory" component={RequestHistory} />
               <Stack.Screen name="CheckOutScreen" component={CheckOutScreen} />
               <Stack.Screen name="CheckoutProducts" component={CheckoutProducts} />
               <Stack.Screen name="Cart" component={Cart} />

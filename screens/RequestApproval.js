@@ -1,24 +1,20 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, ActivityIndicator, Dimensions, Modal, Alert} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, query, updateDoc, doc, where, writeBatch, getDoc, addDoc, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import axios from 'axios';
 import RequesterTab from '../navbars/RequesterTab';
 
 const windowWidth = Dimensions.get('window').width;
 
 const RequestApproval = ({ navigation }) => {
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const scrollRef = useRef(); 
-
   const [requests, setRequests] = useState([]);
   const [donations, setDonations] = useState({});
   const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState({});
   const auth = getAuth();
-  const user = auth.currentUser;
+  const currentUser = auth.currentUser;
   const [selectedTab, setSelectedTab] = useState('To Approve');
 
   const tabStatusMapping = {
@@ -29,95 +25,103 @@ const RequestApproval = ({ navigation }) => {
     'Taken/Declined': 'Declined'
   };
 
-  const handleScroll = (event) => {
-    const scrollX = event.nativeEvent.contentOffset.x;
-    const tabIndex = Math.floor(scrollX / windowWidth);
-    const tabNames = ['To Approve', 'To Deliver', 'To Receive', 'Completed', 'Taken/Declined'];
-    setSelectedTab(tabNames[tabIndex]);
-  };
-
-  const fetchRequests = useCallback(async (tab) => {
-    if (!user) return;
-  
-    setLoading(true);
-    try {
-      const status = tabStatusMapping[tab];
-      const requestsQuery = query(
-        collection(db, 'requests'),
-        where('requesterEmail', '==', user.email),
-        where('status', '==', status),
-        orderBy('dateRequested', 'desc')
-      );
-  
-      const querySnapshot = await getDocs(requestsQuery);
+  useEffect(() => {
+    const fetchRequests = async () => {
+      setLoading(true);
+      const q = query(collection(db, "requests"), where("requesterEmail", "==", currentUser.email), where("status", "==", tabStatusMapping[selectedTab]));
+      const querySnapshot = await getDocs(q);
       const fetchedRequests = [];
-      querySnapshot.forEach((doc) => {
-        fetchedRequests.push({ id: doc.id, ...doc.data() });
-      });
-  
-      setRequests(fetchedRequests);
-      await fetchDonationDetails(fetchedRequests);
-    } catch (error) {
-      console.error("Error fetching requests:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+      const donationIds = new Set();
 
-  const fetchDonationDetails = async (requests) => {
-    const donationIds = new Set();
-    requests.forEach(request => {
-      if (Array.isArray(request.donorDetails)) {
-        request.donorDetails.forEach(donorDetail => {
-          donationIds.add(donorDetail.donationId);
-        });
-      }
-    });
-    
-    const fetchedDonations = {};
-  
-    for (let donationId of donationIds) {
-      const donationRef = doc(db, 'donations', donationId);
-      const donationSnap = await getDoc(donationRef);
-      if (donationSnap.exists()) {
-        const donationData = donationSnap.data();
-        fetchedDonations[donationId] = {
-          ...donationData,
-        };
+      querySnapshot.forEach((doc) => {
+        const requestData = { id: doc.id, ...doc.data() };
+        requestData.donorDetails.forEach(detail => donationIds.add(detail.donationId));
+        fetchedRequests.push(requestData);
+      });
+
+      setRequests(fetchedRequests);
+      fetchDonations([...donationIds]); 
+    };
+
+    fetchRequests();
+  }, [selectedTab]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const usersRef = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersRef);
+      const usersData = {};
+      usersSnapshot.forEach((doc) => {
+        const userData = doc.data();
+        usersData[userData.email] = userData;
+      });
+      setUsers(usersData);
+    };
+
+    fetchUsers();
+  }, []);
+
+  const fetchDonations = async (donationIds) => {
+    const donationData = {};
+    for (let id of donationIds) {
+      const donationRef = doc(db, "donation", id);
+      const docSnap = await getDoc(donationRef);
+      if (docSnap.exists()) {
+        donationData[id] = docSnap.data();
       }
     }
-  
-    setDonations(fetchedDonations);
+    setDonations(donationData);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchRequests(selectedTab);
-  }, [selectedTab, fetchRequests]);
+  const GroupHeader = ({ donorEmail }) => {
+    const user = users[donorEmail];
+    const fullName = user ? `${user.firstName} ${user.lastName}` : donorEmail;
+    return (
+      <View style={styles.groupHeader}>
+        <Icon name="heart" size={16} color="#FF0000" style={styles.heartIcon} />
+        <Text style={styles.fullName}>{fullName}</Text>
+      </View>
+    );
+  };
 
-  const renderDonationItem = ({ item: request }) => {
-    const handlePress = () => {
-      navigation.navigate('RequestDetails', { request, donations });
-    };
+  const renderDonationItem = ({ item }) => {
+    const donation = donations[item.donationId];
+    if (!donation) return null;
+  
+    const donationItems = donation.itemNames.join(' · '); 
+    return (
+      <View>
+        <GroupHeader donorEmail={donation.donor_email} />
+        <TouchableOpacity style={styles.donationItem}>
+          <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+          <View style={styles.donationDetails}>
+            <Text style={styles.donationName}>{donation.name}</Text>
+            <Text style={styles.donationItems}>{donationItems}</Text>
+            <Text style={styles.donationCategory}>{donation.category} Bundles</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
-    const donationDetails = (request.donorDetails || []).map((donorDetail, index) => {
-      const donation = donations[donorDetail.donationId];
-      return donation ? {
-        key: `donation-${index}`,
-        photo: donation.photo,
-        name: donation.name,
-      } : null;
-    }).filter(Boolean);
+  const renderRequestItem = ({ item }) => {
+
+    const totalFee = item.disposalFee + item.deliveryFee;
   
     return (
-      <TouchableOpacity onPress={handlePress} style={styles.requestItemContainer}>
-        {donationDetails.map((detail) => (
-          <View key={detail.key} style={styles.donationContainer}>
-            <Image source={{ uri: detail.photo }} style={styles.donationImage} />
-            <Text style={styles.donationName}>{detail.name}</Text>
-          </View>
-        ))}
-      </TouchableOpacity>
+      <View style={styles.requestCard}>
+        <Text style={styles.requestTitle}>#{item.id}</Text>
+        <FlatList
+          data={item.donorDetails}
+          renderItem={renderDonationItem}
+          keyExtractor={(donation, index) => `${donation.donationId}-${index}`}
+        />
+        <View style={styles.feeContainer}>
+          <Text style={styles.feeLabel}>Total Fee:</Text>
+          <Text style={styles.feeValue}>₱{totalFee.toFixed(2)}</Text>
+        </View>
+      </View>
     );
   };
 
@@ -130,32 +134,16 @@ const RequestApproval = ({ navigation }) => {
         <Text style={styles.title}>Order Transactions</Text>
       </View>
       <RequesterTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-      <ScrollView
-        horizontal
-        pagingEnabled
-        onMomentumScrollEnd={handleScroll}
-        showsHorizontalScrollIndicator={false}
-        style={styles.scrollView}
-      >
-        {Object.keys(tabStatusMapping).map((tab, index) => (
-          <View key={index} style={{ width: windowWidth }}>
-            {loading ? (
-              <ActivityIndicator size="large" color="#0000ff" style={styles.loadingIndicator} />
-            ) : (
-              <FlatList
-                data={requests}
-                keyExtractor={(item) => item.id}
-                renderItem={renderDonationItem}
-                ListEmptyComponent={() => (
-                  <View style={styles.emptyRequestsContainer}>
-                    <Text style={styles.emptyRequestsText}>No {tab} Requests yet.</Text>
-                  </View>
-                )}
-              />
-            )}
-          </View>
-        ))}
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" style={styles.loadingIndicator} />
+      ) : (
+        <FlatList
+          data={requests}
+          renderItem={renderRequestItem}
+          keyExtractor={(item) => item.id}
+          style={styles.list}
+        />
+      )}
     </View>
   );
 };
@@ -178,80 +166,92 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 20,
   },
-  requestItemContainer: {
-    backgroundColor: '#FFFFF0',
+  donationItem: {
+    flexDirection: 'row',
     padding: 10,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECECEC',
   },
-  donationContainer: {
+  donationDetails: {
+    marginLeft: 10,
+    justifyContent: 'center',
+    flex: 1,
+  },
+  fullName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#666',
+  },
+  heartIcon: {
+    marginRight: 5,
+  },
+  groupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 5,
-    paddingHorizontal: 5,
-    borderBottomWidth: 1,  
-    borderBottomColor: '#ccc',
-  },
-  donationHeader: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    backgroundColor: '#E8F5E9',
-    padding: 8,
-    marginTop: 10,
-  },
-  donationImage: {
-    width: 50, 
-    height: 50, 
-    marginRight: 10,
+    marginBottom: 10,
   },
   donationName: {
     fontSize: 16,
     fontWeight: 'bold',
   },
-  donationCategory: {
+  donationItems: {
     fontSize: 14,
+    color: '#666',
+  },
+  feeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', 
+    marginTop: 10,
+  },
+  feeLabel: {
+    fontSize: 16,
+    color: '#444',
+  },
+  feeValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#05652D',
+  },
+  list: {
+    flex: 1,
+  },
+  requestCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    marginBottom: 10,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  requestTitle: {
+    fontSize: 14,
+    textAlign: 'right',
+    marginBottom: 10,
+    color:'#666',
+  },
+  loadingIndicator: {
+    marginTop: 50,
+  },
+  donationImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  donationCategory: {
+    fontSize: 12,
     color: '#666',
     backgroundColor: '#ECECEC',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
-    alignSelf: 'flex-start',
-    overflow: 'hidden',
-    marginVertical: 4,
+    alignSelf: 'flex-start', 
+    overflow: 'hidden', 
+    marginVertical: 4, 
+    marginHorizontal: 2, 
     textAlign: 'center',
-  },
-  donationWeight: {
-    fontSize: 12,
-    color: '#666',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
-    overflow: 'hidden',
-    marginVertical: 4,
-    textAlign: 'center',
-  },
-  loadingIndicator: {
-    marginTop: 50,
-  },
-  emptyRequestsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 50,
-  },
-  emptyRequestsText: {
-    fontSize: 16,
-    color: '#ccc',
-    textAlign: 'center',
-  },
-  scrollView: {
-    flex: 1,
   },
 });
 
