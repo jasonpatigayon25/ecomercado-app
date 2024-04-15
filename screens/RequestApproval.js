@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   requestCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF7F7',
     padding: 20,
     marginBottom: 10,
     borderRadius: 10,
