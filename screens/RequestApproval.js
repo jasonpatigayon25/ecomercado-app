@@ -83,7 +83,6 @@ const RequestApproval = ({ navigation }) => {
         const donationData = donationSnap.data();
         fetchedDonations[donationId] = {
           ...donationData,
-          // Assuming donationData contains 'name' and other donation info
         };
       }
     }
@@ -100,16 +99,15 @@ const RequestApproval = ({ navigation }) => {
     const handlePress = () => {
       navigation.navigate('RequestDetails', { request, donations });
     };
-  
-    // Access the correct 'donorDetails' array from the request object.
+
     const donationDetails = (request.donorDetails || []).map((donorDetail, index) => {
       const donation = donations[donorDetail.donationId];
       return donation ? {
         key: `donation-${index}`,
-        photo: donation.photo, // Ensure 'photo' is a field in your donation documents
-        name: donation.name,   // Ensure 'name' is a field in your donation documents
+        photo: donation.photo,
+        name: donation.name,
       } : null;
-    }).filter(Boolean); // Filter out any null values if donation data was not found
+    }).filter(Boolean);
   
     return (
       <TouchableOpacity onPress={handlePress} style={styles.requestItemContainer}>
@@ -117,7 +115,6 @@ const RequestApproval = ({ navigation }) => {
           <View key={detail.key} style={styles.donationContainer}>
             <Image source={{ uri: detail.photo }} style={styles.donationImage} />
             <Text style={styles.donationName}>{detail.name}</Text>
-            {/* Render other donation details here if necessary */}
           </View>
         ))}
       </TouchableOpacity>
