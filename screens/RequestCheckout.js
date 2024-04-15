@@ -182,7 +182,7 @@ const RequestCheckout = ({ navigation, route }) => {
           count: 0, 
           deliveryFee: donation.deliveryFee, 
           totalWeight: 0,
-          donorEmail: donation.donorEmail // Keep track of donor's email
+          donorEmail: donation.donorEmail 
         };
       }
       grouped[donorName].donations.push(donation);
@@ -291,7 +291,6 @@ const RequestCheckout = ({ navigation, route }) => {
     const disposalFeeSubtotal = sections.reduce((sum, section) => sum + (section.disposalFee || 0), 0);
     const totalFee = deliveryFeeSubtotal + disposalFeeSubtotal;
   
-    // Extracting donor emails from sections
     const donorEmails = sections.map(section => section.donorEmail);
   
     const orderInfo = {
@@ -302,7 +301,7 @@ const RequestCheckout = ({ navigation, route }) => {
       disposalFeeSubtotal,
       totalFee,
       message: requestMessage,
-      donorEmails, // Including the donorEmails array in orderInfo
+      donorEmails, 
     };
   
     navigation.navigate('RequestConfirmation', orderInfo);
