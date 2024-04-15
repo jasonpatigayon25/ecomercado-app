@@ -17,11 +17,11 @@ const RequesterTab = ({ selectedTab, setSelectedTab }) => {
     const currentUser = auth.currentUser;
 
     const statusMap = {
-        'To Approve': 'pending',
-        'To Deliver': 'approved',
-        'To Receive': 'receiving',
-        'Completed': 'completed',
-        'Taken/Declined': 'declined'
+        'To Approve': 'Pending',
+        'To Deliver': 'Approved',
+        'To Receive': 'Receiving',
+        'Completed': 'Completed',
+        'Taken/Declined': 'Declined'
     };
 
     useEffect(() => {

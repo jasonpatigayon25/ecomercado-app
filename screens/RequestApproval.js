@@ -67,15 +67,17 @@ const RequestApproval = ({ navigation }) => {
   const fetchDonationDetails = async (requests) => {
     const donationIds = new Set();
     requests.forEach(request => {
-      request.donationDetails.forEach(item => {
-        donationIds.add(item.donationId);
-      });
+      if (Array.isArray(request.donationDetails)) { // Ensure donationDetails is an array
+        request.donationDetails.forEach(item => {
+          donationIds.add(item.donationId);
+        });
+      }
     });
-
+  
     const fetchedDonations = {};
-
+  
     for (let donationId of donationIds) {
-      const donationRef = doc(db, 'donation', donationId);
+      const donationRef = doc(db, 'donations', donationId);
       const donationSnap = await getDoc(donationRef);
       if (donationSnap.exists()) {
         const donationData = donationSnap.data();
@@ -86,7 +88,7 @@ const RequestApproval = ({ navigation }) => {
         };
       }
     }
-
+  
     setDonations(fetchedDonations);
     setLoading(false);
   };
@@ -100,13 +102,15 @@ const RequestApproval = ({ navigation }) => {
       navigation.navigate('RequestDetails', { request, donations });
     };
 
-    const groupedByDonation = request.donationDetails.reduce((acc, donationDetail) => {
+    // Ensure donationDetails is defined and is an array before proceeding
+    const groupedByDonation = (request.donationDetails || []).reduce((acc, donationDetail) => {
       const donation = donations[donationDetail.donationId];
-      if (!acc[donation.name]) {
-        acc[donation.name] = [];
-      }
       if (donation) {
-        acc[donation.name].push({
+        const donationName = donation.name || 'Unknown Donation'; // Fallback for missing donation names
+        if (!acc[donationName]) {
+          acc[donationName] = [];
+        }
+        acc[donationName].push({
           ...donationDetail,
           ...donation
         });
