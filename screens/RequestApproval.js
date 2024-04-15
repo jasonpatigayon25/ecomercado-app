@@ -38,7 +38,7 @@ const RequestApproval = ({ navigation }) => {
 
   const fetchRequests = useCallback(async (tab) => {
     if (!user) return;
-
+  
     setLoading(true);
     try {
       const status = tabStatusMapping[tab];
@@ -48,13 +48,13 @@ const RequestApproval = ({ navigation }) => {
         where('status', '==', status),
         orderBy('dateRequested', 'desc')
       );
-
+  
       const querySnapshot = await getDocs(requestsQuery);
       const fetchedRequests = [];
       querySnapshot.forEach((doc) => {
         fetchedRequests.push({ id: doc.id, ...doc.data() });
       });
-
+  
       setRequests(fetchedRequests);
       await fetchDonationDetails(fetchedRequests);
     } catch (error) {
@@ -67,13 +67,13 @@ const RequestApproval = ({ navigation }) => {
   const fetchDonationDetails = async (requests) => {
     const donationIds = new Set();
     requests.forEach(request => {
-      if (Array.isArray(request.donationDetails)) { // Ensure donationDetails is an array
-        request.donationDetails.forEach(item => {
-          donationIds.add(item.donationId);
+      if (Array.isArray(request.donorDetails)) {
+        request.donorDetails.forEach(donorDetail => {
+          donationIds.add(donorDetail.donationId);
         });
       }
     });
-  
+    
     const fetchedDonations = {};
   
     for (let donationId of donationIds) {
@@ -82,9 +82,8 @@ const RequestApproval = ({ navigation }) => {
       if (donationSnap.exists()) {
         const donationData = donationSnap.data();
         fetchedDonations[donationId] = {
-          name: donationData.name,
-          category: donationData.category,
-          weight: donationData.weight
+          ...donationData,
+          // Assuming donationData contains 'name' and other donation info
         };
       }
     }
@@ -101,34 +100,24 @@ const RequestApproval = ({ navigation }) => {
     const handlePress = () => {
       navigation.navigate('RequestDetails', { request, donations });
     };
-
-    // Ensure donationDetails is defined and is an array before proceeding
-    const groupedByDonation = (request.donationDetails || []).reduce((acc, donationDetail) => {
-      const donation = donations[donationDetail.donationId];
-      if (donation) {
-        const donationName = donation.name || 'Unknown Donation'; // Fallback for missing donation names
-        if (!acc[donationName]) {
-          acc[donationName] = [];
-        }
-        acc[donationName].push({
-          ...donationDetail,
-          ...donation
-        });
-      }
-      return acc;
-    }, {});
-
+  
+    // Access the correct 'donorDetails' array from the request object.
+    const donationDetails = (request.donorDetails || []).map((donorDetail, index) => {
+      const donation = donations[donorDetail.donationId];
+      return donation ? {
+        key: `donation-${index}`,
+        photo: donation.photo, // Ensure 'photo' is a field in your donation documents
+        name: donation.name,   // Ensure 'name' is a field in your donation documents
+      } : null;
+    }).filter(Boolean); // Filter out any null values if donation data was not found
+  
     return (
       <TouchableOpacity onPress={handlePress} style={styles.requestItemContainer}>
-        {Object.entries(groupedByDonation).map(([donationName, donationDetails]) => (
-          <View key={donationName}>
-            <Text style={styles.donationHeader}>{donationName}</Text>
-            {donationDetails.map((item, index) => (
-              <View key={index} style={styles.donationContainer}>
-                <Text style={styles.donationCategory}>{item.category}</Text>
-                <Text style={styles.donationWeight}>{item.weight} kg</Text>
-              </View>
-            ))}
+        {donationDetails.map((detail) => (
+          <View key={detail.key} style={styles.donationContainer}>
+            <Image source={{ uri: detail.photo }} style={styles.donationImage} />
+            <Text style={styles.donationName}>{detail.name}</Text>
+            {/* Render other donation details here if necessary */}
           </View>
         ))}
       </TouchableOpacity>
@@ -204,7 +193,7 @@ const styles = StyleSheet.create({
   },
   donationContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingTop: 10,
     paddingBottom: 5,
     paddingHorizontal: 5,
@@ -217,6 +206,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F5E9',
     padding: 8,
     marginTop: 10,
+  },
+  donationImage: {
+    width: 50, 
+    height: 50, 
+    marginRight: 10,
+  },
+  donationName: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   donationCategory: {
     fontSize: 14,
