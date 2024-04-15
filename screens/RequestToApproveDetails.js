@@ -3,7 +3,29 @@ import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'rea
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const RequestToApproveDetails = ({ route, navigation }) => {
-  const { requests, donations } = route.params;
+  const { requests, donations, users } = route.params;
+
+  const GroupHeader = ({ donorEmail }) => {
+    if (!users || !users[donorEmail]) {
+      return <View style={styles.groupHeader}><Text>Loading donor details...</Text></View>;
+    }
+    const user = users[donorEmail];
+    const fullName = user ? `${user.firstName} ${user.lastName}` : donorEmail;
+    return (
+      <View style={styles.groupHeader}>
+        <Icon name="heart" size={16} color="#FF0000" style={styles.heartIcon} />
+        <Text style={styles.fullName}>From: {fullName}</Text>
+      </View>
+    );
+  };
+
+  const contactSeller = () => {
+    // 
+  };
+
+  const cancelRequest = () => {
+    // 
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -15,17 +37,20 @@ const RequestToApproveDetails = ({ route, navigation }) => {
       </View>
       {requests.map((request, index) => (
         <View key={index} style={styles.requestCard}>
-          <Text style={styles.requestTitle}>Request #{request.id}</Text>
+          <Text style={styles.requestTitle}>#{request.id}</Text>
           {request.donorDetails.map((detail, idx) => {
             const donation = donations[detail.donationId];
             if (!donation) return null;
             return (
-              <View key={idx} style={styles.donationItem}>
-                <Image source={{ uri: donation.photo }} style={styles.donationImage} />
-                <View style={styles.donationDetails}>
-                  <Text style={styles.donationName}>{donation.name}</Text>
-                  <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
-                  <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+              <View key={idx}>
+                <GroupHeader donorEmail={donation.donor_email} />
+                <View style={styles.donationItem}>
+                  <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+                  <View style={styles.donationDetails}>
+                    <Text style={styles.donationName}>{donation.name}</Text>
+                    <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
+                    <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                  </View>
                 </View>
               </View>
             );
@@ -34,9 +59,14 @@ const RequestToApproveDetails = ({ route, navigation }) => {
             <Text style={styles.feeLabel}>Total Fee:</Text>
             <Text style={styles.feeValue}>₱{(request.disposalFee + request.deliveryFee).toFixed(2)}</Text>
           </View>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Approve Request</Text>
+          <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
+            <Text style={styles.contactbuttonText}>Contact Seller</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.cancelButton} onPress={cancelRequest}>
+            <Text style={styles.cancelbuttonText}>Cancel Request</Text>
+          </TouchableOpacity>
+        </View>
         </View>
       ))}
     </ScrollView>
@@ -113,6 +143,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
+
   },
   feeLabel: {
     fontSize: 16,
@@ -133,6 +164,61 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFF',
     fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  requestTitle: {
+    fontSize: 14,
+    textAlign: 'right',
+    marginBottom: 10,
+    color:'#666',
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  fullName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#666',
+  },
+  heartIcon: {
+    marginRight: 5,
+  },
+  actionButtons: {
+    borderTopWidth: 1,
+    borderColor: '#ECECEC',
+    paddingTop: 20,
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+
+  },
+  contactButton: {
+    backgroundColor: '#0096FF',
+    padding: 15,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 10,
+    elevation: 2,
+  },
+  cancelButton: {
+    borderColor: 'red',
+    borderWidth: 2,
+    padding: 15,
+    borderRadius: 5,
+    flex: 1,
+  },
+  contactbuttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  cancelbuttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ff0000',
     textAlign: 'center',
   },
 });

@@ -111,7 +111,7 @@ const RequestHistory = ({ navigation }) => {
 
     const handlePress = () => {
         if (selectedTab === 'To Approve') {
-          navigation.navigate('RequestToApproveDetails', { requests, donations });
+          navigation.navigate('RequestToApproveDetails', { requests, donations, users });
         } else if (selectedTab === 'To Deliver') {
           navigation.navigate('RequestToDeliverDetails', { requests, donations });
         } else if (selectedTab === 'To Receive') {
