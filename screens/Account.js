@@ -180,7 +180,7 @@ const Account = ({ navigation }) => {
             <View style={styles.optionIconContainer}>
               <Icon name="check-circle" size={25} color="#05652D" style={styles.transactionsIcon} />
             </View>
-            <Text style={styles.optionLabel}>Donation Requests Approval</Text>
+            <Text style={styles.optionLabel}>Donation Request Transactions</Text>
           </TouchableOpacity>
         </View>
         </View>
