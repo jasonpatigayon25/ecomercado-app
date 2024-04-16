@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, query, where, doc, getDoc, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import DonorTab from '../navbars/DonorTab';
 
@@ -67,36 +67,38 @@ useEffect(() => {
         where("status", "==", statusToFetch),
         orderBy("dateRequested", "desc")
       );
-      const querySnapshot = await getDocs(q);
-      let fetchedRequests = [];
-  
-      querySnapshot.forEach((doc) => {
-        const requestData = { id: doc.id, ...doc.data() };
-        const isUserDonor = requestData.donorDetails.some(
-          detail => detail.donorEmail === currentUser.email
-        );
-        if (isUserDonor) {
-          fetchedRequests.push(requestData);
-        }
-      });
-
-      const requesterEmails = new Set();
-      const donationIds = new Set();
-      fetchedRequests.forEach(request => {
-        requesterEmails.add(request.requesterEmail);
-        request.donorDetails.forEach(detail => {
-          donationIds.add(detail.donationId);
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        let fetchedRequests = [];
+        querySnapshot.forEach((doc) => {
+          const requestData = { id: doc.id, ...doc.data() };
+          const isUserDonor = requestData.donorDetails.some(
+            detail => detail.donorEmail === currentUser.email
+          );
+          if (isUserDonor) {
+            fetchedRequests.push(requestData);
+          }
         });
+  
+        const requesterEmails = new Set();
+        const donationIds = new Set();
+        fetchedRequests.forEach(request => {
+          requesterEmails.add(request.requesterEmail);
+          request.donorDetails.forEach(detail => {
+            donationIds.add(detail.donationId);
+          });
+        });
+
+        fetchRequesters([...requesterEmails]);
+        fetchDonations([...donationIds]);
+
+        setRequests(fetchedRequests);
+        setLoading(false);
       });
 
-      await fetchRequesters([...requesterEmails]);
-      await fetchDonations([...donationIds]);
-
-      setRequests(fetchedRequests);
+      return () => unsubscribe();
     } catch (error) {
       console.error("Error fetching requests: ", error);
     }
-    setLoading(false);
   };
 
   if (currentUser && currentUser.email) {
@@ -108,24 +110,26 @@ useEffect(() => {
     const requesterData = {};
     for (let email of emails) {
       const userRef = doc(db, "users", email);
-      const docSnap = await getDoc(userRef);
-      if (docSnap.exists()) {
-        requesterData[email] = docSnap.data();
-      }
+      const unsubscribe = onSnapshot(userRef, (doc) => {
+        if (doc.exists()) {
+          requesterData[email] = doc.data();
+          setRequesters({ ...requesterData });
+        }
+      });
     }
-    setRequesters(requesterData);
   };
 
   const fetchDonations = async (donationIds) => {
     const donationData = {};
     for (let id of donationIds) {
       const donationRef = doc(db, "donation", id);
-      const docSnap = await getDoc(donationRef);
-      if (docSnap.exists()) {
-        donationData[id] = docSnap.data();
-      }
+      const unsubscribe = onSnapshot(donationRef, (doc) => {
+        if (doc.exists()) {
+          donationData[id] = doc.data();
+          setDonations({ ...donationData });
+        }
+      });
     }
-    setDonations(donationData);
   };
 
   const GroupHeader = ({ requesterEmail }) => {
