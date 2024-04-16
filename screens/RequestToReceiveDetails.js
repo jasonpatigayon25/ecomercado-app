@@ -1,13 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Alert, SafeAreaView, Animated } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Modal, Alert, TextInput, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
-import { getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
+import { getDocs, query, collection, where, updateDoc, doc, addDoc } from 'firebase/firestore';
+import * as ImagePicker from 'expo-image-picker';
 import { db } from '../config/firebase';
 import moment from 'moment';
+import CameraIcon from 'react-native-vector-icons/MaterialIcons';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
+
 
 const RequestToReceiveDetails = ({ route, navigation }) => {
   const { request, donations, users } = route.params;
+  const [confirmationModalVisible, setConfirmationModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const [modalVisible, setModalVisible] = useState(false);
 
   const rotateAnimation = useRef(new Animated.Value(0)).current;
 
@@ -38,6 +47,102 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
     outputRange: ['-15deg', '15deg'],
   });
 
+  const confirmReceipt = async () => {
+
+    if (!selectedImage) {
+      Alert.alert('Photo Required', 'Please provide a photo of the donation received.');
+      return;
+    }
+
+    const imageUrl = await uploadImageAsync(selectedImage.uri);
+
+    const requestDocRef = doc(db, 'requests', request.id);
+    await updateDoc(requestDocRef, {
+      receivedPhoto: imageUrl,
+      status: 'Completed',
+      dateReceived: new Date()
+    });
+    
+    setModalVisible(false);
+    
+    Alert.alert(
+      "Confirmation",
+      "Receipt has been confirmed successfully.",
+      [
+        {
+          text: "OK",
+          onPress: () => navigation.navigate('RequestHistory')
+        }
+      ]
+    );
+
+  };
+
+  const uploadImageAsync = async (uri) => {
+    const blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response);
+      };
+      xhr.onerror = function (e) {
+        console.log(e);
+        reject(new TypeError('Network request failed'));
+      };
+      xhr.responseType = 'blob';
+      xhr.open('GET', uri, true);
+      xhr.send(null);
+    });
+  
+    const storage = getStorage();
+    const storageRef = ref(storage, `uploads/${Date.now()}`);
+    await uploadBytes(storageRef, blob);
+  
+    blob.close();
+  
+    return await getDownloadURL(storageRef);
+  };
+
+  const pickImage = async (type) => {
+  let result;
+  if (type === 'camera') {
+    result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+  } else {
+    result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+  }
+
+  if (!result.canceled && result.assets && result.assets[0].uri) {
+    const uploadUrl = await uploadImageAsync(result.assets[0].uri);
+    setSelectedImage({ uri: uploadUrl });
+  }
+};
+
+  const handleChoosePhoto = () => {
+    Alert.alert("Upload Photo", "Choose an option", [
+      {
+        text: "Take Photo",
+        onPress: () => pickImage('camera'),
+      },
+      {
+        text: "Choose from Gallery",
+        onPress: () => pickImage('library'),
+      },
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+    ]);
+  };
+
   const GroupHeader = ({ donorEmail }) => {
     if (!users || !users[donorEmail]) {
       return <View style={styles.groupHeader}><Text>Loading donor details...</Text></View>;
@@ -60,41 +165,6 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
 
   const contactSeller = () => {
     // 
-  };
-
-  const cancelRequest = async () => {
-    Alert.alert(
-      "Cancel Request",
-      "Are you sure you want to cancel this request?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        { 
-          text: "Yes", 
-          onPress: async () => {
-            try {
-              const requestRef = doc(db, 'requests', request.id);
-              await updateDoc(requestRef, {
-                status: 'Declined',
-              });
-  
-              Alert.alert(
-                "Request Cancelled",
-                "Your request has been cancelled.",
-                [
-                  { text: "OK", onPress: () => navigation.navigate('RequestHistory') }
-                ]
-              );
-            } catch (error) {
-              console.error("Error updating req status: ", error);
-              Alert.alert("Error", "Could not cancel the req at this time.");
-            }
-          },
-        },
-      ]
-    );
   };
 
   return (
@@ -172,14 +242,44 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
             </View>
         </View>
     </ScrollView>
-    <View style={styles.footer}>
-        <TouchableOpacity style={styles.confirmationButton} >
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.confirmationButton}  onPress={() => setModalVisible(true)} >
             <Text style={styles.confirmationButtonText}>Confirm Receipt </Text>
             <Animated.View style={{ transform: [{ rotate }] }}>
             <Icon5 name="check-circle" size={24} color="#fff" />
             </Animated.View>
         </TouchableOpacity>
         </View>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+              setModalVisible(!modalVisible);
+          }}
+      >
+          <View style={styles.modalView}>
+              {selectedImage ? (
+                  <>
+                      <Text style={styles.imageAttachedText}>Image Attached</Text>
+                      <Image source={{ uri: selectedImage.uri }} style={styles.previewImage} />
+                      <TouchableOpacity onPress={handleChoosePhoto} style={styles.cameraButton}>
+                          <CameraIcon name="camera-alt" size={60} color="#fff" />
+                          <Text style={styles.cameraButtonText}>Change Photo</Text>
+                      </TouchableOpacity>
+                  </>
+              ) : (
+                  <TouchableOpacity onPress={handleChoosePhoto} style={styles.cameraButton}>
+                      <CameraIcon name="camera-alt" size={60} color="#fff" />
+                      <Text style={styles.cameraButtonText}>Take Photo</Text>
+                  </TouchableOpacity>
+              )}
+              <Text style={styles.modalText}>Confirm receipt by uploading a photo of the donations.</Text>
+              <TouchableOpacity onPress={confirmReceipt} style={styles.confirmButton}>
+                  <Text style={styles.buttonText}>Confirm Receipt</Text>
+              </TouchableOpacity>
+          </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -471,6 +571,113 @@ confirmationButtonText: {
   color: '#fff',
   fontSize: 16,
   fontWeight: 'bold',
+},
+modalView: {
+  position: 'absolute',
+  bottom: 0,
+  width: '100%',
+  backgroundColor: "white",
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  padding: 15,
+  shadowColor: "#000",
+  shadowOffset: {
+    width: 0,
+    height: 2
+  },
+  shadowOpacity: 0.25,
+  shadowRadius: 4,
+  elevation: 5
+},
+modalText: {
+  marginBottom: 15,
+  textAlign: "center",
+  fontWeight: 'bold'
+},
+cameraButton: {
+  flex: 1,
+  justifyContent: 'center',  
+  alignItems: 'center',     
+  backgroundColor: "#2196F3",
+  borderRadius: 10,
+  padding: 20,
+  elevation: 2,
+  marginHorizontal: 30,
+  marginBottom: 10
+},
+cameraButtonText: {
+  color: "#fff",
+  marginLeft: 10,
+  textAlign: 'center',
+},
+previewImage: {
+  width: 300,
+  height: 300,
+  marginBottom: 10
+},
+confirmButton: {
+  backgroundColor: "#4CAF50",
+  borderRadius: 10,
+  padding: 20,
+  elevation: 2
+},
+buttonText: {
+  color: "#fff",
+  textAlign: 'center',
+  fontWeight: 'bold',
+  fontSize: 16,
+},
+imagePreviewContainer: {
+  alignItems: 'center',
+  marginBottom: 10,
+},
+imageAttachedText: {
+textAlign: 'center',
+fontWeight: 'bold',
+fontSize: 16,
+marginBottom: 10,
+},
+confirmationModalCenteredView: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: 'rgba(0, 0, 0, 0.6)',
+},
+confirmationModalView: {
+  margin: 20,
+  backgroundColor: "white",
+  padding: 35,
+  alignItems: "flex-start", 
+  width: '80%',
+},
+confirmationModalText: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  marginBottom: 20, 
+},
+confirmationModalButtonContainer: {
+  alignSelf: 'flex-end', 
+  marginTop: 10,
+},
+confirmationModalButton: {
+  flexDirection: 'row',
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+  elevation: 2,
+  alignItems: 'center',
+  borderColor: '#05652D', 
+  borderWidth: 2,
+},
+confirmationModalButtonText: {
+  color: "#05652D",
+  fontWeight: "bold",
+  textAlign: "center",
+  marginLeft: 10,
+},
+confirmationModalIconStyle: {
+  marginTop: 2,
 },
 });
 
