@@ -360,29 +360,37 @@ const ProductPosts = ({ navigation }) => {
       >
         <View style={styles.modalOverlay}>
           <ScrollView style={styles.editModalContainer}>
-             <Text style={styles.editModalTitle}></Text>
+            <Text style={styles.editModalTitle}>Product Details</Text>
             <Image source={{ uri: product?.photo }} style={{ width: 100, height: 100, marginBottom: 20, borderRadius: 15 }} />
-            <Text style={styles.label}>Product Name</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {product?.subPhotos?.map((photo, index) => (
+                <Image key={index} source={{ uri: photo }} style={{ width: 60, height: 60, marginRight: 10, borderRadius: 15 }} />
+              ))}
+            </ScrollView>
+            <Text style={styles.label}>Name</Text>
             <Text style={styles.readOnlyInput}>{product?.name}</Text>
             <Text style={styles.label}>Price</Text>
-            <Text style={styles.readOnlyInput}>₱{product?.price}</Text>
+            <Text style={styles.readOnlyInput}>{product?.price}</Text>
             <Text style={styles.label}>Category</Text>
             <Text style={styles.readOnlyInput}>{product?.category}</Text>
             <Text style={styles.label}>Quantity</Text>
             <Text style={styles.readOnlyInput}>{product?.quantity}</Text>
+            <Text style={styles.label}>Weight</Text>
+            <Text style={styles.readOnlyInput}>{product?.shipping?.weight} kg</Text>
+            <Text style={styles.label}>Dimensions (H x W x L)</Text>
+            <Text style={styles.readOnlyInput}>{product?.shipping?.height} x {product?.shipping?.width} x {product?.shipping?.length} cm</Text>
             <Text style={styles.label}>Location</Text>
             <Text style={styles.readOnlyInput}>{product?.location}</Text>
             <Text style={styles.label}>Description</Text>
             <Text style={styles.readOnlyInput}>{product?.description}</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.editButton}
               onPress={() => {
-                setEditableProduct(product);
-                setViewModalVisible(false);
-                setEditModalVisible(true);
+                navigation.navigate('EditProduct', { productInfo: product });
+                onClose();  
               }}
             >
-              <Icon name="edit" size={30} color="#05652D" />
+              <Icon name="edit" size={24} color="#05652D" />
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -617,10 +625,10 @@ const ProductPosts = ({ navigation }) => {
         onCancel={() => setIsPhotoPickerModalVisible(false)}
       />
       <ViewProductModal
-    isVisible={viewModalVisible}
-    product={selectedProduct}
-    onClose={() => setViewModalVisible(false)}
-  />
+        isVisible={viewModalVisible}
+        product={selectedProduct}
+        onClose={() => setViewModalVisible(false)}
+      />
     </View>
   );
 };

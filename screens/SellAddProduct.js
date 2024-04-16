@@ -476,6 +476,7 @@ const resetProductInfo = () => {
   const validateForm = () => {
     const missing = {
       photo: !productInfo.photo,
+      subPhotos: productInfo.subPhotos.length === 0, 
       name: !productInfo.name,
       price: !productInfo.price,
       category: productInfo.category === '',
@@ -765,7 +766,8 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           )}
         </TouchableOpacity>
         <Text style={styles.label}>
-          Additional Photos  
+          Additional Photos
+          {missingFields.subPhotos && <Text style={{ color: 'red' }}> * </Text>}
         </Text>
         <View style={styles.subPhotosContainer}>
         {Array.isArray(productInfo.subPhotos) && productInfo.subPhotos.map((photo, index) => (

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput,
   ScrollView, Modal, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
-import { addDoc, getDocs, collection, where, query } from 'firebase/firestore';
+import { addDoc, getDocs, collection, where, query, updateDoc, doc } from 'firebase/firestore';
 import { productsCollection, db } from '../config/firebase';
 import { getAuth } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -52,7 +52,31 @@ const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, naviga
   );
 };
 
-const Sell = ({ navigation }) => {
+const EditProduct = ({ route, navigation }) => {
+    
+    useEffect(() => {
+        if (route.params?.productInfo) {
+          const {
+            id, photo, subPhotos, name, price, category, location, description, quantity, shipping
+          } = route.params.productInfo;
+          
+          setProductInfo({
+            id,
+            photo,
+            subPhotos,
+            name,
+            price,
+            category,
+            location,
+            description,
+            quantity,
+            width: shipping?.width || '',
+            height: shipping?.height || '',
+            length: shipping?.length || '',
+            weight: shipping?.weight || ''
+          });
+        }
+      }, [route.params?.productInfo]);
 
   const [subPhotos, setSubPhotos] = useState([]);
   const MAX_SUB_PHOTOS = 15;
@@ -85,32 +109,6 @@ const Sell = ({ navigation }) => {
     description: false,
     quantity: false,
   });
-
-  useEffect(() => {
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (user) {
-      registerIndieID(user.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
-        .then(() => console.log("Device registered for notifications"))
-        .catch(err => console.error("Error registering device:", err));
-
-      return () => {
-        unregisterIndieDevice(user.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
-          .then(() => console.log("Device unregistered for notifications"))
-          .catch(err => console.error("Error unregistering device:", err));
-      };
-    }
-  }, []);
-
-  const shouldSendNotification = async (email) => {
-    try {
-      const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
-      return sellingNotifications === null || JSON.parse(sellingNotifications);
-    } catch (error) {
-      console.error('Error reading notification settings:', error);
-      return true;
-    }
-  };
 
   useEffect(() => {
     const auth = getAuth();
@@ -201,10 +199,12 @@ const Sell = ({ navigation }) => {
   
     if (result && !result.cancelled && result.assets && result.assets.length > 0) {
       const uploadUrl = await uploadImageAsync(result.assets[0].uri);
-      setProductInfo({
-        ...productInfo,
-        subPhotos: [...productInfo.subPhotos, uploadUrl]
-      });
+      if (uploadUrl) {  // Check if URL is not null
+        setProductInfo(prevState => ({
+          ...prevState,
+          subPhotos: [...prevState.subPhotos, uploadUrl]
+        }));
+      }
     }
   
     setIsSubPhotoPickerModalVisible(false);
@@ -348,106 +348,45 @@ const Sell = ({ navigation }) => {
     }
 };
 
-const sendPushNotification = async (subID, title, message) => {
-  if (!(await shouldSendNotification(subID))) {
-    console.log('Notifications are muted for:', subID);
-    return;
-  }
-
-  const notificationData = {
-    subID: subID,
-    appId: 18345,
-    appToken: 'TdOuHYdDSqcy4ULJFVCN7l',
-    title: 'ECOMercado',
-    message: message
-  };
-
-  try {
-    await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
-    console.log('Push notification sent to:', subID);
-  } catch (error) {
-    console.error('Error sending push notification:', error);
-  }
-};
-
-const notifySubscribers = async (sellerEmail, updatedProductInfo) => {
-  const title = 'New Product Added';
-  const message = `Check out the new product "${updatedProductInfo.name}" added by ${sellerEmail}`;
-
-  const subscribersQuery = query(collection(db, 'subscriptions'), where('subscribedTo_email', '==', sellerEmail));
-  const subscribersSnapshot = await getDocs(subscribersQuery);
-
-  subscribersSnapshot.forEach(async (doc) => {
-    const subscriberEmail = doc.data().subscriber_email;
-
-    if (await shouldSendNotification(subscriberEmail)) {
-      const notificationDoc = {
-        email: subscriberEmail,
-        title: title,
-        type: 'subscribed_sell',
-        text: message,
-        timestamp: new Date(),
-        productInfo: {
-          id: updatedProductInfo.id,
-          name: updatedProductInfo.name,
-          photo: updatedProductInfo.photo,
-          price: updatedProductInfo.price,
-          sellerEmail: sellerEmail
+const handleSubmit = async () => {
+    if (!validateForm()) {
+      Alert.alert("Please fill all the required fields.");
+      return;
+    }
+  
+    if (!productInfo.id) {
+      Alert.alert("Error", "No product ID provided.");
+      return;
+    }
+  
+    try {
+      const productRef = doc(db, 'products', productInfo.id);
+      const updateData = {
+        photo: productInfo.photo,
+        subPhotos: productInfo.subPhotos,
+        name: productInfo.name,
+        price: productInfo.price,
+        category: productInfo.category,
+        description: productInfo.description,
+        location: productInfo.location,
+        quantity: productInfo.quantity,
+        shipping: {
+          width: productInfo.width || null, 
+          length: productInfo.length || null,
+          height: productInfo.height || null,
+          weight: productInfo.weight || null,
         }
       };
-
-      await addDoc(collection(db, 'notifications'), notificationDoc);
-      sendPushNotification(subscriberEmail, title, message);
+  
+      // Update the document with the new product data
+      await updateDoc(productRef, updateData);
+      Alert.alert("Success", "Product updated successfully.");
+      navigation.goBack();  // Navigate back to the previous screen or to the dashboard
+    } catch (error) {
+      console.error("Error updating product:", error);
+      Alert.alert("Error updating product", error.message);
     }
-  });
-};
-
-const handleSubmit = async () => {
-  if (!validateForm()) return;
-
-  if (Array.isArray(productInfo.subPhotos)) {
-  try {
-    const createdAt = Timestamp.fromDate(new Date());
-
-    const productDocRef = await addDoc(productsCollection, {
-      photo: productInfo.photo,
-      subPhotos: productInfo.subPhotos,
-      name: productInfo.name,
-      price: productInfo.price,
-      category: productInfo.category,
-      description: productInfo.description,
-      location: productInfo.location,
-      seller_email: userEmail,
-      quantity: productInfo.quantity,
-      createdAt,
-      publicationStatus: 'pending',
-      shipping: {
-        width: productInfo.width,
-        length: productInfo.length,
-        height: productInfo.height,
-        weight: productInfo.weight,
-      },
-    });
-
-    const updatedProductInfo = {
-      ...productInfo,
-      id: productDocRef.id,
-      publicationStatus: 'pending'
-    };
-
-    await notifySubscribers(userEmail, updatedProductInfo);
-    setProductName(productInfo.name);
-    setSuccessModalVisible(true);
-    //Alert.alert(`${productInfo.name} successfully Added!`);
-    resetProductInfo();
-    setShowModal(false);
-  } catch (error) {
-    console.error("Error adding document: ", error);
-  }
-  } else {
-    console.error('An error occurred: subPhotos or itemNames is not an array.');
-  }
-};
+  };
 
 const resetProductInfo = () => {
   setProductInfo(prevState => ({
@@ -476,7 +415,6 @@ const resetProductInfo = () => {
   const validateForm = () => {
     const missing = {
       photo: !productInfo.photo,
-      subPhotos: productInfo.subPhotos.length === 0, 
       name: !productInfo.name,
       price: !productInfo.price,
       category: productInfo.category === '',
@@ -751,7 +689,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
         <TouchableOpacity onPress={handleBackPress}>
           <Icon name="arrow-left" size={24} color="#FFFFFF" style={styles.backButtonIcon} />
         </TouchableOpacity>
-        <Text style={styles.title}>Sell Product</Text>
+        <Text style={styles.title}>Update Product</Text>
       </View>
       <ScrollView style={styles.content}>
       <Text style={styles.label}>
@@ -766,8 +704,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           )}
         </TouchableOpacity>
         <Text style={styles.label}>
-          Additional Photos
-          {missingFields.subPhotos && <Text style={{ color: 'red' }}> * </Text>}
+          Additional Photos  
         </Text>
         <View style={styles.subPhotosContainer}>
         {Array.isArray(productInfo.subPhotos) && productInfo.subPhotos.map((photo, index) => (
@@ -949,7 +886,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           numberOfLines={3}
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAddProductToSell}>
-          <Text style={styles.addButtonLabel}>Add Product to Sell</Text>
+          <Text style={styles.addButtonLabel}>Update</Text>
         </TouchableOpacity>
       </ScrollView>
       <Modal
@@ -1495,4 +1432,4 @@ const styles = StyleSheet.create({
                                   
 });
 
-export default Sell;
+export default EditProduct;
