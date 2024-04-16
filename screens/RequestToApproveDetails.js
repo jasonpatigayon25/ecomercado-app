@@ -1,10 +1,42 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Alert, SafeAreaView, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon5 from 'react-native-vector-icons/FontAwesome5';
+import { getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import moment from 'moment';
 
 const RequestToApproveDetails = ({ route, navigation }) => {
   const { request, donations, users } = route.params;
+
+  const rotateAnimation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnimation, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnimation, {
+          toValue: -1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnimation, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [rotateAnimation]);
+
+  const rotate = rotateAnimation.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-15deg', '15deg'],
+  });
 
   const GroupHeader = ({ donorEmail }) => {
     if (!users || !users[donorEmail]) {
@@ -24,18 +56,51 @@ const RequestToApproveDetails = ({ route, navigation }) => {
     // 
   };
 
-  const cancelRequest = () => {
-    // 
+  const cancelRequest = async () => {
+    Alert.alert(
+      "Cancel Request",
+      "Are you sure you want to cancel this request?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        { 
+          text: "Yes", 
+          onPress: async () => {
+            try {
+              const requestRef = doc(db, 'requests', request.id);
+              await updateDoc(requestRef, {
+                status: 'Declined',
+              });
+  
+              Alert.alert(
+                "Request Cancelled",
+                "Your request has been cancelled.",
+                [
+                  { text: "OK", onPress: () => navigation.navigate('RequestHistory') }
+                ]
+              );
+            } catch (error) {
+              console.error("Error updating req status: ", error);
+              Alert.alert("Error", "Could not cancel the req at this time.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
+    
         <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
                 <Icon name="arrow-left" size={24} />
             </TouchableOpacity>
             <Text style={styles.title}>Request Details</Text>
         </View>
+        <ScrollView style={styles.container}>
         <View key={request.id} style={styles.requestCard}>
             {/* <Text style={styles.requestTitle}>#{request.id}</Text> */}
             {request.donorDetails.map((detail, idx) => {
@@ -104,10 +169,22 @@ const RequestToApproveDetails = ({ route, navigation }) => {
             </View>
         </View>
     </ScrollView>
+    <View style={styles.footer}>
+        <TouchableOpacity style={styles.pendingButton} disabled>
+            <Text style={styles.pendingButtonText}>Pending Order </Text>
+            <Animated.View style={{ transform: [{ rotate }] }}>
+            <Icon5 name="hourglass-half" size={24} color="#fff" />
+            </Animated.View>
+        </TouchableOpacity>
+        </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8F8F8',
@@ -350,6 +427,31 @@ detailValue: {
   fontSize: 14,
   fontWeight: 'bold',
   color: '#333',
+},
+footer: {
+  padding: 10,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: '#ccc',
+  elevation: 2,
+  shadowColor: '#000',
+  shadowOpacity: 0.1,
+  shadowRadius: 3,
+  shadowOffset: { width: 0, height: -2 },
+},
+pendingButton: {
+  backgroundColor: '#666',
+  padding: 15,
+  justifyContent: 'center',
+  alignItems: 'center',
+  flexDirection: 'row',
+  width: '70%',
+  borderRadius: 10,
+},
+pendingButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
 },
 });
 

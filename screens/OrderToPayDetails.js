@@ -78,7 +78,7 @@ const OrderToPayDetails = ({ route, navigation }) => {
   
               Alert.alert(
                 "Order Cancelled",
-                "Your order has been cancelled successfully.",
+                "Your order has been cancelled.",
                 [
                   { text: "OK", onPress: () => navigation.navigate('OrderHistory') }
                 ]
