@@ -4,7 +4,7 @@ import { Rating } from 'react-native-ratings';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { getDocs, query, collection, where, updateDoc, doc, addDoc } from 'firebase/firestore';
+import { getDocs, query, collection, where, updateDoc, doc, addDoc, writeBatch, getDoc } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import { db } from '../config/firebase';
 import moment from 'moment';
@@ -170,23 +170,41 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
   };
 
   const confirmReceipt = async () => {
-
     if (!selectedImage) {
       Alert.alert('Photo Required', 'Please provide a photo of the item received.');
       return;
     }
-
+  
     const imageUrl = await uploadImageAsync(selectedImage.uri);
-
+  
     const orderDocRef = doc(db, 'orders', order.id);
     await updateDoc(orderDocRef, {
       receivedPhoto: imageUrl,
       status: 'Completed',
       dateReceived: new Date()
     });
-    
+  
+    // Deduct ordered quantities from the products collection
+    try {
+      const batch = writeBatch(db);
+  
+      await Promise.all(order.productDetails.map(async (detail) => {
+        const productRef = doc(db, 'products', detail.productId);
+        const productSnap = await getDoc(productRef);
+        if (productSnap.exists()) {
+          const newQuantity = productSnap.data().quantity - detail.orderedQuantity;
+          batch.update(productRef, { quantity: newQuantity });
+        }
+      }));
+  
+      await batch.commit();
+    } catch (error) {
+      console.error("Failed to update product quantities", error);
+      Alert.alert("Error", "Failed to update product quantities.");
+      return;
+    }
+  
     setModalVisible(false);
-    
     setConfirmationModalVisible(true);
   };
 
