@@ -12,6 +12,12 @@ const Account = ({ navigation }) => {
 
   const marketIcon = require('../assets/market.png');
   const donationIcon = require('../assets/donation.png');
+
+  const sellerManagementIcon = require('../assets/seller-management.png');
+  const donationManagementIcon = require('../assets/donation-management.png');
+  const orderIcon = require('../assets/order-history.png');
+  const requestIcon = require('../assets/donation-history.png');
+  
   const [profile, setProfile] = useState({
     firstName: '',
     lastName: '',
@@ -155,14 +161,14 @@ const Account = ({ navigation }) => {
         <View style={styles.transactionsRow}>
           <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleSellerManagement}>
             <View style={styles.optionIconContainer}>
-              <Image source={marketIcon} style={styles.transactionsIcon} />
+              <Image source={sellerManagementIcon} style={styles.transactionsIcon} />
             </View>
             <Text style={styles.optionLabel}>Seller Management</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleDonationManagement}>
             <View style={styles.optionIconContainer}>
-              <Image source={donationIcon} style={styles.transactionsIcon} />
+              <Image source={donationManagementIcon} style={styles.transactionsIcon} />
             </View>
             <Text style={styles.optionLabel}>Donation Management</Text>
           </TouchableOpacity>
@@ -171,14 +177,14 @@ const Account = ({ navigation }) => {
         <View style={styles.transactionsRow}>
           <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleOrderHistory}>
             <View style={styles.optionIconContainer}>
-              <Icon name="history" size={25} color="#05652D" style={styles.transactionsIcon} />
+              <Image source={orderIcon} style={styles.transactionsIcon} />
             </View>
             <Text style={styles.optionLabel}>My Order Transactions</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleRequestApproval}>
             <View style={styles.optionIconContainer}>
-              <Icon name="check-circle" size={25} color="#05652D" style={styles.transactionsIcon} />
+              <Image source={requestIcon} style={styles.transactionsIcon} />
             </View>
             <Text style={styles.optionLabel}>Donation Request Transactions</Text>
           </TouchableOpacity>
