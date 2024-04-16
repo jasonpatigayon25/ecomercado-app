@@ -181,7 +181,8 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     const orderDocRef = doc(db, 'orders', order.id);
     await updateDoc(orderDocRef, {
       receivedPhoto: imageUrl,
-      status: 'Completed'
+      status: 'Completed',
+      dateReceived: new Date()
     });
     
     setModalVisible(false);
