@@ -184,7 +184,6 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
       dateReceived: new Date()
     });
   
-    // Deduct ordered quantities from the products collection
     try {
       const batch = writeBatch(db);
   

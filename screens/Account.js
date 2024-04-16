@@ -81,7 +81,7 @@ const Account = ({ navigation }) => {
   };
 
   const handleDonationManagement = () => {
-    navigation.navigate('DonationManagement');
+    navigation.navigate('DonorManagement');
   };
 
   const handleOrderHistory = () => {
