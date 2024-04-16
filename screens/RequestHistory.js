@@ -25,6 +25,36 @@ const RequestHistory = ({ navigation }) => {
     'Taken/Declined': 'Declined'
   };
 
+  const renderEmptyListComponent = (tab) => {
+    let icon = 'inbox';  
+    let message = `No ${tab} Orders yet.`; 
+
+    switch (tab) {
+        case 'To Approve':
+            icon = 'like';
+            break;
+          case 'To Deliver':
+            icon = 'truck';
+            break;
+        case 'To Receive':
+            icon = 'truck';
+            break;
+        case 'Completed':
+            icon = 'flag-checkered';
+            break;
+        case 'Taken/Declined':
+            icon = 'times-circle';
+            break;
+    }
+
+    return (
+        <View style={styles.emptyOrdersContainer}>
+            <Icon name={icon} size={50} color="#cccccc" />
+            <Text style={styles.emptyOrdersText}>{message}</Text>
+        </View>
+    );
+};
+
   useEffect(() => {
     const fetchRequests = async () => {
       setLoading(true);
@@ -227,6 +257,7 @@ const RequestHistory = ({ navigation }) => {
           data={requests}
           renderItem={renderRequestItem}
           keyExtractor={(item) => item.id}
+          ListEmptyComponent={() => renderEmptyListComponent(selectedTab)}
           style={styles.list}
         />
       )}
@@ -409,6 +440,17 @@ const styles = StyleSheet.create({
     color: '#666', 
     marginRight: 30,
   },
+  emptyOrdersContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50
+},
+emptyOrdersText: {
+    fontSize: 18,
+    color: '#cccccc',
+    marginTop: 20
+},
 });
 
 export default RequestHistory;
