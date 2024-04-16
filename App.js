@@ -88,6 +88,7 @@ import RequestManagement from './screens/RequestManagement';
 import RequestToApproveByDonorDetails from './screens/RequestToApproveByDonorDetails';
 import RequestToDeliverByDonorDetails from './screens/RequestToDeliverByDonorDetails';
 import RequestReceivingDetails from './screens/RequestReceivingDetails';
+import RequestCompletedByDonorDetails from './screens/RequestCompletedByDonorDetails';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -343,6 +344,7 @@ const App = () => {
               <Stack.Screen name="RequestToApproveByDonorDetails" component={RequestToApproveByDonorDetails} />
               <Stack.Screen name="RequestToDeliverByDonorDetails" component={RequestToDeliverByDonorDetails} />
               <Stack.Screen name="RequestReceivingDetails" component={RequestReceivingDetails} />
+              <Stack.Screen name="RequestCompletedByDonorDetails" component={RequestCompletedByDonorDetails} />
               <Stack.Screen name="CheckOutScreen" component={CheckOutScreen} />
               <Stack.Screen name="CheckoutProducts" component={CheckoutProducts} />
               <Stack.Screen name="Cart" component={Cart} />

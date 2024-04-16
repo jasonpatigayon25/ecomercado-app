@@ -243,7 +243,7 @@ const RequestCompletedDetails = ({ route, navigation }) => {
             <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Delivered Time:</Text>
                 <Text style={styles.detailValue}>
-                {moment(request.dateReceived.toDate()).format('DD-MM-YYYY HH:mm')}
+                {moment(request.dateDelivered.toDate()).format('DD-MM-YYYY HH:mm')}
                 </Text>
             </View>
             <View style={styles.detailRow}>

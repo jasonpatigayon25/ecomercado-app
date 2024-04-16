@@ -17,7 +17,7 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
 
   const [modalVisible, setModalVisible] = useState(false);
 
-  const [deliveryStatus, setDeliveryStatus] = useState(request.deliveryStatus);
+  const [deliveredStatus, setDeliveredStatus] = useState(request.deliveredStatus);
   const rotateAnimation = useRef(new Animated.Value(0)).current;
 
   const deliveringIcon = require('../assets/fast-delivery.png');
@@ -27,14 +27,14 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
     const unsubscribe = onSnapshot(requestRef, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
-        setDeliveryStatus(data.deliveryStatus); 
+        setDeliveredStatus(data.deliveredStatus);
       }
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (deliveryStatus === 'Processing') {
+    if (deliveredStatus === 'Processing') {
       Animated.loop(
         Animated.timing(rotateAnimation, {
           toValue: 1,
@@ -46,7 +46,7 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
     } else {
       Animated.timing(rotateAnimation).stop();
     }
-  }, [deliveryStatus]);
+  }, [deliveredStatus]);
 
   const moveCar = rotateAnimation.interpolate({
     inputRange: [0, 1],
@@ -93,7 +93,7 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
     await updateDoc(requestDocRef, {
       receivedPhoto: imageUrl,
       status: 'Completed',
-      deliveryStatus: 'Confirmed',
+      deliveredStatus: 'Confirmed',
       dateReceived: new Date()
     });
     
@@ -277,19 +277,18 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
         </View>
     </ScrollView>
     <View style={styles.footer}>
-        {deliveryStatus === 'Processing' && (
+        {deliveredStatus === 'Waiting' ? (
+          <TouchableOpacity style={styles.confirmButton} onPress={() => setModalVisible(true)}>
+            <Text style={styles.buttonText}>Confirm Receipt</Text>
+          </TouchableOpacity>
+        ) : (
           <View style={styles.pendingButton}>
-            <Text style={styles.pendingButtonText}>Delivery in Progress...    </Text>
+            <Text style={styles.pendingButtonText}>{deliveredStatus === 'Processing' ? 'Pending...' : 'Delivery in Progress...'}</Text>
             <Animated.Image
               source={deliveringIcon}
               style={[styles.carIcon, { transform: [{ translateX: moveCar }] }]}
             />
           </View>
-        )}
-        {deliveryStatus === 'Waiting' && (
-          <TouchableOpacity style={styles.confirmButton}  onPress={() => setModalVisible(true)}>
-            <Text style={styles.buttonText}>Confirm Receipt</Text>
-          </TouchableOpacity>
         )}
       </View>
         <Modal

@@ -61,7 +61,10 @@ const RequestReceivingDetails = ({ route, navigation }) => {
           onPress: async () => {
             try {
               const requestRef = doc(db, 'requests', request.id);
-              await updateDoc(requestRef, { deliveredStatus: 'Waiting' });
+              await updateDoc(requestRef, { 
+                deliveredStatus: 'Waiting',
+                dateDelivered: new Date() 
+            });
               Alert.alert("Delivery Confirmed!");
             } catch (error) {
               console.error("Error updating request status:", error);
