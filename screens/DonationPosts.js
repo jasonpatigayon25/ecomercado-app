@@ -247,7 +247,7 @@ const DonationPosts = ({ navigation }) => {
                 style={styles.editButton}
                 onPress={() => {
                     navigation.navigate('EditDonation', { donationInfo: item });
-                    onClose();  // This will close the modal when the edit button is clicked
+                    onClose();  
                 }}
                 >
                 <Icon name="edit" size={24} color="#05652D" />

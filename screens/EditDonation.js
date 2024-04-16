@@ -553,7 +553,7 @@ const decrementWeight = () => {
             <Icon name="arrow-left" size={24} color="#fff" />
           </View>
         </TouchableOpacity>
-        <Text style={styles.title}>Donate</Text>
+        <Text style={styles.title}>Update Donation</Text>
       </View>
       <ScrollView style={styles.contentContainer}>
         
