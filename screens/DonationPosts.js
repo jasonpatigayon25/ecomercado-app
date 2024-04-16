@@ -224,7 +224,7 @@ const DonationPosts = ({ navigation }) => {
             <Image source={{ uri: item?.photo }} style={{ width: 100, height: 100, marginBottom: 20, borderRadius: 15 }} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {item?.subPhotos?.map((photo, index) => (
-                <Image key={index} source={{ uri: photo }} style={{ width: 100, height: 100, marginRight: 10, borderRadius: 15 }} />
+                <Image key={index} source={{ uri: photo }} style={{ width: 60, height: 60, marginRight: 10, borderRadius: 15 }} />
               ))}
             </ScrollView>
             <Text style={styles.label}>Name</Text>
