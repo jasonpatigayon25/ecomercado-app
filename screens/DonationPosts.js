@@ -36,13 +36,16 @@ const DonationPosts = ({ navigation }) => {
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState({
     photo: '',
+    subPhoto: [], 
     name: '',
     price: '',
     category: '',
-    description: '',
     quantity: '',
-    location: ''
-  });
+    location: '',
+    weight: '', 
+    purpose: '',
+    message: '', 
+});
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
   const [editModalVisible, setEditModalVisible] = useState(false);
 
@@ -168,49 +171,47 @@ const DonationPosts = ({ navigation }) => {
     </View>
   );
 
-  const DonationItem  = ({ item }) => (
+  const DonationItem = ({ item }) => (
     <TouchableOpacity 
-    onPress={() => {
-      setSelectedProduct(item);
-      if (item) {
+      onPress={() => {
+        setSelectedProduct(item);
         setViewModalVisible(true);
-      }
-    }}
-    onLongPress={(event) => showOptions(item, event)}
-  >
-    <View style={styles.productItemContainer}>
-      <Image source={{ uri: item.photo }} style={styles.productItemImage} />
-      <View style={styles.productItemDetails}>
-        <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
-        <Text style={styles.productItemPrice} numberOfLines={1} ellipsizeMode="tail">{item.purpose}</Text>
-        <View style={styles.productItemMetaContainer}>
-          <Text style={styles.productItemCategory} numberOfLines={1} ellipsizeMode="tail">{item.category}</Text>
+      }}
+      onLongPress={(event) => showOptions(item, event)}
+    >
+      <View style={styles.productItemContainer}>
+        <Image source={{ uri: item.photo }} style={styles.productItemImage} />
+        <View style={styles.productItemDetails}>
+          <Text style={styles.productItemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+          <Text style={styles.productItemPrice} numberOfLines={1} ellipsizeMode="tail">
+            {item.itemNames?.join(' · ')}
+          </Text>
+          <Text style={styles.productItemCategory} numberOfLines={1} ellipsizeMode="tail">
+            {item.category}
+          </Text>
+          <Text style={styles.productItemPrice} numberOfLines={1} ellipsizeMode="tail">{item.weight} kg</Text>
+          <Text style={styles.productItemDescription} numberOfLines={1} ellipsizeMode="tail">{item.purpose}</Text>
         </View>
-        <View style={styles.productItemLocationContainer}>
-          <Icon name="map-marker" size={14} color="#666" />
-          <Text style={styles.productItemLocation} numberOfLines={1} ellipsizeMode="tail">{item.location}</Text>
-        </View>
+        {item.publicationStatus === 'approved' && (
+          <View style={styles.statusIconContainer}>
+            <Icon name="check" size={14} color="green" />
+            <Text style={styles.statusText}>Approved</Text>
+          </View>
+        )}
+        {item.publicationStatus === 'pending' && (
+          <View style={styles.statusIconContainer}>
+            <Icon name="clock-o" size={14} color="orange" />
+            <Text style={styles.statusText}>Pending</Text>
+          </View>
+        )}
+        <TouchableOpacity style={styles.productItemOptionsButton} onPress={(event) => showOptions(item, event)}>
+          <Icon name="ellipsis-v" size={20} color="#05652D" />
+        </TouchableOpacity>
       </View>
-      {item.publicationStatus === 'approved' && (
-        <View style={styles.statusIconContainer}>
-          <Icon name="check" size={14} color="green" />
-          <Text style={styles.statusText}>Approved</Text>
-        </View>
-      )}
-      {item.publicationStatus === 'pending' && (
-        <View style={styles.statusIconContainer}>
-          <Icon name="clock-o" size={14} color="orange" />
-          <Text style={styles.statusText}>Pending</Text>
-        </View>
-      )}
-      <TouchableOpacity style={styles.productItemOptionsButton} onPress={(event) => showOptions(item, event)}>
-        <Icon name="ellipsis-v" size={20} color="#05652D" />
-      </TouchableOpacity>
-    </View>
     </TouchableOpacity>
   );
 
-  const ViewDonationItemModal = ({ isVisible, donationItem, onClose }) => {
+  const ViewDonationItemModal = ({ isVisible, item, onClose }) => {
     return (
       <Modal
         animationType="slide"
@@ -220,25 +221,30 @@ const DonationPosts = ({ navigation }) => {
       >
         <View style={styles.modalOverlay}>
           <ScrollView style={styles.editModalContainer}>
-             <Text style={styles.editModalTitle}></Text>
-            <Image source={{ uri: donationItem?.photo }} style={{ width: 100, height: 100, marginBottom: 20, borderRadius: 15 }} />
-            <Text style={styles.label}>Product Name</Text>
-            <Text style={styles.readOnlyInput}>{donationItem?.name}</Text>
-            <Text style={styles.label}>Price</Text>
-            <Text style={styles.readOnlyInput}>₱{donationItem?.purpose}</Text>
+            <Image source={{ uri: item?.photo }} style={{ width: 100, height: 100, marginBottom: 20, borderRadius: 15 }} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {item?.subPhotos?.map((photo, index) => (
+                <Image key={index} source={{ uri: photo }} style={{ width: 100, height: 100, marginRight: 10, borderRadius: 15 }} />
+              ))}
+            </ScrollView>
+            <Text style={styles.label}>Name</Text>
+            <Text style={styles.readOnlyInput}>{item?.name}</Text>
+            <Text style={styles.label}>Items</Text>
+            <Text style={styles.readOnlyInput}>{item?.itemNames?.join(', ')}</Text>
             <Text style={styles.label}>Category</Text>
-            <Text style={styles.readOnlyInput}>{donationItem?.category}</Text>
+            <Text style={styles.readOnlyInput}>{item?.category}</Text>
+            <Text style={styles.label}>Weight</Text>
+            <Text style={styles.readOnlyInput}>{item?.weight}</Text>
             <Text style={styles.label}>Location</Text>
-            <Text style={styles.readOnlyInput}>{donationItem?.location}</Text>
-            <Text style={styles.label}>Description</Text>
-            <Text style={styles.readOnlyInput}>{donationItem?.message}</Text>
+            <Text style={styles.readOnlyInput}>{item?.location}</Text>
+            <Text style={styles.label}>Purpose</Text>
+            <Text style={styles.readOnlyInput}>{item?.purpose}</Text>
+            <Text style={styles.label}>Message</Text>
+            <Text style={styles.readOnlyInput}>{item?.message}</Text>
             <TouchableOpacity 
               style={styles.editButton}
-              onPress={() => {
-                setViewModalVisible(false);
-              }}
             >
-              <Icon name="edit" size={30} color="#05652D" />
+              <Icon name="pencil" size={30} color="#05652D" />
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -326,7 +332,7 @@ const DonationPosts = ({ navigation }) => {
      
       <ViewDonationItemModal
         isVisible={viewModalVisible}
-        donations={selectedProduct}
+        item={selectedProduct}
         onClose={() => setViewModalVisible(false)}
   />
     </View>
@@ -660,6 +666,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
+    alignSelf: 'flex-start', 
+    overflow: 'hidden', 
+    marginVertical: 4, 
+    marginHorizontal: 2, 
+    textAlign: 'center',
   },
   
   productItemQuantity: {
