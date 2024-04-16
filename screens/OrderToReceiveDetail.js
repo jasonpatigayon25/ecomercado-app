@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Modal, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Modal, Alert, TextInput, Animated } from 'react-native';
 import { Rating } from 'react-native-ratings';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
@@ -24,6 +24,36 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [ratings, setRatings] = useState({});
   const [comments, setComments] = useState({});
+
+  const rotateAnimation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnimation, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnimation, {
+          toValue: -1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnimation, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [rotateAnimation]);
+
+  const rotate = rotateAnimation.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-15deg', '15deg'],
+  });
+
 
   useEffect(() => {
     if (route.params.shouldOpenConfirmModal) {
@@ -396,7 +426,10 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
           style={styles.confirmationButton}
           onPress={() => setModalVisible(true)}
         >
-          <Text style={styles.confirmationButtonText}>Confirm Receipt</Text>
+          <Text style={styles.confirmationButtonText}>Confirm Receipt </Text>
+          <Animated.View style={{ transform: [{ rotate }] }}>
+            <Icon5 name="check-circle" size={24} color="#fff" />
+            </Animated.View>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -714,6 +747,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '90%',
+    borderRadius: 10,
+    flexDirection: 'row',
     borderRadius: 10,
   },
   confirmationButtonText: {

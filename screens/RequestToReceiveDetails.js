@@ -173,10 +173,10 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
         </View>
     </ScrollView>
     <View style={styles.footer}>
-        <TouchableOpacity style={styles.confirmationButton} disabled>
-            <Text style={styles.confirmationButtonText}>Comfirm Receipt </Text>
+        <TouchableOpacity style={styles.confirmationButton} >
+            <Text style={styles.confirmationButtonText}>Confirm Receipt </Text>
             <Animated.View style={{ transform: [{ rotate }] }}>
-            <Icon5 name="hourglass-half" size={24} color="#fff" />
+            <Icon5 name="check-circle" size={24} color="#fff" />
             </Animated.View>
         </TouchableOpacity>
         </View>

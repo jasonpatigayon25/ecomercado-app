@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   confirmButton: {
-    backgroundColor: '#05652D', 
+    backgroundColor: '#4CAF50', 
     padding: 10,
     borderRadius: 5,
   },
