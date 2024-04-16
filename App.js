@@ -84,6 +84,8 @@ import DonationPosts from './screens/DonationPosts';
 import DonorManagement from './screens/DonorManagement';
 import EditDonation from './screens/EditDonation';
 import EditProduct from './screens/EditProduct';
+import RequestManagement from './screens/RequestManagement';
+import RequestToApproveByDonorDetails from './screens/RequestToApproveByDonorDetails';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -314,6 +316,7 @@ const App = () => {
               <Stack.Screen name="DonorManagement" component={DonorManagement} />
               <Stack.Screen name="DonateAddDonation" component={DonateAddDonation} />
               <Stack.Screen name="DonationPosts" component={DonationPosts} />
+              <Stack.Screen name="RequestManagement" component={RequestManagement} />
               <Stack.Screen name="EditDonation" component={EditDonation} />
               <Stack.Screen name="OrderHistory" component={OrderHistory} />
               <Stack.Screen name="OrderToPayDetails" component={OrderToPayDetails} />
@@ -335,6 +338,7 @@ const App = () => {
               <Stack.Screen name="RequestToReceiveDetails" component={RequestToReceiveDetails} />
               <Stack.Screen name="RequestCompletedDetails" component={RequestCompletedDetails} />
               <Stack.Screen name="RequestDeclinedDetails" component={RequestDeclinedDetails} />
+              <Stack.Screen name="RequestToApproveByDonorDetails" component={RequestToApproveByDonorDetails} />
               <Stack.Screen name="CheckOutScreen" component={CheckOutScreen} />
               <Stack.Screen name="CheckoutProducts" component={CheckoutProducts} />
               <Stack.Screen name="Cart" component={Cart} />

@@ -4,11 +4,11 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
 import { collection, getDocs, query, where, doc, getDoc, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import RequesterTab from '../navbars/RequesterTab';
+import DonorTab from '../navbars/DonorTab';
 
 const windowWidth = Dimensions.get('window').width;
 
-const RequestHistory = ({ navigation }) => {
+const RequestManagement = ({ navigation }) => {
   const [requests, setRequests] = useState([]);
   const [donations, setDonations] = useState({});
   const [loading, setLoading] = useState(true);
@@ -17,10 +17,12 @@ const RequestHistory = ({ navigation }) => {
   const currentUser = auth.currentUser;
   const [selectedTab, setSelectedTab] = useState('To Approve');
 
+  const [requesters, setRequesters] = useState({});
+
   const tabStatusMapping = {
     'To Approve': 'Pending',
     'To Deliver': 'Approved',
-    'To Receive': 'Receiving',
+    'Receiving': 'Receiving',
     'Completed': 'Completed',
     'Taken/Declined': 'Declined'
   };
@@ -36,7 +38,7 @@ const RequestHistory = ({ navigation }) => {
           case 'To Deliver':
             icon = 'truck';
             break;
-        case 'To Receive':
+        case 'Receiving':
             icon = 'truck';
             break;
         case 'Completed':
@@ -55,42 +57,64 @@ const RequestHistory = ({ navigation }) => {
     );
 };
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      setLoading(true);
-      const q = query(collection(db, "requests"), where("requesterEmail", "==", currentUser.email), 
-      where("status", "==", tabStatusMapping[selectedTab]),orderBy("dateRequested", "desc"));
+useEffect(() => {
+  const fetchRequests = async () => {
+    setLoading(true);
+    try {
+      const statusToFetch = tabStatusMapping[selectedTab];
+      const q = query(
+        collection(db, "requests"),
+        where("status", "==", statusToFetch),
+        orderBy("dateRequested", "desc")
+      );
       const querySnapshot = await getDocs(q);
-      const fetchedRequests = [];
-      const donationIds = new Set();
-
+      let fetchedRequests = [];
+  
       querySnapshot.forEach((doc) => {
         const requestData = { id: doc.id, ...doc.data() };
-        requestData.donorDetails.forEach(detail => donationIds.add(detail.donationId));
-        fetchedRequests.push(requestData);
+        const isUserDonor = requestData.donorDetails.some(
+          detail => detail.donorEmail === currentUser.email
+        );
+        if (isUserDonor) {
+          fetchedRequests.push(requestData);
+        }
       });
+
+      const requesterEmails = new Set();
+      const donationIds = new Set();
+      fetchedRequests.forEach(request => {
+        requesterEmails.add(request.requesterEmail);
+        request.donorDetails.forEach(detail => {
+          donationIds.add(detail.donationId);
+        });
+      });
+
+      await fetchRequesters([...requesterEmails]);
+      await fetchDonations([...donationIds]);
 
       setRequests(fetchedRequests);
-      fetchDonations([...donationIds]); 
-    };
+    } catch (error) {
+      console.error("Error fetching requests: ", error);
+    }
+    setLoading(false);
+  };
 
+  if (currentUser && currentUser.email) {
     fetchRequests();
-  }, [selectedTab]);
+  }
+}, [selectedTab, currentUser]);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const usersRef = collection(db, 'users');
-      const usersSnapshot = await getDocs(usersRef);
-      const usersData = {};
-      usersSnapshot.forEach((doc) => {
-        const userData = doc.data();
-        usersData[userData.email] = userData;
-      });
-      setUsers(usersData);
-    };
-
-    fetchUsers();
-  }, []);
+  const fetchRequesters = async (emails) => {
+    const requesterData = {};
+    for (let email of emails) {
+      const userRef = doc(db, "users", email);
+      const docSnap = await getDoc(userRef);
+      if (docSnap.exists()) {
+        requesterData[email] = docSnap.data();
+      }
+    }
+    setRequesters(requesterData);
+  };
 
   const fetchDonations = async (donationIds) => {
     const donationData = {};
@@ -102,16 +126,33 @@ const RequestHistory = ({ navigation }) => {
       }
     }
     setDonations(donationData);
-    setLoading(false);
   };
 
-  const GroupHeader = ({ donorEmail }) => {
-    const user = users[donorEmail];
-    const fullName = user ? `${user.firstName} ${user.lastName}` : donorEmail;
+  const GroupHeader = ({ requesterEmail }) => {
+    const [requester, setRequester] = useState(null);
+  
+    useEffect(() => {
+      const fetchRequesterData = async () => {
+        try {
+          const userRef = doc(db, "users", requesterEmail);
+          const docSnap = await getDoc(userRef);
+          if (docSnap.exists()) {
+            setRequester(docSnap.data());
+          }
+        } catch (error) {
+          console.error("Error fetching requester data: ", error);
+        }
+      };
+  
+      fetchRequesterData();
+    }, [requesterEmail]);
+  
+    const fullName = requester ? `${requester.firstName} ${requester.lastName}` : requesterEmail;
+  
     return (
       <View style={styles.groupHeader}>
-        <Icon name="heart" size={16} color="#FF0000" style={styles.heartIcon} />
-        <Text style={styles.fullName}>From: {fullName}</Text>
+        {/* <Icon name="heart" size={16} color="#FF0000" style={styles.heartIcon} /> */}
+        <Text style={styles.fullName}>Request from: {fullName}</Text>
       </View>
     );
   };
@@ -137,24 +178,26 @@ const RequestHistory = ({ navigation }) => {
   // };
 
   const renderRequestItem = ({ item }) => {
+    const requesterEmail = item.requesterEmail;
+    const requester = requesters[item.requesterEmail];
+    const fullName = requester ? `${requester.firstName} ${requester.lastName}` : item.requesterEmail;
     const totalFee = item.disposalFee + item.deliveryFee;
     const uniqueDonorNames = {};
 
     const handlePress = (request) => {
         if (selectedTab === 'To Approve') {
-          navigation.navigate('RequestToApproveDetails', { request: request, donations: donations, users: users });
+          navigation.navigate('RequestToApproveByDonorDetails', { request: request, donations: donations, users: users });
         } else if (selectedTab === 'To Deliver') {
-          navigation.navigate('RequestToDeliverDetails', { request: request, donations: donations, users: users });
-        } else if (selectedTab === 'To Receive') {
-          navigation.navigate('RequestToReceiveDetails', { request: request, donations: donations, users: users });
+          navigation.navigate('RequestToDeliverByDonorDetails', { request: request, donations: donations, users: users });
+        } else if (selectedTab === 'Receiving') {
+          navigation.navigate('RequestReceivingDetails', { request: request, donations: donations, users: users });
         } else if (selectedTab === 'Completed') {
-          navigation.navigate('RequestCompletedDetails', { request: request, donations: donations, users: users });
+          navigation.navigate('RequestCompletedByDonorDetails', { request: request, donations: donations, users: users });
         } else if (selectedTab === 'Taken/Declined') {
-          navigation.navigate('RequestDeclinedDetails', { request: request, donations: donations, users: users });
+          navigation.navigate('RequestDeclinedByDonorDetails', { request: request, donations: donations, users: users });
         }
       };
   
-
     const renderButton = (status) => {
       switch (status) {
         case 'To Approve':
@@ -193,18 +236,18 @@ const RequestHistory = ({ navigation }) => {
   
     return (
       <TouchableOpacity onPress={() => handlePress(item)} style={styles.requestCard}>
-        {/* <Text style={styles.requestTitle}>#{item.id}</Text> */}
+        <Text style={styles.requestTitle}>#{item.id.toUpperCase()}</Text> 
         <FlatList
           data={item.donorDetails}
           renderItem={({ item: detail }) => {
             const donation = donations[detail.donationId];
             if (!donation) return null;
-  
+
             if (!uniqueDonorNames[donation.donor_email]) {
               uniqueDonorNames[donation.donor_email] = true;
               return (
                 <View>
-                  <GroupHeader donorEmail={donation.donor_email} />
+                  <GroupHeader requesterEmail={requesterEmail} /> 
                   <TouchableOpacity style={styles.donationItem}>
                     <Image source={{ uri: donation.photo }} style={styles.donationImage} />
                     <View style={styles.donationDetails}>
@@ -247,9 +290,9 @@ const RequestHistory = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>Request Transactions</Text>
+        <Text style={styles.title}>Donation Requests Management</Text>
       </View>
-      <RequesterTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+      <DonorTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" style={styles.loadingIndicator} />
       ) : (
@@ -453,4 +496,4 @@ emptyOrdersText: {
 },
 });
 
-export default RequestHistory;
+export default RequestManagement;

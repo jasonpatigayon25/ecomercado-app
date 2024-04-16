@@ -119,7 +119,7 @@ const DonorManagement = ({ navigation }) => {
                     <View style={styles.transactionsRow}>
                         <OptionItemCube onPress={() => navigation.navigate('DonationPosts')} icon="th-list" label="My Donation Posts" />
                         <OptionItemCube onPress={() => navigation.navigate('DonateAddDonation')} icon="plus-circle" label="Add Donation" />
-                        <OptionItemCube onPress={() => navigation.navigate('SellerOrderManagement')} icon="heart" label="Donor Management" />
+                        <OptionItemCube onPress={() => navigation.navigate('RequestManagement')} icon="heart" label="Donor Management" />
                         <OptionItemCube onPress={() => navigation.navigate('SuspendedProducts')} icon="ban" label="Suspended Products" />
                     </View>
             </ScrollView>
