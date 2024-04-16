@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, Tex
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs, addDoc, onSnapshot, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs, addDoc, onSnapshot, runTransaction, Timestamp } from 'firebase/firestore';
 import { Rating } from 'react-native-ratings';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
 
 const ProductDetail = ({ navigation, route }) => {
 
@@ -221,7 +222,8 @@ const ProductDetail = ({ navigation, route }) => {
               description: product.description,
               quantity: parseInt(product.quantity, 10),
               seller_email: product.seller_email,
-              location: product.location
+              location: product.location,
+              dateCarted: new Date()
             })
           });
           console.log('Product added to cart');
@@ -241,7 +243,8 @@ const ProductDetail = ({ navigation, route }) => {
             description: product.description,
             quantity: parseInt(product.quantity, 10),
             seller_email: product.seller_email,
-            location: product.location
+            location: product.location,
+            dateCarted: new Date()
           }]
         });
         console.log('Product added to cart');

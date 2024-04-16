@@ -37,7 +37,9 @@ const Cart = ({ navigation }) => {
       const cartRef = doc(db, 'carts', user.email);
       const unsubscribeCart = onSnapshot(cartRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
-          const cartData = docSnapshot.data().cartItems || [];
+          let cartData = docSnapshot.data().cartItems || [];
+          // Sort the cart items based on dateCarted in descending order
+          cartData.sort((a, b) => b.dateCarted.seconds - a.dateCarted.seconds);
           setCartItems(cartData);
           setupProductListeners(cartData);
           fetchSellerName(user.email).then(sellerName => {
@@ -49,7 +51,7 @@ const Cart = ({ navigation }) => {
           setProductListeners([]);
         }
       });
-
+  
       return () => {
         unsubscribeCart();
         productListeners.forEach(unsubscribe => unsubscribe());
@@ -162,8 +164,13 @@ const Cart = ({ navigation }) => {
   const groupedCartItems = useMemo(() => {
     const groups = {};
     cartItems.forEach(item => {
-      groups[item.sellerName] = groups[item.sellerName] || [];
+      if (!groups[item.sellerName]) {
+        groups[item.sellerName] = [];
+      }
       groups[item.sellerName].push(item);
+    });
+    Object.keys(groups).forEach(sellerName => {
+      groups[sellerName].sort((a, b) => b.dateCarted.seconds - a.dateCarted.seconds);
     });
     return groups;
   }, [cartItems]);
