@@ -2,14 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Modal, Alert, TextInput, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
-import { getDocs, query, collection, where, updateDoc, doc, addDoc } from 'firebase/firestore';
+import { getDocs, query, collection, where, updateDoc, doc, addDoc, onSnapshot } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import { db } from '../config/firebase';
 import moment from 'moment';
 import CameraIcon from 'react-native-vector-icons/MaterialIcons';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
-
 
 const RequestToReceiveDetails = ({ route, navigation }) => {
   const { request, donations, users } = route.params;
@@ -18,7 +17,41 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
 
   const [modalVisible, setModalVisible] = useState(false);
 
+  const [deliveryStatus, setDeliveryStatus] = useState(request.deliveryStatus);
   const rotateAnimation = useRef(new Animated.Value(0)).current;
+
+  const deliveringIcon = require('../assets/fast-delivery.png');
+
+  useEffect(() => {
+    const requestRef = doc(db, 'requests', request.id);
+    const unsubscribe = onSnapshot(requestRef, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        setDeliveryStatus(data.deliveryStatus); 
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (deliveryStatus === 'Processing') {
+      Animated.loop(
+        Animated.timing(rotateAnimation, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true
+        }),
+        { iterations: -1 }
+      ).start();
+    } else {
+      Animated.timing(rotateAnimation).stop();
+    }
+  }, [deliveryStatus]);
+
+  const moveCar = rotateAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 20] 
+  });
 
   useEffect(() => {
     Animated.loop(
@@ -60,6 +93,7 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
     await updateDoc(requestDocRef, {
       receivedPhoto: imageUrl,
       status: 'Completed',
+      deliveryStatus: 'Confirmed',
       dateReceived: new Date()
     });
     
@@ -237,19 +271,27 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
             </View>
             <View style={styles.actionButtons}>
                 <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
-                    <Text style={styles.contactbuttonText}>Contact Seller</Text>
+                    <Text style={styles.contactbuttonText}>Contact Donor</Text>
                 </TouchableOpacity>
             </View>
         </View>
     </ScrollView>
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.confirmationButton}  onPress={() => setModalVisible(true)} >
-            <Text style={styles.confirmationButtonText}>Confirm Receipt </Text>
-            <Animated.View style={{ transform: [{ rotate }] }}>
-            <Icon5 name="check-circle" size={24} color="#fff" />
-            </Animated.View>
-        </TouchableOpacity>
-        </View>
+    <View style={styles.footer}>
+        {deliveryStatus === 'Processing' && (
+          <View style={styles.pendingButton}>
+            <Text style={styles.pendingButtonText}>Delivery in Progress...    </Text>
+            <Animated.Image
+              source={deliveringIcon}
+              style={[styles.carIcon, { transform: [{ translateX: moveCar }] }]}
+            />
+          </View>
+        )}
+        {deliveryStatus === 'Waiting' && (
+          <TouchableOpacity style={styles.confirmButton}  onPress={() => setModalVisible(true)}>
+            <Text style={styles.buttonText}>Confirm Receipt</Text>
+          </TouchableOpacity>
+        )}
+      </View>
         <Modal
           animationType="slide"
           transparent={true}
@@ -678,6 +720,32 @@ confirmationModalButtonText: {
 },
 confirmationModalIconStyle: {
   marginTop: 2,
+},
+deliveringButton: {
+  flexDirection: 'row',
+  backgroundColor: '#4CAF50',
+  padding: 15,
+  borderRadius: 10,
+  alignItems: 'center',
+},
+carIcon: {
+  width: 50,
+  height: 50,
+  marginRight: 10,
+},
+pendingButton: {
+  backgroundColor: '#666',
+  padding: 15,
+  justifyContent: 'center',
+  alignItems: 'center',
+  flexDirection: 'row',
+  width: '95%',
+  borderRadius: 10,
+},
+pendingButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
 },
 });
 
