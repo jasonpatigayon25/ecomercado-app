@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
-import { collection, query, where, getDocs, addDoc, doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';;
+import { collection, query, where, getDocs, addDoc, doc, getDoc, setDoc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';;
 import { db } from '../config/firebase';
+import moment from 'moment';
 
 const DonationDetail = ({ navigation, route }) => {
   const { donation } = route.params;
@@ -88,7 +89,9 @@ const DonationDetail = ({ navigation, route }) => {
             category: donation.category,
             purpose: donation.purpose,
             donor_email: donation.donor_email,
-            location: donation.location
+            location: donation.location,
+            dateListed: new Date()
+
           }];
           await updateDoc(wishlistRef, { wishItems: updatedWishItems });
           console.log('Donation added to wishlist');
@@ -104,7 +107,8 @@ const DonationDetail = ({ navigation, route }) => {
           category: donation.category,
           purpose: donation.purpose,
           donor_email: donation.donor_email,
-          location: donation.location
+          location: donation.location,
+          dateListed: new Date()
         }];
         await setDoc(wishlistRef, {
           userEmail: user.email,

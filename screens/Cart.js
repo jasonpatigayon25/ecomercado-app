@@ -38,7 +38,7 @@ const Cart = ({ navigation }) => {
       const unsubscribeCart = onSnapshot(cartRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
           let cartData = docSnapshot.data().cartItems || [];
-          // Sort the cart items based on dateCarted in descending order
+          
           cartData.sort((a, b) => b.dateCarted.seconds - a.dateCarted.seconds);
           setCartItems(cartData);
           setupProductListeners(cartData);
