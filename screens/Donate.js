@@ -833,7 +833,7 @@ const decrementWeight = () => {
         }}
         navigateToDonationPosts={() => {
           setSuccessModalVisible(false);
-          navigation.navigate('DonationManagement');
+          navigation.navigate('DonationPosts');
         }}
       />
     </View>
