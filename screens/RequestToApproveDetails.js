@@ -48,6 +48,12 @@ const RequestToApproveDetails = ({ route, navigation }) => {
       <View style={styles.groupHeader}>
         <Icon name="heart" size={16} color="#FF0000" style={styles.heartIcon} />
         <Text style={styles.fullName}>From: {fullName}</Text>
+        <TouchableOpacity
+            style={styles.visitButton}
+            onPress={() => navigation.navigate('UserVisit', { email: donorEmail })}
+          >
+            <Text style={styles.visitButtonText}>Visit</Text>
+          </TouchableOpacity>
       </View>
     );
   };
@@ -451,6 +457,21 @@ pendingButton: {
 pendingButtonText: {
   color: '#fff',
   fontSize: 16,
+  fontWeight: 'bold',
+},
+visitButton: {
+  position: 'absolute',
+  right: 2,
+  top: 1,
+  backgroundColor: '#FFFFFF',
+  paddingVertical: 4,
+  paddingHorizontal: 8,
+  borderRadius: 5,
+  borderWidth: 1,
+  borderColor: '#05652D',
+},
+visitButtonText: {
+  fontSize: 12,
   fontWeight: 'bold',
 },
 });
