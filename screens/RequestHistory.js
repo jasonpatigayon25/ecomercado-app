@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import RequesterTab from '../navbars/RequesterTab';
 
@@ -28,7 +28,8 @@ const RequestHistory = ({ navigation }) => {
   useEffect(() => {
     const fetchRequests = async () => {
       setLoading(true);
-      const q = query(collection(db, "requests"), where("requesterEmail", "==", currentUser.email), where("status", "==", tabStatusMapping[selectedTab]));
+      const q = query(collection(db, "requests"), where("requesterEmail", "==", currentUser.email), 
+      where("status", "==", tabStatusMapping[selectedTab]),orderBy("dateRequested", "desc"));
       const querySnapshot = await getDocs(q);
       const fetchedRequests = [];
       const donationIds = new Set();
