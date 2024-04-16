@@ -211,6 +211,8 @@ const DonationPosts = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+  const [isViewDonationItemModalVisible, setIsViewDonationItemModalVisible] = useState(true);
+
   const ViewDonationItemModal = ({ isVisible, item, onClose }) => {
     return (
       <Modal
@@ -241,11 +243,15 @@ const DonationPosts = ({ navigation }) => {
             <Text style={styles.readOnlyInput}>{item?.purpose}</Text>
             <Text style={styles.label}>Message</Text>
             <Text style={styles.readOnlyInput}>{item?.message}</Text>
-            <TouchableOpacity 
-              style={styles.editButton}
-            >
-              <Icon name="pencil" size={30} color="#05652D" />
-            </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => {
+                    navigation.navigate('EditDonation', { donationInfo: item });
+                    onClose();  // This will close the modal when the edit button is clicked
+                }}
+                >
+                <Icon name="edit" size={24} color="#05652D" />
+                </TouchableOpacity>
           </ScrollView>
         </View>
       </Modal>

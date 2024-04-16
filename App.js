@@ -82,6 +82,7 @@ import RequestCompletedDetails from './screens/RequestCompletedDetails';
 import RequestDeclinedDetails from './screens/RequestDeclinedDetails';
 import DonationPosts from './screens/DonationPosts';
 import DonorManagement from './screens/DonorManagement';
+import EditDonation from './screens/EditDonation';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -311,6 +312,7 @@ const App = () => {
               <Stack.Screen name="DonorManagement" component={DonorManagement} />
               <Stack.Screen name="DonateAddDonation" component={DonateAddDonation} />
               <Stack.Screen name="DonationPosts" component={DonationPosts} />
+              <Stack.Screen name="EditDonation" component={EditDonation} />
               <Stack.Screen name="OrderHistory" component={OrderHistory} />
               <Stack.Screen name="OrderToPayDetails" component={OrderToPayDetails} />
               <Stack.Screen name="OrderToShipDetails" component={OrderToShipDetails} />
