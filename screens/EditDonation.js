@@ -54,10 +54,10 @@ const SuccessModal = ({ donationName, isVisible, onCancel, navigateToDonate, nav
 const screenHeight = Dimensions.get('window').height;
 
 const EditDonation = ({ route, navigation }) => {
-    // Initialize state with default values
+
 
     useEffect(() => {
-        // Check if donationInfo is passed as a parameter and has content
+
         if (route.params?.donationInfo) {
           setDonationInfo(route.params.donationInfo);
         }
@@ -252,7 +252,6 @@ const EditDonation = ({ route, navigation }) => {
       return;
     }
 
-    // Ensure we have the donation ID to update the correct document
     if (!donationInfo.id) {
       Alert.alert("Error", "No donation ID provided.");
       return;
