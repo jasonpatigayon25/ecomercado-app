@@ -216,7 +216,7 @@ useEffect(() => {
           return (
             <View style={styles.noteButtonContainer}>
               <TouchableOpacity style={styles.shipButton}>
-                <Text style={styles.confirmButtonText}>Contact Donor</Text>
+                <Text style={styles.confirmButtonText}>Deliver Request</Text>
               </TouchableOpacity>
             </View>
           );
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   shipButton: {
-    backgroundColor: '#0096FF',
+    backgroundColor: '#4CAF50',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
