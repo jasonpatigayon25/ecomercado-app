@@ -65,8 +65,8 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
 
   const cancelRequest = async () => {
     Alert.alert(
-      "Cancel Requester's Request",
-      "Are you sure you want to cancel this request?",
+      "Decline Requester's Request",
+      "Are you sure you want to decline the request?",
       [
         {
           text: "No",
@@ -82,8 +82,8 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
               });
   
               Alert.alert(
-                "Request Cancelled",
-                "Your request has been cancelled.",
+                "Request Declined",
+                "You Declined Requester's Request.",
                 [
                   { text: "OK", onPress: () => navigation.navigate('RequestManagement') }
                 ]
@@ -98,7 +98,35 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
     );
   };
 
+  const approveRequest = async () => {
+    Alert.alert(
+      "Confirm Approval",
+      "Are you sure you want to approve this order?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { 
+          text: "Approve", 
+          onPress: async () => {
+            try {
+              const requestRef = doc(db, 'requests', request.id);
+              await updateDoc(requestRef, {
+                status: 'Approved'
+              });
   
+              Alert.alert("Request Approved", "The request has been approved successfully.");
+              navigation.navigate('RequestManagement');
+            } catch (error) {
+              console.error("Error updating request status: ", error);
+              Alert.alert("Error", "Could not approve the request at this time.");
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -171,23 +199,20 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
               </View>
             </View>
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
-                <Text style={styles.contactbuttonText}>Contact Seller</Text>
+              <TouchableOpacity style={styles.approveButton}  onPress={approveRequest}>
+                <Text style={styles.approveButtonText}>Approve Request</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.cancelButton} onPress={cancelRequest}>
-                <Text style={styles.cancelbuttonText}>Cancel Request</Text>
+                <Text style={styles.cancelbuttonText}>Decline Request</Text>
               </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.pendingButton} disabled>
-            <Text style={styles.pendingButtonText}>Pending Order </Text>
-            <Animated.View style={{ transform: [{ rotate }] }}>
-              <Icon5 name="hourglass-half" size={24} color="#fff" />
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.approveButtonMain} onPress={approveRequest}>
+          <Text style={styles.approveButtonTextMain}>Approve Request</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -481,6 +506,34 @@ visitButtonText: {
   fontSize: 12,
   fontWeight: 'bold',
 },
+approveButtonMain: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: '90%',
+    borderRadius: 10,
+  },
+  approveButtonTextMain: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  approveButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 10,
+    elevation: 2,
+  },
+  approveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center'
+  },
 });
 
 export default RequestToApproveByDonorDetails;

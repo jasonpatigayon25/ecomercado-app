@@ -203,9 +203,8 @@ useEffect(() => {
         case 'To Approve':
           return (
             <View style={styles.noteButtonContainer}>
-              <Text style={styles.noteText}>Waiting for Donor Approval</Text>
-              <TouchableOpacity disabled style={styles.pendingButton}>
-                <Text style={styles.pendingButtonText}>Pending</Text>
+              <TouchableOpacity style={styles.confirmButton}>
+                <Text style={styles.confirmButtonText}>Approve</Text>
               </TouchableOpacity>
             </View>
           );
