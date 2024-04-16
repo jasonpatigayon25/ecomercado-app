@@ -113,13 +113,13 @@ const RequestHistory = ({ navigation }) => {
         if (selectedTab === 'To Approve') {
           navigation.navigate('RequestToApproveDetails', { request: request, donations: donations, users: users });
         } else if (selectedTab === 'To Deliver') {
-          navigation.navigate('RequestToDeliverDetails', { requests, donations });
+          navigation.navigate('RequestToDeliverDetails', { request: request, donations: donations, users: users });
         } else if (selectedTab === 'To Receive') {
-          navigation.navigate('RequestToReceiveDetails', { requests, donations });
+          navigation.navigate('RequestToReceiveDetails', { request: request, donations: donations, users: users });
         } else if (selectedTab === 'Completed') {
-          navigation.navigate('RequestCompletedDetails', { requests, donations });
+          navigation.navigate('RequestCompletedDetails', { request: request, donations: donations, users: users });
         } else if (selectedTab === 'Taken/Declined') {
-          navigation.navigate('RequestDeclinedDetails', { requests, donations });
+          navigation.navigate('RequestDeclinedDetails', { request: request, donations: donations, users: users });
         }
       };
   
