@@ -220,11 +220,11 @@ useEffect(() => {
               </TouchableOpacity>
             </View>
           );
-        case 'To Receive':
+        case 'Receiving':
           return (
             <View style={styles.noteButtonContainer}>
               <TouchableOpacity style={styles.confirmButton}>
-                <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
+                <Text style={styles.confirmButtonText}>Confirm Delivered</Text>
               </TouchableOpacity>
             </View>
           );
