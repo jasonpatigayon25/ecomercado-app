@@ -142,12 +142,6 @@ const OrderCompletedDetails = ({ route, navigation }) => {
                 </Text>
             </View>
             <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Order Time:</Text>
-                <Text style={styles.detailValue}>
-                {moment(order.dateOrdered.toDate()).format('DD-MM-YYYY HH:mm')}
-                </Text>
-            </View>
-            <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Payment Time:</Text>
                 <Text style={styles.detailValue}>
                 {moment(order.dateReceived.toDate()).format('DD-MM-YYYY HH:mm')}

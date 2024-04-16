@@ -155,11 +155,11 @@ const RequestToDeliverDetails = ({ route, navigation }) => {
             </View>
             <View style={styles.orderInfo}>
             <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Order ID:</Text>
+                <Text style={styles.detailLabel}>Request ID:</Text>
                 <Text style={styles.detailValue}>{request.id.toUpperCase()}</Text>
             </View>
             <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Order Time:</Text>
+                <Text style={styles.detailLabel}>Request Time:</Text>
                 <Text style={styles.detailValue}>
                 {moment(request.dateRequested.toDate()).format('DD-MM-YYYY HH:mm')}
                 </Text>
