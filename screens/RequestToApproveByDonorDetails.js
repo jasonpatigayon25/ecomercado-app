@@ -9,6 +9,8 @@ import moment from 'moment';
 const RequestToApproveByDonorDetails = ({ route, navigation }) => {
   const { request, donations, users, requesterEmail } = route.params;
 
+  const [requesterFullName, setRequesterFullName] = useState('');
+
   const rotateAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -38,33 +40,32 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
     outputRange: ['-15deg', '15deg'],
   });
 
-  const GroupHeader = () => {
-    if (!users || !users[requesterEmail]) {
-      return <View style={styles.groupHeader}><Text>Loading requester details...</Text></View>;
-    }
-    const user = users[requesterEmail];
-    const fullName = user ? `${user.firstName} ${user.lastName}` : requesterEmail;
-    return (
-      <View style={styles.groupHeader}>
-        <Icon name="heart" size={16} color="#FF0000" style={styles.heartIcon} />
-        <Text style={styles.fullName}>Requester: {fullName}</Text>
-        <TouchableOpacity
-            style={styles.visitButton}
-            onPress={() => navigation.navigate('UserVisit', { email: requesterEmail })}
-          >
-            <Text style={styles.visitButtonText}>Visit</Text>
-          </TouchableOpacity>
-      </View>
-    );
-  };
-
   const contactSeller = () => {
     // 
   };
 
+  useEffect(() => {
+    const fetchRequesterName = async () => {
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where("email", "==", request.requesterEmail));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const fullName = `${data.firstName} ${data.lastName}`;
+          setRequesterFullName(fullName);
+        });
+      } catch (error) {
+        console.error("Error fetching requester name: ", error);
+      }
+    };
+
+    fetchRequesterName();
+  }, [request.requesterEmail]);
+
   const cancelRequest = async () => {
     Alert.alert(
-      "Cancel Request",
+      "Cancel Requester's Request",
       "Are you sure you want to cancel this request?",
       [
         {
@@ -84,7 +85,7 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
                 "Request Cancelled",
                 "Your request has been cancelled.",
                 [
-                  { text: "OK", onPress: () => navigation.navigate('RequestHistory') }
+                  { text: "OK", onPress: () => navigation.navigate('RequestManagement') }
                 ]
               );
             } catch (error) {
@@ -96,6 +97,8 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
       ]
     );
   };
+
+  
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -112,7 +115,15 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
                 if (!donation) return null;
                 return (
                     <View key={idx}>
-                        <GroupHeader /> 
+                        <View style={styles.groupHeader}>
+                        <Text style={styles.donationName}>Requester: {requesterFullName}</Text>
+                        <TouchableOpacity
+                            style={styles.visitButton}
+                            onPress={() => navigation.navigate('UserVisit', { email: request.requesterEmail })}
+                        >
+                            <Text style={styles.visitButtonText}>Visit</Text>
+                        </TouchableOpacity>
+                        </View>
                         <View style={styles.donationItem}>
                             <Image source={{ uri: donation.photo }} style={styles.donationImage} />
                             <View style={styles.donationDetails}>
