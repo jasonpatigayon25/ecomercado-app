@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    width: '70%',
+    width: '90%',
     borderRadius: 10,
   },
   pendingButtonText: {
