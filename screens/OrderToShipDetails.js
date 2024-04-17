@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
-import { getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
+import { getDocs, query, collection, where, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
