@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, SafeAreaView, Dimensions, Alert, Modal, Button } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, SafeAreaView, Dimensions, Alert, Modal, Button, Animated} from 'react-native';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
@@ -10,9 +10,40 @@ import moment from 'moment';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient'; 
 
-
 const OrderShippedDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
+
+  const [deliveredStatus, setDeliveredStatus] = useState(order.deliveredStatus);
+
+  const rotateAnimation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnimation, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnimation, {
+          toValue: -1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnimation, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [rotateAnimation]);
+
+  const rotate = rotateAnimation.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-15deg', '15deg'],
+  });
+
 
   const subtotal = order.productDetails.reduce(
     (sum, detail) => sum + detail.orderedQuantity * products[detail.productId].price,
@@ -23,6 +54,37 @@ const OrderShippedDetails = ({ route, navigation }) => {
     (sum, detail) => sum + detail.orderedQuantity,
     0
   );
+
+  const confirmDelivery = async () => {
+    Alert.alert(
+      "Confirm Delivery",
+      "Are you sure you want to confirm this delivery?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Delivery confirmation canceled."),
+          style: "cancel"
+        },
+        {
+          text: "Confirm",
+          onPress: async () => {
+            try {
+              const orderRef = doc(db, 'orders', order.id);
+              await updateDoc(orderRef, { 
+                deliveredStatus: 'Waiting',
+                dateDelivered: new Date() 
+            });
+            setDeliveredStatus('Waiting');
+              Alert.alert("Delivery Confirmed!");
+            } catch (error) {
+              console.error("Error updating request status:", error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -36,7 +98,7 @@ const OrderShippedDetails = ({ route, navigation }) => {
       <ScrollView style={styles.container}>
       <View style={styles.orderItemContainer}>
       <LinearGradient
-          colors={['#333', '#05652D']}
+          colors={['#C1E1C1', '#478778']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={styles.deliveryInfoContainer}>
@@ -116,11 +178,23 @@ const OrderShippedDetails = ({ route, navigation }) => {
         </View>
       </View>
     </ScrollView>
-    <View style={styles.footer}>
-        <TouchableOpacity style={styles.approveButtonMain}>
-          <Text style={styles.approveButtonTextMain}>Pending For Buyer Confirmation </Text>
-        </TouchableOpacity>
-      </View>
+      <View style={styles.footer}>
+        {deliveredStatus === 'Waiting' ? (
+            <TouchableOpacity style={[styles.pendingButton, { backgroundColor: '#666' }]} disabled>
+                <Text style={styles.pendingButtonText}>Pending for Buyer to Confirm</Text>
+                <Animated.View style={{ transform: [{ rotate }] }}>
+                    <Icon name="hourglass-half" size={24} color="#fff" />
+                </Animated.View>
+            </TouchableOpacity>
+        ) : (
+            <TouchableOpacity
+                style={styles.approveButtonMain}
+                onPress={confirmDelivery}
+            >
+                <Text style={styles.approveButtonTextMain}>Confirm Delivered</Text>
+            </TouchableOpacity>
+        )}
+    </View>
     </SafeAreaView>
   );
 };
@@ -583,6 +657,34 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, 
     borderBottomWidth: 1,  
     borderColor: '#ccc',
+  },
+  pendingButton: {
+    backgroundColor: '#666',
+    padding: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: '90%',
+    borderRadius: 10,
+  },
+  pendingButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  approveButtonMain: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: '90%',
+    borderRadius: 10,
+  },
+  approveButtonTextMain: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
