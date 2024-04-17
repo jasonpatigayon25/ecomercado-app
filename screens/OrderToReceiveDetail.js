@@ -4,7 +4,7 @@ import { Rating } from 'react-native-ratings';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { getDocs, query, collection, where, updateDoc, doc, addDoc, writeBatch, getDoc } from 'firebase/firestore';
+import { getDocs, query, collection, where, updateDoc, doc, addDoc, writeBatch, getDoc, onSnapshot } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import { db } from '../config/firebase';
 import moment from 'moment';
@@ -25,33 +25,40 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
   const [ratings, setRatings] = useState({});
   const [comments, setComments] = useState({});
 
+  const [deliveredStatus, setDeliveredStatus] = useState(order.deliveredStatus);
   const rotateAnimation = useRef(new Animated.Value(0)).current;
 
+  const deliveringIcon = require('../assets/fast-delivery.png');
+
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
+    const orderRef = doc(db, 'orders', order.id);
+    const unsubscribe = onSnapshot(orderRef, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        setDeliveredStatus(data.deliveredStatus);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (deliveredStatus === 'Processing') {
+      Animated.loop(
         Animated.timing(rotateAnimation, {
           toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
+          duration: 3000,
+          useNativeDriver: true
         }),
-        Animated.timing(rotateAnimation, {
-          toValue: -1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotateAnimation, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [rotateAnimation]);
+        { iterations: -1 }
+      ).start();
+    } else {
+      Animated.timing(rotateAnimation).stop();
+    }
+  }, [deliveredStatus]);
 
-  const rotate = rotateAnimation.interpolate({
-    inputRange: [-1, 1],
-    outputRange: ['-15deg', '15deg'],
+  const moveCar = rotateAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 20] 
   });
 
 
@@ -181,6 +188,7 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     await updateDoc(orderDocRef, {
       receivedPhoto: imageUrl,
       status: 'Completed',
+      deliveredStatus: 'Confirmed',
       dateReceived: new Date()
     });
   
@@ -440,15 +448,19 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
       </View>
       </ScrollView>
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.confirmationButton}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.confirmationButtonText}>Confirm Receipt </Text>
-          <Animated.View style={{ transform: [{ rotate }] }}>
-            <Icon5 name="check-circle" size={24} color="#fff" />
-            </Animated.View>
-        </TouchableOpacity>
+        {deliveredStatus === 'Waiting' ? (
+          <TouchableOpacity style={styles.confirmButton} onPress={() => setModalVisible(true)}>
+            <Text style={styles.buttonText}>Confirm Receipt</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.pendingButton}>
+            <Text style={styles.pendingButtonText}>{deliveredStatus === 'Processing' ? 'Delivery in Pogress...' : 'Delivered...'}</Text>
+            <Animated.Image
+              source={deliveringIcon}
+              style={[styles.carIcon, { transform: [{ translateX: moveCar }] }]}
+            />
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -987,7 +999,21 @@ ratingButtonText: {
   textAlign: 'center',
   fontWeight: 'bold',
   fontSize: 16,
-}
+},
+pendingButton: {
+  backgroundColor: '#666',
+  padding: 15,
+  justifyContent: 'center',
+  alignItems: 'center',
+  flexDirection: 'row',
+  width: '95%',
+  borderRadius: 10,
+},
+pendingButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
+},
 });
 
 export default OrderToReceiveDetails;
