@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Platform, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, getDoc, doc, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, getDoc, doc, getDocs, deleteDoc, updateDoc, 
+          setDoc} from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../config/firebase';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert } from 'react-native';
+import { AppState } from 'react-native';
 
 const Chat = ({ navigation, route }) => {
 
+  const { email } = route.params;
+
   const [senderName, setSenderName] = useState('');
-
   const [receiverName, setReceiverName] = useState('');
-
+  const [receiverPhotoUrl, setReceiverPhotoUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [chatData, setChatData] = useState([]);
@@ -24,6 +27,33 @@ const Chat = ({ navigation, route }) => {
 
   const { chatId, productDetails, donationDetails } = route.params;
   const messagesRef = collection(db, 'messages');
+
+  useEffect(() => {
+    const fetchReceiverDetails = async (email) => {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email));
+    
+      try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          setReceiverName(`${userData.firstName} ${userData.lastName}`);
+          setReceiverPhotoUrl(userData.photoUrl || '');
+        } else {
+          console.log(`No user found for email: ${email}`);
+          setReceiverName('User not found');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+  
+    if (receiverEmail) {
+      fetchReceiverDetails(receiverEmail);
+    }
+  }, [receiverEmail]);
+
+
 
   const fetchReceiverName = async (email) => {
     const usersRef = collection(db, 'users');
@@ -268,17 +298,20 @@ const Chat = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <TouchableOpacity onPress={() => navigation.navigate('UserVisit', { email: receiverEmail })} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#05652D" style={styles.backButtonIcon} />
         </TouchableOpacity>
+        {receiverPhotoUrl ? (
+          <Image source={{ uri: receiverPhotoUrl }} style={styles.profilePic} />
+        ) : (
+          <Icon name="user" size={50} color="#05652D" style={styles.profilePic} />
+        )}
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>To: {receiverName || receiverEmail}</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('UserVisit', { email: receiverEmail })}>
-            <Text style={styles.visitText}>Visit</Text>
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{receiverName || receiverEmail}</Text>
+          <Text style={styles.subHeaderTitle}>{receiverEmail}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
       <View style={styles.chatContainer}>
         <FlatList
           data={chatData}
@@ -424,6 +457,29 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 10,
+  },
+  profilePic: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  headerTitleContainer: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#05652D',
+  },
+  subHeaderTitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  onlineStatus: {
+    fontSize: 12,
+    color: '#2E8B57',
+    fontStyle: 'italic',
   },
 });
 

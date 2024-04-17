@@ -6,10 +6,21 @@ import { getDocs, query, collection, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { getAuth } from 'firebase/auth';
 
 const OrderToShipDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
   const [sellerName, setSellerName] = useState('...');
+  const [user, setUser] = useState(null); // State to store current user
+
+  // Fetch current user on component mount
+  useEffect(() => {
+    const auth = getAuth(); // Get authentication instance
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const rotateAnimation = useRef(new Animated.Value(0)).current;
 
@@ -55,8 +66,55 @@ const OrderToShipDetails = ({ route, navigation }) => {
     fetchSellerName();
   }, [order.sellerEmail]);
 
-  const contactSeller = () => {
-    // 
+  const handleChatWithSeller = async () => {
+    if (!user) {
+      console.log('User not authenticated');
+      return;
+    }
+
+    if (order.sellerEmail === user.email) {
+      Alert.alert("You are trying to chat about your product.");
+      return;
+    }
+
+    const sellerEmail = order.sellerEmail;
+    const buyerEmail = user.email;
+
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('users', 'array-contains', buyerEmail));
+      const querySnapshot = await getDocs(q);
+
+      let existingChatId = null;
+
+      querySnapshot.forEach((doc) => {
+        const chatData = doc.data();
+        if (chatData.users.includes(sellerEmail)) {
+          existingChatId = doc.id;
+        }
+      });
+
+      if (existingChatId) {
+        navigation.navigate('Chat', {
+          chatId: existingChatId,
+          receiverEmail: sellerEmail,
+        });
+      } else {
+        const newChatRef = collection(db, 'chats');
+        const newChat = {
+          users: [buyerEmail, sellerEmail],
+          messages: [],
+        };
+
+        const docRef = await addDoc(newChatRef, newChat);
+        navigation.navigate('Chat', {
+          chatId: docRef.id,
+          receiverEmail: sellerEmail,
+        });
+      }
+    } catch (error) {
+      console.error('Error handling chat with seller:', error);
+    }
   };
 
   const cancelOrder = () => {
@@ -151,7 +209,7 @@ const OrderToShipDetails = ({ route, navigation }) => {
             </View>
             </View>
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
+          <TouchableOpacity style={styles.contactButton} onPress={handleChatWithSeller}>
             <Text style={styles.contactbuttonText}>Contact Seller</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelButton} onPress={cancelOrder}>
