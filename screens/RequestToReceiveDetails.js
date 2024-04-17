@@ -10,6 +10,7 @@ import CameraIcon from 'react-native-vector-icons/MaterialIcons';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { LinearGradient } from 'expo-linear-gradient'; 
 
 const RequestToReceiveDetails = ({ route, navigation }) => {
   const { request, donations, users } = route.params;
@@ -213,6 +214,18 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
         </View>
         <ScrollView style={styles.container}>
         <View key={request.id} style={styles.requestCard}>
+        <LinearGradient
+          colors={['#C1E1C1', '#478778']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.deliveryInfoContainer}>
+          <Text style={styles.deliveryInfoText}>
+            Your request is on the way{'\n\n'}
+            Delivery should be made 
+            between {request.deliveryStart?.toDate() ? moment(request.deliveryStart.toDate()).format('DD MMM YYYY') : 'N/A'} and {request.deliveryEnd?.toDate() ? moment(request.deliveryEnd.toDate()).format('DD MMM YYYY') : 'N/A'}
+          </Text>
+          <MaterialIcons name="local-shipping" size={40} color="#FFF" style={styles.deliveryIcon} />
+        </LinearGradient>
         <View style={styles.deliveryAddress}>
             <Text style={styles.orderTotalLabel}>Delivery Address</Text>
             <View style={styles.orderTotalRow}>
@@ -771,6 +784,22 @@ orderTotalRow: {
   justifyContent: 'space-between',
   paddingVertical: 5,
 },
+deliveryInfoContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: 15,
+},
+deliveryInfoText: {
+  color: '#fff',
+  fontWeight: 'bold',
+},
+deliveryIcon: {
+  backgroundColor: '#000000',
+  borderRadius: 30,
+  top: -32,
+},
+
 });
 
 

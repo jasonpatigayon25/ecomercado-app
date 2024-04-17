@@ -355,7 +355,7 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
       <ScrollView style={styles.container}>
       <View style={styles.orderItemContainer}>
       <LinearGradient
-          colors={['#333', '#05652D']}
+          colors={['#C1E1C1', '#478778']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={styles.deliveryInfoContainer}>
