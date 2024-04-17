@@ -62,7 +62,8 @@ const handleConfirmEndDate = (date) => {
                             await updateDoc(orderRef, {
                                 deliveryStart: Timestamp.fromDate(new Date(deliveryStart)), 
                                 deliveryEnd: Timestamp.fromDate(new Date(deliveryEnd)), 
-                                status: 'Receiving'
+                                status: 'Receiving',
+                                deliveredStatus: 'Processing',
                             });
                             setDeliveryDateModalVisible(false);
                             Alert.alert("Success", "Delivery dates set successfully.", [

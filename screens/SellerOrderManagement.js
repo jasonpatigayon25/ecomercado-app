@@ -211,7 +211,8 @@ const SellerOrderManagement = ({ navigation }) => {
                             await updateDoc(orderRef, {
                                 deliveryStart: Timestamp.fromDate(new Date(deliveryStart)), 
                                 deliveryEnd: Timestamp.fromDate(new Date(deliveryEnd)), 
-                                status: 'Receiving'
+                                status: 'Receiving',
+                                deliveredStatus: 'Processing',
                             });
                             setDeliveryDateModalVisible(false);
                             await fetchOrders();
