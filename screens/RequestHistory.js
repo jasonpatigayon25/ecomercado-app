@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, query, where, doc, getDoc, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, orderBy, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import RequesterTab from '../navbars/RequesterTab';
 
@@ -54,6 +54,69 @@ const RequestHistory = ({ navigation }) => {
         </View>
     );
 };
+
+const [user, setUser] = useState(null); 
+
+useEffect(() => {
+  const auth = getAuth();
+  const unsubscribe = auth.onAuthStateChanged((user) => {
+    setUser(user);
+  });
+  return () => unsubscribe();
+}, []);
+
+const handleChatWithDonor = async (request) => {
+  if (!user) {
+    console.log('User not authenticated');
+    return;
+  }
+
+  const donorEmails = request.donorDetails.map(detail => detail.donorEmail);
+  const requesterEmail = user.email;
+
+  try {
+    const chatsRef = collection(db, 'chats');
+    const q = query(chatsRef, where('users', 'array-contains', requesterEmail));
+    const querySnapshot = await getDocs(q);
+
+    let existingChatId = null;
+    let matchedDonorEmail = null;
+
+    querySnapshot.forEach((doc) => {
+      const chatData = doc.data();
+      for (const donorEmail of donorEmails) {
+        if (chatData.users.includes(donorEmail)) {
+          existingChatId = doc.id;
+          matchedDonorEmail = donorEmail;
+          break; 
+        }
+      }
+      if (existingChatId) return; 
+    });
+
+    if (existingChatId) {
+      navigation.navigate('Chat', {
+        chatId: existingChatId,
+        receiverEmail: matchedDonorEmail,
+      });
+    } else {
+      const newChatRef = collection(db, 'chats');
+      const newChat = {
+        users: [requesterEmail, donorEmails[0]],
+        messages: [],
+      };
+
+      const docRef = await addDoc(newChatRef, newChat);
+      navigation.navigate('Chat', {
+        chatId: docRef.id,
+        receiverEmail: donorEmails[0],
+      });
+    }
+  } catch (error) {
+    console.error('Error handling chat with donor:', error);
+  }
+};
+
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -168,8 +231,8 @@ const RequestHistory = ({ navigation }) => {
           );
         case 'To Deliver':
           return (
-            <View style={styles.noteButtonContainer}>
-              <TouchableOpacity style={styles.shipButton}>
+            <View style={styles.noteButtonContainer} >
+              <TouchableOpacity style={styles.shipButton} onPress={() => handleChatWithDonor(item)}>
                 <Text style={styles.confirmButtonText}>Contact Donor</Text>
               </TouchableOpacity>
             </View>
