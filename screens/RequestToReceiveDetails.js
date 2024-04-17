@@ -289,6 +289,12 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
                 {moment(request.dateRequested.toDate()).format('DD-MM-YYYY HH:mm')}
                 </Text>
             </View>
+            <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Delivery Time:</Text>
+                <Text style={styles.detailValue}>
+                {moment(request.deliveryStart.toDate()).format('DD-MM-YYYY HH:mm')}
+                </Text>
+            </View>
             </View>
             <View style={styles.actionButtons}>
                 <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
