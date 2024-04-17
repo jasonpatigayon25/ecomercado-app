@@ -17,6 +17,8 @@ const RequestHistory = ({ navigation }) => {
   const currentUser = auth.currentUser;
   const [selectedTab, setSelectedTab] = useState('To Approve');
 
+  const [activeRequest, setActiveRequest] = useState(null);
+
   const tabStatusMapping = {
     'To Approve': 'Pending',
     'To Deliver': 'Approved',
@@ -250,7 +252,17 @@ const handleChatWithDonor = async (request) => {
             } else if (item.deliveredStatus === 'Waiting') {
               return (
                 <View style={styles.noteButtonContainer}>
-                  <TouchableOpacity style={styles.confirmButton}>
+                  <TouchableOpacity style={styles.confirmButton}
+                  onPress={() => {
+                    setActiveRequest(item); 
+                    navigation.navigate('RequestToReceiveDetails', {
+                      request: item,
+                      donations: donations,
+                      users: users,
+                      shouldOpenConfirmModal: true 
+                    });
+                  }}
+                  >
                     <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
                   </TouchableOpacity>
                 </View>

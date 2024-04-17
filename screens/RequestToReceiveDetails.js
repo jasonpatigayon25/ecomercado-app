@@ -27,6 +27,12 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (route.params?.shouldOpenConfirmModal) {  
+      setModalVisible(true);
+    }
+  }, [route.params?.shouldOpenConfirmModal]); 
+
   const [modalVisible, setModalVisible] = useState(false);
 
   const [deliveredStatus, setDeliveredStatus] = useState(request.deliveredStatus);
