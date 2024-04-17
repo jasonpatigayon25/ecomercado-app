@@ -135,6 +135,7 @@ const handleChatWithDonor = async (request) => {
 
       setRequests(fetchedRequests);
       fetchDonations([...donationIds]); 
+      setLoading(false);
     };
 
     fetchRequests();
@@ -237,14 +238,25 @@ const handleChatWithDonor = async (request) => {
               </TouchableOpacity>
             </View>
           );
-        case 'To Receive':
-          return (
-            <View style={styles.noteButtonContainer}>
-              <TouchableOpacity style={styles.confirmButton}>
-                <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
-              </TouchableOpacity>
-            </View>
-          );
+          case 'To Receive':
+            if (item.deliveredStatus === 'Processing') {
+              return (
+                <View style={styles.noteButtonContainer}>
+                  <TouchableOpacity disabled style={styles.pendingButton}>
+                    <Text style={styles.buttonText}>Delivery In Processed...</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            } else if (item.deliveredStatus === 'Waiting') {
+              return (
+                <View style={styles.noteButtonContainer}>
+                  <TouchableOpacity style={styles.confirmButton}>
+                    <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            }
+            break;
         case 'Completed':
           return <Text style={styles.completedText}>Donations Acquired</Text>;
         case 'Taken/Declined':

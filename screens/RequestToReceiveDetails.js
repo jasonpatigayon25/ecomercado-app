@@ -368,7 +368,7 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
           </TouchableOpacity>
         ) : (
           <View style={styles.pendingButton}>
-            <Text style={styles.pendingButtonText}>{deliveredStatus === 'Processing' ? 'Pending...' : 'Delivery in Progress...'}</Text>
+            <Text style={styles.pendingButtonText}>{deliveredStatus === 'Processing' ? 'Delivery in Progress...' : 'Delivery in Progress...'}</Text>
             <Animated.Image
               source={deliveringIcon}
               style={[styles.carIcon, { transform: [{ translateX: moveCar }] }]}
