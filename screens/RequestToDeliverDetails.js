@@ -5,6 +5,7 @@ import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const RequestToDeliverDetails = ({ route, navigation }) => {
   const { request, donations, users } = route.params;
@@ -108,6 +109,13 @@ const RequestToDeliverDetails = ({ route, navigation }) => {
         </View>
         <ScrollView style={styles.container}>
         <View key={request.id} style={styles.requestCard}>
+        <View style={styles.deliveryAddress}>
+            <Text style={styles.orderTotalLabel}>Delivery Address</Text>
+            <View style={styles.orderTotalRow}>
+                <MaterialIcons name="location-on" size={20} color="#333" />
+                <Text style={styles.orderTotalValue}>{request.address}</Text>
+            </View>
+        </View>
             {/* <Text style={styles.requestTitle}>#{request.id}</Text> */}
             {request.donorDetails.map((detail, idx) => {
                 const donation = donations[detail.donationId];
@@ -473,6 +481,23 @@ visitButton: {
 visitButtonText: {
   fontSize: 12,
   fontWeight: 'bold',
+},
+deliveryAddress: {
+
+  paddingVertical: 10,
+  borderBottomWidth: 1,  
+  borderColor: '#ccc',
+  marginBottom: 10,
+},
+orderTotalLabel: {
+  fontSize: 15,
+  fontWeight: 'bold',
+  color: '#333',
+},
+orderTotalRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  paddingVertical: 5,
 },
 });
 

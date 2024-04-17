@@ -164,24 +164,6 @@ const RequestToApproveDetails = ({ route, navigation }) => {
                 {moment(request.dateRequested.toDate()).format('DD-MM-YYYY HH:mm')}
                 </Text>
             </View>
-            <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Request Time:</Text>
-                <Text style={styles.detailValue}>
-                {moment(request.dateRequested.toDate()).format('DD-MM-YYYY HH:mm')}
-                </Text>
-            </View>
-            <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Request Time:</Text>
-                <Text style={styles.detailValue}>
-                {moment(request.dateRequested.toDate()).format('DD-MM-YYYY HH:mm')}
-                </Text>
-            </View>
-            <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Request Time:</Text>
-                <Text style={styles.detailValue}>
-                {moment(request.dateRequested.toDate()).format('DD-MM-YYYY HH:mm')}
-                </Text>
-            </View>
             </View>
             <View style={styles.actionButtons}>
                 <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
