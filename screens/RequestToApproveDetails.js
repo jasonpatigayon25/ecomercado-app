@@ -74,7 +74,6 @@ const RequestToApproveDetails = ({ route, navigation }) => {
       return;
     }
   
-    // Assuming `request` is the current request object with donor details
     const donorEmails = request.donorDetails.map(detail => detail.donorEmail);
     const requesterEmail = user.email;
   
@@ -85,31 +84,28 @@ const RequestToApproveDetails = ({ route, navigation }) => {
   
       let existingChatId = null;
       let matchedDonorEmail = null;
-  
-      // Search through existing chats to find if one already exists with any of the donors
+
       querySnapshot.forEach((doc) => {
         const chatData = doc.data();
         for (const donorEmail of donorEmails) {
           if (chatData.users.includes(donorEmail)) {
             existingChatId = doc.id;
             matchedDonorEmail = donorEmail;
-            break; // Break the for loop once a match is found
+            break; 
           }
         }
-        if (existingChatId) return; // Break the forEach loop once a match is found
+        if (existingChatId) return; 
       });
-  
-      // If an existing chat with a donor is found, navigate to it
+
       if (existingChatId) {
         navigation.navigate('Chat', {
           chatId: existingChatId,
           receiverEmail: matchedDonorEmail,
         });
       } else {
-        // If no existing chat is found, create a new one with the first donor
         const newChatRef = collection(db, 'chats');
         const newChat = {
-          users: [requesterEmail, donorEmails[0]], // Include the requester and the first donor email
+          users: [requesterEmail, donorEmails[0]],
           messages: [],
         };
   
