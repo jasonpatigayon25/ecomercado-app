@@ -249,12 +249,54 @@ const confirmReceipt = async () => {
   }
 };
 
-const navigateToOrderDetails = (order) => {
-  navigation.navigate('OrderToReceiveDetails', {
-    order,
-    products,
-    shouldOpenConfirmModal: true
-  });
+const handleChatWithSeller = async (sellerEmail, user, navigation) => {
+  if (!user) {
+    console.log('User not authenticated');
+    return;
+  }
+
+  if (sellerEmail === user.email) {
+    Alert.alert("You are trying to chat about your product.");
+    return;
+  }
+
+  const buyerEmail = user.email;
+
+  try {
+    const chatsRef = collection(db, 'chats');
+    const q = query(chatsRef, where('users', 'array-contains', buyerEmail));
+    const querySnapshot = await getDocs(q);
+
+    let existingChatId = null;
+
+    querySnapshot.forEach((doc) => {
+      const chatData = doc.data();
+      if (chatData.users.includes(sellerEmail)) {
+        existingChatId = doc.id;
+      }
+    });
+
+    if (existingChatId) {
+      navigation.navigate('Chat', {
+        chatId: existingChatId,
+        receiverEmail: sellerEmail,
+      });
+    } else {
+      const newChatRef = collection(db, 'chats');
+      const newChat = {
+        users: [buyerEmail, sellerEmail],
+        messages: [],
+      };
+
+      const docRef = await addDoc(newChatRef, newChat);
+      navigation.navigate('Chat', {
+        chatId: docRef.id,
+        receiverEmail: sellerEmail,
+      });
+    }
+  } catch (error) {
+    console.error('Error handling chat with seller:', error);
+  }
 };
 
   const renderOrderItem = ({ item: order }) => {
@@ -332,7 +374,7 @@ const navigateToOrderDetails = (order) => {
         {selectedTab === 'To Ship' && (
           <View style={styles.confirmationContainer}>
             <Text style={styles.noteText}>Your order is being processed. Please wait for the seller to confirm shipment.</Text>
-            <TouchableOpacity style={styles.shipButton} onPress={() => confirmReceipt(order.id)}>
+            <TouchableOpacity style={styles.shipButton} onPress={() => handleChatWithSeller(order.sellerEmail, user, navigation)}>
               <Text style={styles.confirmButtonText}>Contact Seller</Text>
             </TouchableOpacity>
           </View>
