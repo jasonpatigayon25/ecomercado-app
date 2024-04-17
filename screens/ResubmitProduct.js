@@ -52,7 +52,7 @@ const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, naviga
   );
 };
 
-const EditProduct = ({ route, navigation }) => {
+const ResubmitProduct = ({ route, navigation }) => {
     
     useEffect(() => {
         if (route.params?.productInfo) {
@@ -360,6 +360,8 @@ const handleSubmit = async () => {
     }
   
     try {
+        const createdAt = Timestamp.fromDate(new Date());
+        
       const productRef = doc(db, 'products', productInfo.id);
       const updateData = {
         photo: productInfo.photo,
@@ -370,6 +372,8 @@ const handleSubmit = async () => {
         description: productInfo.description,
         location: productInfo.location,
         quantity: productInfo.quantity,
+        publicationStatus: 'pending',
+        createdAt,
         shipping: {
           width: productInfo.width || null, 
           length: productInfo.length || null,
@@ -378,9 +382,10 @@ const handleSubmit = async () => {
         }
       };
   
+      // Update the document with the new product data
       await updateDoc(productRef, updateData);
       Alert.alert("Success", "Product updated successfully.");
-      navigation.goBack();  
+      navigation.goBack();  // Navigate back to the previous screen or to the dashboard
     } catch (error) {
       console.error("Error updating product:", error);
       Alert.alert("Error updating product", error.message);
@@ -1431,4 +1436,4 @@ const styles = StyleSheet.create({
                                   
 });
 
-export default EditProduct;
+export default ResubmitProduct;
