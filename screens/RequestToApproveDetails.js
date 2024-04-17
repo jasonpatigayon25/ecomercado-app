@@ -2,12 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Alert, SafeAreaView, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
-import { getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
+import { getDocs, query, collection, where, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
+import { getAuth } from 'firebase/auth';
 
 const RequestToApproveDetails = ({ route, navigation }) => {
   const { request, donations, users } = route.params;
+  const [user, setUser] = useState(null); 
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const rotateAnimation = useRef(new Animated.Value(0)).current;
 
@@ -58,8 +68,60 @@ const RequestToApproveDetails = ({ route, navigation }) => {
     );
   };
 
-  const contactSeller = () => {
-    // 
+  const handleChatWithDonor = async () => {
+    if (!user) {
+      console.log('User not authenticated');
+      return;
+    }
+  
+    // Assuming `request` is the current request object with donor details
+    const donorEmails = request.donorDetails.map(detail => detail.donorEmail);
+    const requesterEmail = user.email;
+  
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('users', 'array-contains', requesterEmail));
+      const querySnapshot = await getDocs(q);
+  
+      let existingChatId = null;
+      let matchedDonorEmail = null;
+  
+      // Search through existing chats to find if one already exists with any of the donors
+      querySnapshot.forEach((doc) => {
+        const chatData = doc.data();
+        for (const donorEmail of donorEmails) {
+          if (chatData.users.includes(donorEmail)) {
+            existingChatId = doc.id;
+            matchedDonorEmail = donorEmail;
+            break; // Break the for loop once a match is found
+          }
+        }
+        if (existingChatId) return; // Break the forEach loop once a match is found
+      });
+  
+      // If an existing chat with a donor is found, navigate to it
+      if (existingChatId) {
+        navigation.navigate('Chat', {
+          chatId: existingChatId,
+          receiverEmail: matchedDonorEmail,
+        });
+      } else {
+        // If no existing chat is found, create a new one with the first donor
+        const newChatRef = collection(db, 'chats');
+        const newChat = {
+          users: [requesterEmail, donorEmails[0]], // Include the requester and the first donor email
+          messages: [],
+        };
+  
+        const docRef = await addDoc(newChatRef, newChat);
+        navigation.navigate('Chat', {
+          chatId: docRef.id,
+          receiverEmail: donorEmails[0],
+        });
+      }
+    } catch (error) {
+      console.error('Error handling chat with donor:', error);
+    }
   };
 
   const cancelRequest = async () => {
@@ -166,8 +228,8 @@ const RequestToApproveDetails = ({ route, navigation }) => {
             </View>
             </View>
             <View style={styles.actionButtons}>
-                <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
-                    <Text style={styles.contactbuttonText}>Contact Seller</Text>
+                <TouchableOpacity style={styles.contactButton} onPress={handleChatWithDonor}>
+                    <Text style={styles.contactbuttonText}>Contact Donor</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.cancelButton} onPress={cancelRequest}>
                     <Text style={styles.cancelbuttonText}>Cancel Request</Text>
