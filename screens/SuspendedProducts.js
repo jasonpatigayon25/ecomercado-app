@@ -252,7 +252,7 @@ const SuspendedProducts = ({ navigation }) => {
             try {
               const productRef = doc(db, 'products', product.id);
               await deleteDoc(productRef);
-              Alert.alert('Success', 'Product deleted successfully.');
+              Alert.alert('Deleted', 'Product has been deleted.');
     
               setProducts(products.filter(p => p.id !== product.id));
               setIsModalVisible(false); 
@@ -538,9 +538,6 @@ const showOptions = (item, event) => {
                 }
               ]}
             >
-            <TouchableOpacity style={styles.modalButton} onPress={() => handleEdit(selectedProduct)}>
-              <Text style={styles.modalButtonText}>Edit</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.modalButton} onPress={() => handleDelete(selectedProduct)}>
               <Text style={styles.modalButtonText}>Delete</Text>
             </TouchableOpacity>
@@ -683,7 +680,7 @@ const styles = StyleSheet.create({
   },
   modalButtonText: {
     color: "#05652D",
-    fontSize: 14, 
+    fontSize: 16, 
   },
   centeredView: {
     flex: 1,

@@ -11,11 +11,10 @@ import { getAuth } from 'firebase/auth';
 const OrderToShipDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
   const [sellerName, setSellerName] = useState('...');
-  const [user, setUser] = useState(null); // State to store current user
+  const [user, setUser] = useState(null); 
 
-  // Fetch current user on component mount
   useEffect(() => {
-    const auth = getAuth(); // Get authentication instance
+    const auth = getAuth();
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
     });

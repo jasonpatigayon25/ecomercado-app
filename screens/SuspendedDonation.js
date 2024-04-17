@@ -119,7 +119,7 @@ const SuspendedDonation = ({ navigation }) => {
             try {
               const donationRef = doc(db, 'donation', donationItem.id);
               await deleteDoc(donationRef);
-              Alert.alert('Success', 'Donation deleted successfully.');
+              Alert.alert('Deleted', 'Donation has been deleted.');
     
               setDonations(donations.filter(item => item.id !== donationItem.id));
               setIsModalVisible(false); 
@@ -272,9 +272,6 @@ const SuspendedDonation = ({ navigation }) => {
                 }
               ]}
             >
-            <TouchableOpacity style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>Edit</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.modalButton} onPress={() => handleDelete(selectedProduct)}>
               <Text style={styles.modalButtonText}>Delete</Text>
             </TouchableOpacity>
