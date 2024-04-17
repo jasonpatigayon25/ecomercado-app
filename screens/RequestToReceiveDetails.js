@@ -17,6 +17,16 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
   const [confirmationModalVisible, setConfirmationModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
+  const [user, setUser] = useState(null); 
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [modalVisible, setModalVisible] = useState(false);
 
   const [deliveredStatus, setDeliveredStatus] = useState(request.deliveredStatus);
@@ -199,8 +209,56 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
     );
   };
 
-  const contactSeller = () => {
-    // 
+  const handleChatWithDonor = async () => {
+    if (!user) {
+      console.log('User not authenticated');
+      return;
+    }
+  
+    const donorEmails = request.donorDetails.map(detail => detail.donorEmail);
+    const requesterEmail = user.email;
+  
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('users', 'array-contains', requesterEmail));
+      const querySnapshot = await getDocs(q);
+  
+      let existingChatId = null;
+      let matchedDonorEmail = null;
+
+      querySnapshot.forEach((doc) => {
+        const chatData = doc.data();
+        for (const donorEmail of donorEmails) {
+          if (chatData.users.includes(donorEmail)) {
+            existingChatId = doc.id;
+            matchedDonorEmail = donorEmail;
+            break; 
+          }
+        }
+        if (existingChatId) return; 
+      });
+
+      if (existingChatId) {
+        navigation.navigate('Chat', {
+          chatId: existingChatId,
+          receiverEmail: matchedDonorEmail,
+        });
+      } else {
+        const newChatRef = collection(db, 'chats');
+        const newChat = {
+          users: [requesterEmail, donorEmails[0]],
+          messages: [],
+        };
+  
+        const docRef = await addDoc(newChatRef, newChat);
+        navigation.navigate('Chat', {
+          chatId: docRef.id,
+          receiverEmail: donorEmails[0],
+        });
+      }
+    } catch (error) {
+      console.error('Error handling chat with donor:', error);
+    }
   };
 
   return (
@@ -297,7 +355,7 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
             </View>
             </View>
             <View style={styles.actionButtons}>
-                <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
+                <TouchableOpacity style={styles.contactButton} onPress={handleChatWithDonor}>
                     <Text style={styles.contactbuttonText}>Contact Donor</Text>
                 </TouchableOpacity>
             </View>
