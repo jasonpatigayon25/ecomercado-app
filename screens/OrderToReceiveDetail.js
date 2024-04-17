@@ -21,6 +21,16 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
+  const [user, setUser] = useState(null); 
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [ratings, setRatings] = useState({});
   const [comments, setComments] = useState({});
@@ -96,8 +106,55 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     fetchSellerName();
   }, [order.sellerEmail]);
 
-  const contactSeller = () => {
-    // 
+  const handleChatWithSeller = async () => {
+    if (!user) {
+      console.log('User not authenticated');
+      return;
+    }
+
+    if (order.sellerEmail === user.email) {
+      Alert.alert("You are trying to chat about your product.");
+      return;
+    }
+
+    const sellerEmail = order.sellerEmail;
+    const buyerEmail = user.email;
+
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('users', 'array-contains', buyerEmail));
+      const querySnapshot = await getDocs(q);
+
+      let existingChatId = null;
+
+      querySnapshot.forEach((doc) => {
+        const chatData = doc.data();
+        if (chatData.users.includes(sellerEmail)) {
+          existingChatId = doc.id;
+        }
+      });
+
+      if (existingChatId) {
+        navigation.navigate('Chat', {
+          chatId: existingChatId,
+          receiverEmail: sellerEmail,
+        });
+      } else {
+        const newChatRef = collection(db, 'chats');
+        const newChat = {
+          users: [buyerEmail, sellerEmail],
+          messages: [],
+        };
+
+        const docRef = await addDoc(newChatRef, newChat);
+        navigation.navigate('Chat', {
+          chatId: docRef.id,
+          receiverEmail: sellerEmail,
+        });
+      }
+    } catch (error) {
+      console.error('Error handling chat with seller:', error);
+    }
   };
 
   // 
@@ -441,7 +498,7 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
             </View>
             </View>
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.contactButton} onPress={contactSeller}>
+          <TouchableOpacity style={styles.contactButton} onPress={handleChatWithSeller}>
             <Text style={styles.buttonText}>Contact Seller</Text>
           </TouchableOpacity>
         </View>
@@ -454,7 +511,7 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
           </TouchableOpacity>
         ) : (
           <View style={styles.pendingButton}>
-            <Text style={styles.pendingButtonText}>{deliveredStatus === 'Processing' ? 'Delivery in Pogress...' : 'Delivered...'}</Text>
+            <Text style={styles.pendingButtonText}>{deliveredStatus === 'Processing' ? 'Delivery in Pogress...' : 'Delivery in Pogress...'}</Text>
             <Animated.Image
               source={deliveringIcon}
               style={[styles.carIcon, { transform: [{ translateX: moveCar }] }]}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
-import { getDocs, query, collection, where } from 'firebase/firestore';
+import { getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -116,8 +116,39 @@ const OrderToShipDetails = ({ route, navigation }) => {
     }
   };
 
-  const cancelOrder = () => {
-    // 
+  const cancelOrder = async () => {
+    Alert.alert(
+      "Cancel Order",
+      "Are you sure you want to cancel this order?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        { 
+          text: "Yes", 
+          onPress: async () => {
+            try {
+              const orderRef = doc(db, 'orders', order.id);
+              await updateDoc(orderRef, {
+                status: 'Cancelled',
+              });
+  
+              Alert.alert(
+                "Order Cancelled",
+                "Your order has been cancelled.",
+                [
+                  { text: "OK", onPress: () => navigation.navigate('OrderHistory') }
+                ]
+              );
+            } catch (error) {
+              console.error("Error updating order status: ", error);
+              Alert.alert("Error", "Could not cancel the order at this time.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   // 
