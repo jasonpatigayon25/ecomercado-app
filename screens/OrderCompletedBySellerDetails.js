@@ -89,6 +89,24 @@ const OrderCompletedBySellerDetails = ({ route, navigation }) => {
                 {moment(order.dateOrdered.toDate()).format('DD-MM-YYYY HH:mm')}
                 </Text>
             </View>
+            <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Payment Time:</Text>
+                <Text style={styles.detailValue}>
+                {moment(order.dateDelivered.toDate()).format('DD-MM-YYYY HH:mm')}
+                </Text>
+            </View>
+            <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Ship Time:</Text>
+                <Text style={styles.detailValue}>
+                {moment(order.deliveryStart.toDate()).format('DD-MM-YYYY HH:mm')}
+                </Text>
+            </View>
+            <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Completed Time:</Text>
+                <Text style={styles.detailValue}>
+                {moment(order.dateReceived.toDate()).format('DD-MM-YYYY HH:mm')}
+                </Text>
+            </View>
             </View>
         <View style={styles.totalPriceContainer}>
           <Text style={styles.orderTotalLabel}>Total:</Text>

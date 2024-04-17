@@ -144,7 +144,7 @@ const OrderCompletedDetails = ({ route, navigation }) => {
             <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Payment Time:</Text>
                 <Text style={styles.detailValue}>
-                {moment(order.dateReceived.toDate()).format('DD-MM-YYYY HH:mm')}
+                {moment(order.dateDelivered.toDate()).format('DD-MM-YYYY HH:mm')}
                 </Text>
             </View>
             <View style={styles.detailRow}>
