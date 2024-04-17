@@ -379,20 +379,27 @@ const handleChatWithSeller = async (sellerEmail, user, navigation) => {
             </TouchableOpacity>
           </View>
         )}
-      {selectedTab === 'To Receive' && (
-          <View style={styles.confirmationContainer}>
-            <Text style={styles.noteText}>Please confirm when you've received your items.</Text>
-            <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={() => {
-                  setActiveOrder(order); 
-                  navigation.navigate('OrderToReceiveDetails', { order, products, shouldOpenConfirmModal: true });
-                }}
-              >
-                <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
-              </TouchableOpacity>
-          </View>
-        )}
+      {selectedTab === 'To Receive' && order.deliveredStatus === 'Processing' && (
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={[styles.pendingButton, { }]} disabled={true}>
+                        <Text style={styles.pendingButtonText}>Delivery In Progress...</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+            {selectedTab === 'To Receive' && order.deliveredStatus === 'Waiting' && (
+                <View style={styles.confirmationContainer}>
+                <Text style={styles.noteText}>Please confirm when you've received your items.</Text>
+                <TouchableOpacity
+                    style={styles.confirmButton}
+                    onPress={() => {
+                      setActiveOrder(order); 
+                      navigation.navigate('OrderToReceiveDetails', { order, products, shouldOpenConfirmModal: true });
+                    }}
+                  >
+                    <Text style={styles.confirmButtonText}>Confirm Receipt</Text>
+                  </TouchableOpacity>
+              </View>
+            )}
         {selectedTab === 'Cancelled' && (
           <View style={styles.confirmationContainer}>
             <Text style={styles.noteText}>Please press button if you wish to cart the items again.</Text>
