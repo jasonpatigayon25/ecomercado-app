@@ -13,6 +13,8 @@ const UserVisit = ({ route, navigation }) => {
   const [followingCount, setFollowingCount] = useState(0);
 
   const backgroundUserIcon = require('../assets/background-user.webp'); 
+  const [backgroundImage, setBackgroundImage] = useState(require('../assets/background-user.webp')); // Default background image
+
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -87,33 +89,44 @@ const UserVisit = ({ route, navigation }) => {
     const fetchUserDetails = async () => {
       setIsProductsLoading(true);
       setIsDonationsLoading(true);
-  
+
       const q = query(collection(db, 'users'), where('email', '==', email));
       const userQuerySnapshot = await getDocs(q);
       if (!userQuerySnapshot.empty) {
         const userData = userQuerySnapshot.docs[0].data();
         setProfile(userData);
-        
+
+        // Check if the user is a registered seller
+        const registeredSellerQuery = query(collection(db, 'registeredSeller'), where('email', '==', email));
+        const registeredSellerSnapshot = await getDocs(registeredSellerQuery);
+        if (!registeredSellerSnapshot.empty) {
+          const registeredSellerData = registeredSellerSnapshot.docs[0].data();
+          setProfile({ ...userData, sellerName: registeredSellerData.sellerName });
+          if (registeredSellerData.backgroundImage) {
+            setBackgroundImage({ uri: registeredSellerData.backgroundImage });
+          }
+        }
+
         const averageRatingQuery = query(collection(db, 'userAverageRating'), where('email', '==', email));
         const averageRatingSnapshot = await getDocs(averageRatingQuery);
         if (!averageRatingSnapshot.empty) {
           const averageRatingData = averageRatingSnapshot.docs[0].data();
           setAverageRating(averageRatingData.averageRating || 0);
         }
-  
+
         const productsQuery = query(collection(db, 'products'), where('seller_email', '==', email), orderBy('createdAt', 'desc'));
         const productsSnapshot = await getDocs(productsQuery);
         const productsList = productsSnapshot.docs.map((doc) => ({
-          id: doc.id, 
+          id: doc.id,
           ...doc.data(),
         }));
         setProducts(productsList);
         setIsProductsLoading(false);
-  
+
         const donationsQuery = query(collection(db, 'donation'), where('donor_email', '==', email), orderBy('createdAt', 'desc'));
         const donationsSnapshot = await getDocs(donationsQuery);
         const donationsList = donationsSnapshot.docs.map(doc => ({
-          id: doc.id, 
+          id: doc.id,
           ...doc.data(),
         }));
         setDonations(donationsList);
@@ -123,9 +136,10 @@ const UserVisit = ({ route, navigation }) => {
         setIsDonationsLoading(false);
       }
     };
-  
+
     fetchUserDetails();
   }, [email]);
+
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -162,9 +176,9 @@ const UserVisit = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollableContent}>
-      <View style={styles.profileHeader}>
-        <Image source={backgroundUserIcon} style={styles.profileBackground} />
-      </View>
+        <View style={styles.profileHeader}>
+          <Image source={backgroundImage} style={styles.profileBackground} />
+        </View>
 
       <View style={styles.profileInfo}>
         <View style={styles.userPhotoContainer}>
@@ -174,6 +188,7 @@ const UserVisit = ({ route, navigation }) => {
             <Icon name="user" size={100} color="#05652D" />
           )}
         </View>
+        <Text style={styles.sellerName}>{profile.sellerName}</Text> 
         <Text style={styles.userName}>{profile.firstName} {profile.lastName}</Text>
         <Text style={styles.userEmail}>{profile.email}</Text>
         <View style={styles.followContainer}>
@@ -473,9 +488,8 @@ userPhoto: {
   height: '100%',
 },
 userName: {
-  fontSize: 24,
+  fontSize: 20,
   fontWeight: 'bold',
-  color: '#05652D',
   marginTop: 8,
 },
 userEmail: {
@@ -495,6 +509,12 @@ followText: {
 countText: {
   fontWeight: 'bold',
   color: '#05652D',
+},
+sellerName: {
+  fontSize: 24,
+  fontWeight: 'bold',
+  color: '#05652D',
+  marginBottom: 2,
 },
 });
 
