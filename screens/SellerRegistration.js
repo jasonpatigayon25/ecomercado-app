@@ -116,9 +116,9 @@ const SellerRegistration = ({ navigation }) => {
     }
   };
   
-  const pickImage = async (type) => {
+  const pickImage = async (sourceType) => {
     let result;
-    if (type === "camera") {
+    if (sourceType === "camera") {
       result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -141,24 +141,43 @@ const SellerRegistration = ({ navigation }) => {
   };
   
   const handleProfilePhotoUpload = async () => {
-    try {
-      const uploadUrl = await pickImage('gallery');
-      if (uploadUrl) {
-        setProfilePhotoUri(uploadUrl);
-      }
-    } catch (error) {
-      console.error("Error uploading profile photo:", error);
-    }
+    Alert.alert(
+      'Select Photo',
+      'Choose a photo source',
+      [
+        { text: 'Take Photo', onPress: () => handlePhotoSourceSelection('profile', 'camera') },
+        { text: 'Choose from Gallery', onPress: () => handlePhotoSourceSelection('profile', 'library') },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+      { cancelable: true }
+    );
   };
   
   const handleBackgroundPhotoUpload = async () => {
+    Alert.alert(
+      'Select Photo',
+      'Choose a photo source',
+      [
+        { text: 'Take Photo', onPress: () => handlePhotoSourceSelection('background', 'camera') },
+        { text: 'Choose from Gallery', onPress: () => handlePhotoSourceSelection('background', 'library') },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handlePhotoSourceSelection = async (photoType, sourceType) => {
     try {
-      const uploadUrl = await pickImage('gallery');
+      const uploadUrl = await pickImage(sourceType);
       if (uploadUrl) {
-        setBackgroundPhotoUri(uploadUrl);
+        if (photoType === 'profile') {
+          setProfilePhotoUri(uploadUrl);
+        } else if (photoType === 'background') {
+          setBackgroundPhotoUri(uploadUrl);
+        }
       }
     } catch (error) {
-      console.error("Error uploading background photo:", error);
+      console.error(`Error uploading ${photoType} photo:`, error);
     }
   };
 
@@ -211,28 +230,28 @@ const SellerRegistration = ({ navigation }) => {
           editable={false}
         />
         <View>
-  <Text style={styles.label}>
-    Profile Photo:
-  </Text>
-  <TouchableOpacity style={styles.addPhotoContainer} onPress={handleProfilePhotoUpload}>
-    {profilePhotoUri ? (
-      <Image source={{ uri: profilePhotoUri }} style={styles.photoImage} />
-    ) : (
-      <Icon name="camera" size={24} color="#D3D3D3" style={styles.addPhotoIcon} />
-    )}
-  </TouchableOpacity>
+          <Text style={styles.label}>
+            Profile Photo:
+          </Text>
+          <TouchableOpacity style={styles.addPhotoContainer} onPress={handleProfilePhotoUpload}>
+            {profilePhotoUri ? (
+              <Image source={{ uri: profilePhotoUri }} style={styles.photoImage} />
+            ) : (
+              <Icon name="camera" size={24} color="#D3D3D3" style={styles.addPhotoIcon} />
+            )}
+          </TouchableOpacity>
 
-  <Text style={styles.label}>
-    Background Photo:
-  </Text>
-  <TouchableOpacity style={styles.addPhotoContainer} onPress={handleBackgroundPhotoUpload}>
-    {backgroundPhotoUri ? (
-      <Image source={{ uri: backgroundPhotoUri }} style={styles.photoImage} />
-    ) : (
-      <Icon name="camera" size={24} color="#D3D3D3" style={styles.addPhotoIcon} />
-    )}
-  </TouchableOpacity>
-</View>
+          <Text style={styles.label}>
+            Background Photo:
+          </Text>
+          <TouchableOpacity style={styles.addPhotoContainer} onPress={handleBackgroundPhotoUpload}>
+            {backgroundPhotoUri ? (
+              <Image source={{ uri: backgroundPhotoUri }} style={styles.photoImage} />
+            ) : (
+              <Icon name="camera" size={24} color="#D3D3D3" style={styles.addPhotoIcon} />
+            )}
+          </TouchableOpacity>
+        </View>
       </ScrollView>
       <TouchableOpacity style={styles.button} onPress={handleRegistration}>
         <Text style={styles.buttonText}>Register</Text>
@@ -266,6 +285,7 @@ const SellerRegistration = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+      
     </View>
   );
 };
