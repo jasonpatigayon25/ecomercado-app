@@ -218,77 +218,79 @@ const SellerManagement = ({ navigation }) => {
             </View>
             <SellerInfoView />
             <ScrollView style={styles.scrollView}>
-                {isSeller ? (
-                    <View style={styles.transactionsRow}>
-                        <OptionItemCube onPress={() => navigation.navigate('ProductPosts')} icon="th-list" label="My Product Posts" />
-                        <OptionItemCube onPress={() => navigation.navigate('SellAddProduct')} icon="plus-circle" label="Add Product" />
-                        <OptionItemCube onPress={() => navigation.navigate('SellerOrderManagement')} icon="shopping-cart" label="Orders Management" />
-                        <OptionItemCube onPress={() => navigation.navigate('SuspendedProducts')} icon="ban" label="Suspended Products" />
-                    </View>
-                ) : (
-                    <View style={styles.nonSellerView}>
-                        <Text style={styles.noteText}>Register as a seller to access these features.</Text>
-                        <Animated.View style={[styles.registerButton, { transform: [{ scale }] }]}>
-                            <TouchableOpacity onPress={() => navigation.navigate('SellerRegistration')}>
-                                <Text style={styles.registerButtonText}>Register as a Seller</Text>
-                            </TouchableOpacity>
-                        </Animated.View>
-                    </View>
-                )}
-            </ScrollView>
-            <View style={styles.scrollableContainer}>
+            {isSeller ? (
+                <View style={styles.transactionsRow}>
+                <OptionItemCube onPress={() => navigation.navigate('ProductPosts')} icon="th-list" label="My Product Posts" />
+                <OptionItemCube onPress={() => navigation.navigate('SellAddProduct')} icon="plus-circle" label="Add Product" />
+                <OptionItemCube onPress={() => navigation.navigate('SellerOrderManagement')} icon="shopping-cart" label="Orders Management" />
+                <OptionItemCube onPress={() => navigation.navigate('SuspendedProducts')} icon="ban" label="Suspended Products" />
+                </View>
+            ) : (
+                <View style={styles.nonSellerView}>
+                <Text style={styles.noteText}>Register as a seller to access these features.</Text>
+                <Animated.View style={[styles.registerButton, { transform: [{ scale }] }]}>
+                    <TouchableOpacity onPress={() => navigation.navigate('SellerRegistration')}>
+                    <Text style={styles.registerButtonText}>Register as a Seller</Text>
+                    </TouchableOpacity>
+                </Animated.View>
+                </View>
+            )}
+            {isSeller && (
+                <View style={styles.scrollableContainer}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <ScrollableItem
+                    <ScrollableItem
                     imageSource={toApproveIcon}
                     label="To Approve"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
                     tabName="To Approve"
                     count={toApproveCount}
-                />
-                <ScrollableItem
+                    />
+                    <ScrollableItem
                     imageSource={toShipIcon}
                     label="To Ship"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
                     tabName="To Ship"
                     count={toShipCount}
-                />
-                <ScrollableItem
+                    />
+                    <ScrollableItem
                     imageSource={shippedIcon}
                     label="Shipped"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
                     tabName="Shipped"
                     count={shippedCount}
-                />
-                <ScrollableItem
+                    />
+                    <ScrollableItem
                     imageSource={completedIcon}
                     label="Completed"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
                     tabName="Completed"
                     count={completedCount}
-                />
-                <ScrollableItem
+                    />
+                    <ScrollableItem
                     imageSource={cancelledIcon}
                     label="Cancelled Orders"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
                     tabName="Cancelled"
                     count={cancelledCount}
-                />
-                <ScrollableItem
+                    />
+                    <ScrollableItem
                     imageSource={approvedIcon}
                     label="Approved Posts"
                     onPress={(tabName) => navigation.navigate('ProductPosts', { selectedTab: tabName })}
                     tabName="Approved Posts"
                     count={approvedPostsCount}
-                />
-                <ScrollableItem
+                    />
+                    <ScrollableItem
                     imageSource={pendingIcon}
                     label="Pending Posts"
                     onPress={(tabName) => navigation.navigate('ProductPosts', { selectedTab: tabName })}
                     tabName="Pending Posts"
                     count={pendingPostsCount}
-                />
+                    />
                 </ScrollView>
-            </View>
+                </View>
+            )}
+            </ScrollView>
         </View>
     );
 };

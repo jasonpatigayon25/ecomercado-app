@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import { RadioButton } from 'react-native-paper';
 import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import axios from 'axios';
+import { Dimensions } from 'react-native';
+
+const screenHeight = Dimensions.get('window').height;
 
 const SellerRegistration = ({ navigation }) => {
   const [sellerName, setSellerName] = useState('');
@@ -12,6 +16,43 @@ const SellerRegistration = ({ navigation }) => {
   const [type, setType] = useState('Individual');
   const [sellerAddress, setSellerAddress] = useState(''); 
   const [email, setEmail] = useState('');
+
+  const [locationSearchModalVisible, setLocationSearchModalVisible] = useState(false);
+  const [locationSearchQuery, setLocationSearchQuery] = useState('');
+  const [locationSearchResults, setLocationSearchResults] = useState([]);
+
+  const handleLocationSearch = async (query) => {
+    setLocationSearchQuery(query);
+  
+    if (query.length > 0) {
+      try {
+        const response = await axios.get(`https://maps.googleapis.com/maps/api/place/autocomplete/json`, {
+          params: {
+            input: query,
+            key: 'AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g', 
+            components: 'country:PH' 
+          }
+        });
+  
+        if (response.data && response.data.predictions) {
+          const locations = response.data.predictions.map(prediction => ({
+            name: prediction.description,
+            placeId: prediction.place_id 
+          }));
+          setLocationSearchResults(locations);
+        }
+      } catch (error) {
+        console.error('Error fetching location suggestions:', error);
+      }
+    } else {
+      setLocationSearchResults([]);
+    }
+  };
+
+  const handleAddressSelect = (selectedAddress) => {
+    setSellerAddress(selectedAddress); 
+    setLocationSearchModalVisible(false); 
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -87,6 +128,7 @@ const SellerRegistration = ({ navigation }) => {
           placeholder="Your Address"
           value={sellerAddress}
           onChangeText={setSellerAddress}
+          onFocus={() => setLocationSearchModalVisible(true)}
           style={styles.input}
         />
 
@@ -102,6 +144,35 @@ const SellerRegistration = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={handleRegistration}>
         <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={locationSearchModalVisible}
+        onRequestClose={() => setLocationSearchModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <TextInput
+              style={styles.modalTextInput}
+              placeholder="Search for a location"
+              value={locationSearchQuery}
+              onChangeText={handleLocationSearch}
+              autoFocus={true}
+            />
+            <ScrollView style={styles.searchResultsContainer}>
+              {locationSearchResults.map((result, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.searchResultItem}
+                  onPress={() => handleAddressSelect(result.name)}
+                >
+                  <Text style={styles.searchResultText}>{result.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -175,7 +246,56 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: '#05652D',
     fontSize: 18,
-  }
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'flex-end', 
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  modalView: {
+    height: screenHeight / 2, 
+    width: '100%',
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTextInput: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  searchResultsContainer: {
+    maxHeight: screenHeight / 2 - 80,
+  },
+  searchResultItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  searchResultText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  inputError: {
+    borderColor: 'red', 
+  },
+  errorText: {
+    fontSize: 14,
+    color: 'red',
+    alignSelf: 'flex-start',
+    marginRight: 10,
+    marginTop: 4,
+  },
 });
 
 export default SellerRegistration;
