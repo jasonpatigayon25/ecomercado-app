@@ -153,14 +153,17 @@ const UserVisit = ({ route, navigation }) => {
   
   return (
     <View style={styles.container}>
-      <View style={styles.profileHeader}>
-        <Image source={backgroundUserIcon} style={styles.profileBackground} />
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-left" size={24} color="#05652D" />
+          <Icon name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <TouchableOpacity onPress={isSubscribed ? handleUnsubscribe : handleSubscribe} style={styles.subscribeButton}>
-          <Icon name={isSubscribed ? "heart" : "heart-o"} size={24} color="#05652D" />
+          <Icon name={isSubscribed ? "heart" : "heart-o"} size={24} color="#FFFFFF" />
         </TouchableOpacity>
+      </View>
+      <ScrollView style={styles.scrollableContent}>
+      <View style={styles.profileHeader}>
+        <Image source={backgroundUserIcon} style={styles.profileBackground} />
       </View>
 
       <View style={styles.profileInfo}>
@@ -178,7 +181,7 @@ const UserVisit = ({ route, navigation }) => {
           {/* <Text style={styles.followText}>Following: <Text style={styles.countText}>{followingCount}</Text></Text> */}
         </View>
       </View>
-      <ScrollView style={styles.scrollableContent}>
+      
       <View style={styles.content}>
       {/* <View style={styles.profileInfoContainer}>
     <View style={styles.profileImageContainer}>
@@ -277,15 +280,12 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#05652D', 
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 4,
+    backgroundColor: '#05652D',
+    paddingHorizontal: 10,
+    paddingTop: 44,
+    paddingBottom: 10,
   },
   backButtonIcon: {
     marginRight: 10,
@@ -441,18 +441,18 @@ backButton: {
   top: 16,
   left: 16,
   zIndex: 10,
-  backgroundColor: '#FFFFFF', 
-  borderRadius: 20,
-  padding: 6, 
+  // backgroundColor: '#FFFFFF', 
+  // borderRadius: 20,
+  // padding: 6, 
 },
 subscribeButton: {
   position: 'absolute',
   top: 16,
   right: 16,
   zIndex: 10,
-  backgroundColor: '#FFFFFF', 
-  borderRadius: 20,
-  padding: 6, 
+  // backgroundColor: '#FFFFFF', 
+  // borderRadius: 20,
+  // padding: 6, 
 },
 profileInfo: {
   alignItems: 'left',
