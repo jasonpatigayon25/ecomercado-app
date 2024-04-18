@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, Image } from 'react-native';
 import { RadioButton } from 'react-native-paper';
 import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../config/firebase';
+import * as ImagePicker from 'expo-image-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
 import { Dimensions } from 'react-native';
@@ -16,6 +18,8 @@ const SellerRegistration = ({ navigation }) => {
   const [type, setType] = useState('Individual');
   const [sellerAddress, setSellerAddress] = useState(''); 
   const [email, setEmail] = useState('');
+  const [profilePhotoUri, setProfilePhotoUri] = useState(null);
+  const [backgroundPhotoUri, setBackgroundPhotoUri] = useState(null);
 
   const [locationSearchModalVisible, setLocationSearchModalVisible] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState('');
@@ -82,6 +86,8 @@ const SellerRegistration = ({ navigation }) => {
         type,
         sellerAddress, 
         email,
+        profilePhotoUri,
+        backgroundPhotoUri, 
       };
       await addDoc(collection(db, 'registeredSeller'), sellerData);
       Alert.alert('Seller registered successfully');
@@ -89,6 +95,70 @@ const SellerRegistration = ({ navigation }) => {
     } catch (error) {
       console.error('Error registering seller:', error);
       Alert.alert('Error registering seller');
+    }
+  };
+
+  const uploadImageAsync = async (uri) => {
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+  
+      const storage = getStorage();
+      const storageRef = ref(storage, 'profile/' + Date.now());
+      await uploadBytes(storageRef, blob);
+  
+      blob.close();
+  
+      return await getDownloadURL(storageRef);
+    } catch (error) {
+      console.error("Detailed error: ", error.message);
+      throw error;
+    }
+  };
+  
+  const pickImage = async (type) => {
+    let result;
+    if (type === "camera") {
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    } else {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    }
+  
+    if (!result.cancelled && result.assets) {
+      const uploadUrl = await uploadImageAsync(result.assets[0].uri);
+      return uploadUrl;
+    }
+  };
+  
+  const handleProfilePhotoUpload = async () => {
+    try {
+      const uploadUrl = await pickImage('gallery');
+      if (uploadUrl) {
+        setProfilePhotoUri(uploadUrl);
+      }
+    } catch (error) {
+      console.error("Error uploading profile photo:", error);
+    }
+  };
+  
+  const handleBackgroundPhotoUpload = async () => {
+    try {
+      const uploadUrl = await pickImage('gallery');
+      if (uploadUrl) {
+        setBackgroundPhotoUri(uploadUrl);
+      }
+    } catch (error) {
+      console.error("Error uploading background photo:", error);
     }
   };
 
@@ -140,6 +210,29 @@ const SellerRegistration = ({ navigation }) => {
           style={styles.inputEmail}
           editable={false}
         />
+        <View>
+  <Text style={styles.label}>
+    Profile Photo:
+  </Text>
+  <TouchableOpacity style={styles.addPhotoContainer} onPress={handleProfilePhotoUpload}>
+    {profilePhotoUri ? (
+      <Image source={{ uri: profilePhotoUri }} style={styles.photoImage} />
+    ) : (
+      <Icon name="camera" size={24} color="#D3D3D3" style={styles.addPhotoIcon} />
+    )}
+  </TouchableOpacity>
+
+  <Text style={styles.label}>
+    Background Photo:
+  </Text>
+  <TouchableOpacity style={styles.addPhotoContainer} onPress={handleBackgroundPhotoUpload}>
+    {backgroundPhotoUri ? (
+      <Image source={{ uri: backgroundPhotoUri }} style={styles.photoImage} />
+    ) : (
+      <Icon name="camera" size={24} color="#D3D3D3" style={styles.addPhotoIcon} />
+    )}
+  </TouchableOpacity>
+</View>
       </ScrollView>
       <TouchableOpacity style={styles.button} onPress={handleRegistration}>
         <Text style={styles.buttonText}>Register</Text>
@@ -295,6 +388,72 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginRight: 10,
     marginTop: 4,
+  },
+  modalOverlayPhoto: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainerPhoto: {
+    backgroundColor: '#05652D',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  cancelButtonTopRight: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
+  modalHeader: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 10,
+  },
+  modalSubHeader: {
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 20,
+  },
+  photoOption: {
+    alignItems: 'center',
+    padding: 10,
+    marginVertical: 10,
+  },
+  separateBorder: {
+    borderWidth: 2,
+    borderColor: '#fff',
+    borderRadius: 10,
+  },
+  photoOptionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  photoOption: {
+    alignItems: 'center',
+    padding: 10,
+    marginVertical: 10,
+    backgroundColor: '#05652D',
+    borderRadius: 8,
+  },
+  addPhotoContainer: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  addPhotoIcon: {
+    marginBottom: 5,
+  },
+  photoImage: {
+    width: 200,
+    height: 200,
+    marginBottom: 10,
   },
 });
 
