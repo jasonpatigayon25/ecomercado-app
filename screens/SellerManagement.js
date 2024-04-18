@@ -194,6 +194,9 @@ const SellerManagement = ({ navigation }) => {
     const SellerInfoView = () => (
         sellerInfo && (
             <View style={styles.sellerInfoContainer}>
+                  <TouchableOpacity onPress={() => navigation.navigate('EditSellerInfo', { sellerInfo: sellerInfo.email })}>
+            <Icon name="edit" size={24} color="#05652D" style={styles.editIcon} />
+              </TouchableOpacity>
                 <Text style={styles.sellerName}>{sellerInfo.sellerName}</Text>
                 <Text style={styles.fullName}>{sellerInfo.registeredName}</Text>
                 <View style={styles.infoRow}>
@@ -204,6 +207,7 @@ const SellerManagement = ({ navigation }) => {
                     <MaterialIcons name="place" size={20} color="#05652D" />
                     <Text style={styles.miniSubText}>{sellerInfo.sellerAddress}</Text>
                 </View>
+              
             </View>
         )
     );
@@ -435,6 +439,11 @@ const styles = StyleSheet.create({
         color: '#05652D',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    editIcon: {
+        position: 'absolute',
+        top: 20, // Adjust as needed to position the icon vertically
+        right: 20, // Adjust as needed to position the icon horizontally
     },
 });
 
