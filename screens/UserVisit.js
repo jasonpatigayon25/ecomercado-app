@@ -8,6 +8,29 @@ import { Rating } from 'react-native-ratings';
 import { getAuth } from 'firebase/auth';
 
 const UserVisit = ({ route, navigation }) => {
+
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+
+  const backgroundUserIcon = require('../assets/background-user.webp'); 
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+        if (email) {
+
+            const followersQuery = query(collection(db, 'subscriptions'), where('subscribedTo_email', '==', email));
+            const followersSnapshot = await getDocs(followersQuery);
+            setFollowersCount(followersSnapshot.size);
+
+            const followingQuery = query(collection(db, 'subscriptions'), where('subscriber_email', '==', email));
+            const followingSnapshot = await getDocs(followingQuery);
+            setFollowingCount(followingSnapshot.size);
+        }
+    };
+
+    fetchCounts();
+}, [email]);
+
   const [profile, setProfile] = useState({});
   const [averageRating, setAverageRating] = useState(0);
   const { email } = route.params;
@@ -130,48 +153,50 @@ const UserVisit = ({ route, navigation }) => {
   
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#05652D" style={styles.backButtonIcon} />
+      <View style={styles.profileHeader}>
+        <Image source={backgroundUserIcon} style={styles.profileBackground} />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="arrow-left" size={24} color="#05652D" />
         </TouchableOpacity>
-        <Text style={styles.title}> </Text>
-        <TouchableOpacity onPress={isSubscribed ? handleUnsubscribe : handleSubscribe}>
-        <Icon 
-          name={isSubscribed ? "heart" : "heart-o"} 
-          size={24} 
-          color="#FFFFFF" 
-          style={styles.subscribeIcon} 
-        />
-      </TouchableOpacity>
+        <TouchableOpacity onPress={isSubscribed ? handleUnsubscribe : handleSubscribe} style={styles.subscribeButton}>
+          <Icon name={isSubscribed ? "heart" : "heart-o"} size={24} color="#05652D" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.profileInfo}>
+        <View style={styles.userPhotoContainer}>
+          {profile.photoUrl ? (
+            <Image source={{ uri: profile.photoUrl }} style={styles.userPhoto} />
+          ) : (
+            <Icon name="user" size={100} color="#05652D" />
+          )}
+        </View>
+        <Text style={styles.userName}>{profile.firstName} {profile.lastName}</Text>
+        <Text style={styles.userEmail}>{profile.email}</Text>
+        <View style={styles.followContainer}>
+          <Text style={styles.followText}>Followers: <Text style={styles.countText}>{followersCount}</Text></Text>
+          {/* <Text style={styles.followText}>Following: <Text style={styles.countText}>{followingCount}</Text></Text> */}
+        </View>
       </View>
       <ScrollView style={styles.scrollableContent}>
       <View style={styles.content}>
-      <View style={styles.profileInfoContainer}>
-        <View style={styles.profileImageContainer}>
-          {profile.photoUrl ? (
+      {/* <View style={styles.profileInfoContainer}>
+    <View style={styles.profileImageContainer}>
+        {profile.photoUrl ? (
             <Image source={{ uri: profile.photoUrl }} style={styles.profileImage} />
-          ) : (
+        ) : (
             <Icon name="user" size={80} color="#05652D" />
-          )}
+        )}
+    </View>
+    <View style={styles.accountInfoContainer}>
+        <Text style={styles.name}>{profile.firstName} {profile.lastName}</Text>
+        <Text style={styles.email}>{profile.email}</Text>
+        <View style={styles.followerFollowingContainer}>
+            <Text style={styles.followText}>Followers: <Text style={styles.countText}>{followersCount}</Text></Text>
+            <Text style={styles.followText}>Following: <Text style={styles.countText}>{followingCount}</Text></Text>
         </View>
-        <View style={styles.accountInfoContainer}>
-          <Text style={styles.name}>{profile.firstName} {profile.lastName}</Text>
-          <Text style={styles.email}>{profile.email}</Text>
-          {averageRating > 0 && (
-              <View style={styles.ratingContainer}>
-                <Rating
-                  type="star"
-                  ratingCount={5}
-                  imageSize={20}
-                  readonly
-                  startingValue={averageRating}
-                  style={styles.rating}
-                />
-                <Text style={styles.ratingText}>{averageRating.toFixed(1)}</Text>
-              </View>
-            )}
           </View>
-        </View>
+      </View> */}
         <View style={styles.divider} />
         <Text style={styles.productTitle}>Products</Text>
         <View style={styles.productsContainer}>
@@ -244,6 +269,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F8F8',
+  },
+  profileHeader: {
+    position: 'relative',
+    height: 200,
+    backgroundColor: '#90EE90',
   },
   header: {
     flexDirection: 'row',
@@ -396,6 +426,76 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+  followerFollowingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10
+},
+profileBackground: {
+  width: '100%',
+  height: '100%',
+  resizeMode: 'cover'
+},
+backButton: {
+  position: 'absolute',
+  top: 16,
+  left: 16,
+  zIndex: 10,
+  backgroundColor: '#FFFFFF', 
+  borderRadius: 20,
+  padding: 6, 
+},
+subscribeButton: {
+  position: 'absolute',
+  top: 16,
+  right: 16,
+  zIndex: 10,
+  backgroundColor: '#FFFFFF', 
+  borderRadius: 20,
+  padding: 6, 
+},
+profileInfo: {
+  alignItems: 'left',
+  marginTop: -50,
+  marginLeft: 20,
+},
+userPhotoContainer: {
+  width: 100,
+  height: 100,
+  borderRadius: 50,
+  borderWidth: 4,
+  borderColor: '#FFFFFF',
+  overflow: 'hidden',
+
+},
+userPhoto: {
+  width: '100%',
+  height: '100%',
+},
+userName: {
+  fontSize: 24,
+  fontWeight: 'bold',
+  color: '#05652D',
+  marginTop: 8,
+},
+userEmail: {
+  fontSize: 16,
+  color: '#666666',
+},
+followContainer: {
+  flexDirection: 'row',
+  justifyContent: 'left',
+  width: '100%',
+  marginTop: 8,
+},
+followText: {
+  fontSize: 14,
+  color: '#333333',
+},
+countText: {
+  fontWeight: 'bold',
+  color: '#05652D',
+},
 });
 
 export default UserVisit;
