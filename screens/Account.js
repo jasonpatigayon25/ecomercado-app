@@ -3,12 +3,15 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image} from 'reac
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Alert } from 'react-native';
 import { getAuth, signOut } from 'firebase/auth';
-import { query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { query, where, getDocs, doc, getDoc, collection } from 'firebase/firestore';
 import { db, usersCollection } from '../config/firebase';
 import { useFocusEffect } from '@react-navigation/native'; 
 import { Rating } from 'react-native-ratings';
 
 const Account = ({ navigation }) => {
+
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   const marketIcon = require('../assets/market.png');
   const donationIcon = require('../assets/donation.png');
@@ -63,9 +66,42 @@ const Account = ({ navigation }) => {
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchUserDetails();
+        fetchUserDetails(); 
+        fetchFollowersCount(); 
+        fetchFollowingCount(); 
     }, [user])
-  );
+);
+
+  const fetchFollowersCount = async () => {
+    if (user) {
+        const subscribersQuery = query(
+            collection(db, "subscriptions"), 
+            where("subscribedTo_email", "==", user.email)
+        );
+        try {
+            const querySnapshot = await getDocs(subscribersQuery);
+            setFollowersCount(querySnapshot.size); 
+        } catch (error) {
+            console.error("Error fetching subscriber count:", error);
+        }
+    }
+};
+
+const fetchFollowingCount = async () => {
+  if (user) {
+      const followingQuery = query(
+          collection(db, "subscriptions"), 
+          where("subscriber_email", "==", user.email)
+      );
+      try {
+          const querySnapshot = await getDocs(followingQuery);
+          setFollowingCount(querySnapshot.size); 
+      } catch (error) {
+          console.error("Error fetching following count:", error);
+      }
+  }
+};
+
 
   const getInitials = (firstName, lastName) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -128,33 +164,26 @@ const Account = ({ navigation }) => {
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.content2}>
-        <View style={styles.accountInfoContainer}>
-          <TouchableOpacity style={styles.editIconContainer} onPress={handleEditProfile}> 
-            <Icon name="edit" size={20} color="#05652D" style={styles.editIcon} />
-          </TouchableOpacity>
-          <View style={styles.profileImageContainer}>
-            {profile.photoUrl ? (
-              <Image source={{ uri: profile.photoUrl }} style={styles.profileImage} />
-            ) : (
-              <Text style={styles.profileImageIcon}>{getInitials(profile.firstName, profile.lastName)}</Text>
-            )}
-          </View>
-          <View>
-            <Text style={styles.name}>{`${profile.firstName} ${profile.lastName}`}</Text>
-            <Text style={styles.email}>{profile.email}</Text>
-            <View>
-              <Rating
-                type="star"
-                ratingCount={5}
-                imageSize={20}
-                readonly
-                startingValue={averageRating}
-                style={styles.rating}
-              />
-              <Text style={styles.ratingText}>{averageRating.toFixed(1)}</Text>
-            </View>
-          </View>
+      <View style={styles.accountInfoContainer}>
+    <TouchableOpacity style={styles.editIconContainer} onPress={handleEditProfile}> 
+        <Icon name="edit" size={20} color="#05652D" style={styles.editIcon} />
+    </TouchableOpacity>
+    <View style={styles.profileImageContainer}>
+        {profile.photoUrl ? (
+            <Image source={{ uri: profile.photoUrl }} style={styles.profileImage} />
+        ) : (
+            <Text style={styles.profileImageIcon}>{getInitials(profile.firstName, profile.lastName)}</Text>
+        )}
+    </View>
+    <View>
+        <Text style={styles.name}>{`${profile.firstName} ${profile.lastName}`}</Text>
+        <Text style={styles.email}>{profile.email}</Text>
+        <View style={styles.followerFollowingContainer}>
+            <Text style={styles.followText}>Followers: <Text style={styles.countText}>{followersCount}</Text></Text>
+            <Text style={styles.followText}>Following: <Text style={styles.countText}>{followingCount}</Text></Text>
         </View>
+    </View>
+</View>
         <View style={styles.divider} />
         <Text style={styles.settingTitle}>My Transactions</Text>
         <View style={styles.optionsContainer}>
@@ -427,6 +456,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#05652D',
   },
+  followText: {
+    fontSize: 12,
+    color: 'black', 
+},
+countText: {
+    color: '#05652D', 
+    fontWeight: 'bold'
+},
+followerFollowingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10
+}
 });
 
 export default Account;
