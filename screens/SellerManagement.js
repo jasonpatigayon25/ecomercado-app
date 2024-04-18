@@ -194,9 +194,9 @@ const SellerManagement = ({ navigation }) => {
     const SellerInfoView = () => (
         sellerInfo && (
             <View style={styles.sellerInfoContainer}>
-                  <TouchableOpacity onPress={() => navigation.navigate('EditSellerInfo', { sellerInfo: sellerInfo.email })}>
+            <TouchableOpacity onPress={() => navigation.navigate('EditSellerInfo')}>
             <Icon name="edit" size={24} color="#05652D" style={styles.editIcon} />
-              </TouchableOpacity>
+            </TouchableOpacity>
                 <Text style={styles.sellerName}>{sellerInfo.sellerName}</Text>
                 <Text style={styles.fullName}>{sellerInfo.registeredName}</Text>
                 <View style={styles.infoRow}>

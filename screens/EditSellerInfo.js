@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, Image } from 'react-native';
 import { RadioButton } from 'react-native-paper';
 import { getAuth } from 'firebase/auth';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../config/firebase';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,6 +20,8 @@ const EditSellerInfo = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [profilePhotoUri, setProfilePhotoUri] = useState(null);
   const [backgroundPhotoUri, setBackgroundPhotoUri] = useState(null);
+
+  const [sellerDocId, setSellerDocId] = useState('');
 
   const [locationSearchModalVisible, setLocationSearchModalVisible] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState('');
@@ -63,38 +65,46 @@ const EditSellerInfo = ({ navigation }) => {
       const auth = getAuth();
       const user = auth.currentUser;
       if (user) {
-        const q = query(collection(db, 'users'), where('uid', '==', user.uid));
+        setEmail(user.email);
+        const q = query(collection(db, 'registeredSeller'), where('email', '==', user.email));
         const querySnapshot = await getDocs(q);
-        const userData = querySnapshot.docs[0].data();
-
-        setSellerName(`${userData.firstName}'s Surplus`);
-        setRegisteredName(`${userData.firstName} ${userData.lastName}`);
-        setSellerAddress(userData.address); 
-        setEmail(userData.email);
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          setSellerName(userData.sellerName);
+          setRegisteredName(userData.registeredName);
+          setType(userData.type);
+          setSellerAddress(userData.sellerAddress);
+          setProfilePhotoUri(userData.profilePhotoUri);
+          setBackgroundPhotoUri(userData.backgroundPhotoUri);
+          setSellerDocId(querySnapshot.docs[0].id);
+        }
       }
     };
 
     fetchUserData();
   }, []);
 
-  const handleRegistration = async () => {
-    console.log('Registering seller:', sellerName, sellerAddress, email);
+  const handleUpdateProfile = async () => {
+    console.log('Updating seller profile:', sellerName, sellerAddress, email);
     try {
-      const sellerData = {
-        sellerName,
-        registeredName,
-        type,
-        sellerAddress, 
-        email,
-        profilePhotoUri,
-        backgroundPhotoUri, 
-      };
-      await addDoc(collection(db, 'registeredSeller'), sellerData);
-      Alert.alert('Seller registered successfully');
-      navigation.goBack();
+      if (sellerDocId) {
+        await updateDoc(doc(db, 'registeredSeller', sellerDocId), {
+          sellerName,
+          registeredName,
+          type,
+          sellerAddress,
+          profilePhotoUri,
+          backgroundPhotoUri,
+        });
+        Alert.alert('Seller profile updated successfully');
+        navigation.goBack();
+      } else {
+        console.error('Document ID not found for the seller');
+        Alert.alert('Error updating seller profile');
+      }
     } catch (error) {
-      console.error('Error registering seller:', error);
-      Alert.alert('Error registering seller');
+      console.error('Error updating seller profile:', error);
+      Alert.alert('Error updating seller profile');
     }
   };
 
@@ -190,7 +200,7 @@ const EditSellerInfo = ({ navigation }) => {
       <Text style={styles.title}>Seller Registration</Text>
       </View>
       <ScrollView style={styles.scrollContainer}>
-        <Text style={styles.label}>Seller Name:</Text>
+        <Text style={styles.label}>Edit Seller Profile:</Text>
         <TextInput
           placeholder="Seller Name"
           value={sellerName}
@@ -253,8 +263,8 @@ const EditSellerInfo = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <TouchableOpacity style={styles.button} onPress={handleRegistration}>
-        <Text style={styles.buttonText}>Register</Text>
+      <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
+        <Text style={styles.buttonText}>Update Profile</Text>
       </TouchableOpacity>
       <Modal
         animationType="slide"
