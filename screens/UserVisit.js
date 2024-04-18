@@ -11,10 +11,12 @@ const UserVisit = ({ route, navigation }) => {
 
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [backgroundProfileUri, setBackgroundProfileUri] = useState(null);
+  const [profilePhotoUri, setProfilePhotoUri] = useState(null);
 
   const backgroundUserIcon = require('../assets/background-user.webp'); 
-  const [backgroundImage, setBackgroundImage] = useState(require('../assets/background-user.webp')); // Default background image
-
+  const [backgroundImage, setBackgroundImage] = useState(require('../assets/background-user.webp')); 
+  const [profileImage, setProfileImage] = useState(null);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -30,8 +32,36 @@ const UserVisit = ({ route, navigation }) => {
         }
     };
 
-    fetchCounts();
-}, [email]);
+    const fetchProfileImages = async () => {
+      const userQuery = query(collection(db, 'users'), where('email', '==', email));
+      const userQuerySnapshot = await getDocs(userQuery);
+      if (!userQuerySnapshot.empty) {
+        const userData = userQuerySnapshot.docs[0].data();
+        if (userData.backgroundProfileUri) {
+          setBackgroundProfileUri(userData.backgroundProfileUri);
+        }
+        if (userData.profilePhotoUri) {
+          setProfilePhotoUri(userData.profilePhotoUri);
+        }
+      }
+  
+      const registeredSellerQuery = query(collection(db, 'registeredSeller'), where('email', '==', email));
+      const registeredSellerSnapshot = await getDocs(registeredSellerQuery);
+      if (!registeredSellerSnapshot.empty) {
+        const registeredSellerData = registeredSellerSnapshot.docs[0].data();
+        if (registeredSellerData.backgroundPhotoUri) {
+          setBackgroundImage({ uri: registeredSellerData.backgroundPhotoUri });
+        }
+
+        if (registeredSellerData.profilePhotoUri) {
+          setProfilePhotoUri(registeredSellerData.profilePhotoUri);
+        }
+      }
+    };
+  
+    fetchProfileImages();
+  }, [email]);
+
 
   const [profile, setProfile] = useState({});
   const [averageRating, setAverageRating] = useState(0);
@@ -96,14 +126,13 @@ const UserVisit = ({ route, navigation }) => {
         const userData = userQuerySnapshot.docs[0].data();
         setProfile(userData);
 
-        // Check if the user is a registered seller
         const registeredSellerQuery = query(collection(db, 'registeredSeller'), where('email', '==', email));
         const registeredSellerSnapshot = await getDocs(registeredSellerQuery);
         if (!registeredSellerSnapshot.empty) {
           const registeredSellerData = registeredSellerSnapshot.docs[0].data();
           setProfile({ ...userData, sellerName: registeredSellerData.sellerName });
-          if (registeredSellerData.backgroundImage) {
-            setBackgroundImage({ uri: registeredSellerData.backgroundImage });
+          if (registeredSellerData.backgroundPhotoUri) {
+            setBackgroundImage({ uri: registeredSellerData.backgroundPhotoUri });
           }
         }
 
@@ -180,14 +209,14 @@ const UserVisit = ({ route, navigation }) => {
           <Image source={backgroundImage} style={styles.profileBackground} />
         </View>
 
-      <View style={styles.profileInfo}>
-        <View style={styles.userPhotoContainer}>
-          {profile.photoUrl ? (
-            <Image source={{ uri: profile.photoUrl }} style={styles.userPhoto} />
-          ) : (
-            <Icon name="user" size={100} color="#05652D" />
-          )}
-        </View>
+        <View style={styles.profileInfo}>
+          <View style={styles.userPhotoContainer}>
+            {profilePhotoUri ? (
+              <Image source={{ uri: profilePhotoUri }} style={styles.userPhoto} />
+            ) : (
+              <Icon name="user" size={100} color="#05652D" />
+            )}
+          </View>
         <Text style={styles.sellerName}>{profile.sellerName}</Text> 
         <Text style={styles.userName}>{profile.firstName} {profile.lastName}</Text>
         <Text style={styles.userEmail}>{profile.email}</Text>
