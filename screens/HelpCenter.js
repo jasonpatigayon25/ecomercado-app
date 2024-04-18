@@ -142,15 +142,9 @@ const HelpCenter = ({ navigation }) => {
             <TouchableOpacity style={styles.helpListItem} onPress={() => setHC12Visible(true)}>
               <Text style={styles.helpListItemText}>How to browse and search for products</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.helpListItem} onPress={() => setHC13Visible(true)}>
-              <Text style={styles.helpListItemText}>How to buy, sell, and donate</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.helpListItem} onPress={() => setHC14Visible(true)}>
-              <Text style={styles.helpListItemText}>How to communicate with other users</Text>
-            </TouchableOpacity>
           </View>
 
-          <View style={styles.helpListSection}>
+          {/* <View style={styles.helpListSection}>
             <Text style={styles.helpListSectionTitle}>MANAGING YOUR ACCOUNT</Text>
             <TouchableOpacity style={styles.helpListItem} onPress={() => setHC21Visible(true)}>
               <Text style={styles.helpListItemText}>How to update your profile information</Text>
@@ -164,7 +158,7 @@ const HelpCenter = ({ navigation }) => {
             <TouchableOpacity style={styles.helpListItem} onPress={() => setHC24Visible(true)}>
               <Text style={styles.helpListItemText}>How to view activity history</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           <View style={styles.helpListSection}>
             <Text style={styles.helpListSectionTitle}>BUYING, SELLING, AND DONATING</Text>

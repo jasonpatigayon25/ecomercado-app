@@ -20,9 +20,8 @@ const HC11 = ({ visible, onClose }) => {
           </View>
           <ScrollView style={styles.listContainer}>
             {[
-              "Go to the sign-up page.",
-              "Enter your personal details.",
-              "Confirm your email address.",
+              "Go to the Sign Up screen.",
+              "Input credentials.",
               "Set up a secure password.",
               "Complete the process and log in."
             ].map((item, index) => (

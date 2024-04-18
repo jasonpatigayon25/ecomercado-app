@@ -22,7 +22,6 @@ const HC12 = ({ visible, onClose }) => {
               {[
                 "Navigate to the 'Products' section on the main menu.",
                 "Use the search bar at the top to enter the product name or category.",
-                "Filter results by price, rating, or relevance as needed.",
                 "Click on a product for more details.",
               ].map((item, index) => (
                 <View key={index} style={styles.listItem}>

@@ -20,9 +20,9 @@ const HC13 = ({ visible, onClose }) => {
             </View>
             <ScrollView style={styles.listContainer}>
               {[
-                "To buy: Browse products, add to cart, and proceed to checkout.",
-                "To sell: Select sell option, list your item, set a price, and post it for buyers to see.",
-                "To donate: Choose the donate option, select a location or charity, and follow the instructions to donate."
+                "To buy: Browse products at Home Screen, add to cart, and proceed to checkout.",
+                "To sell: Select Register as a seller, list your item, set a price, and post it. Admin required to approve if it is",
+                "To donate: Redirect to Donate, input information, and follow the instructions to donate."
               ].map((item, index) => (
                 <View key={index} style={styles.listItem}>
                   <Text style={styles.listNumber}>{index + 1}.</Text>
