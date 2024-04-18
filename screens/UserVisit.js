@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   profileHeader: {
     position: 'relative',
     height: 200,
-    backgroundColor: '#90EE90',
+
   },
   header: {
     flexDirection: 'row',
