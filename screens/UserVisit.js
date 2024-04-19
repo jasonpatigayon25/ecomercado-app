@@ -21,6 +21,8 @@ const UserVisit = ({ route, navigation }) => {
   const [backgroundImage, setBackgroundImage] = useState(require('../assets/background-user.webp')); 
   const [profileImage, setProfileImage] = useState(null);
 
+  const [priceSortOrder, setPriceSortOrder] = useState('desc');
+
   useEffect(() => {
     const fetchCounts = async () => {
       if (email) {
@@ -273,10 +275,9 @@ const UserVisit = ({ route, navigation }) => {
       const productList = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        price: parseFloat(doc.data().price) // Convert price to a number
+        price: parseFloat(doc.data().price) 
       }));
     
-      // Sort the products based on their numerical prices
       productList.sort((a, b) => a.price - b.price);
     
       console.log(productList);
@@ -376,9 +377,9 @@ const UserVisit = ({ route, navigation }) => {
                   style={styles.productCard}
                 >
                   <Image source={{ uri: product.photo }} style={styles.productImage} />
-                  <Text style={styles.productName}>{product.name}</Text>
-                  <Text style={styles.productPrice}>₱{product.price}</Text>
+                  <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{product.name}</Text>
                   <Text style={styles.productCategory}>{product.category}</Text>
+                  <Text style={styles.productPrice}>₱{product.price}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -511,7 +512,7 @@ const styles = StyleSheet.create({
   productCard: {
     width: '50%',
     backgroundColor: '#FFF',
-    padding: 10,
+    padding: 5,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ccc',
@@ -520,7 +521,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 150,
     resizeMode: 'cover',
-    borderRadius: 8,
+
     marginBottom: 8,
   },
   productName: {
@@ -530,8 +531,22 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   productPrice: {
-    fontSize: 14,
-    color: '#333',
+    color: '#05652D',
+
+    marginLeft: 5,
+  },
+  productCategory: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#ECECEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    alignSelf: 'flex-start', 
+    overflow: 'hidden', 
+    marginVertical: 4, 
+    marginHorizontal: 2, 
+    textAlign: 'center',
   },
   divider: {
     height: 1,
