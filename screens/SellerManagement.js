@@ -194,8 +194,8 @@ const SellerManagement = ({ navigation }) => {
     const SellerInfoView = () => (
         sellerInfo && (
             <View style={styles.sellerInfoContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate('EditSellerInfo')}>
-            <Icon name="edit" size={24} color="#05652D" style={styles.editIcon} />
+                <TouchableOpacity onPress={() => navigation.navigate('EditSellerInfo')} style={styles.editIcon}>
+                <Icon name="edit" size={30} color="#05652D" />
             </TouchableOpacity>
                 <Text style={styles.sellerName}>{sellerInfo.sellerName}</Text>
                 <Text style={styles.fullName}>{sellerInfo.registeredName}</Text>
@@ -223,6 +223,7 @@ const SellerManagement = ({ navigation }) => {
             <SellerInfoView />
             <ScrollView style={styles.scrollView}>
                 {isSeller ? (
+                    
                     <View style={styles.transactionsRow}>
                         <OptionItemCube onPress={() => navigation.navigate('ProductPosts')} icon="th-list" label="My Product Posts" />
                         <OptionItemCube onPress={() => navigation.navigate('SellAddProduct')} icon="plus-circle" label="Add Product" />
@@ -240,59 +241,61 @@ const SellerManagement = ({ navigation }) => {
                     </View>
                 )}
             </ScrollView>
-            <View style={styles.scrollableContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <ScrollableItem
-                    imageSource={toApproveIcon}
-                    label="To Approve"
-                    onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
-                    tabName="To Approve"
-                    count={toApproveCount}
-                />
-                <ScrollableItem
-                    imageSource={toShipIcon}
-                    label="To Ship"
-                    onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
-                    tabName="To Ship"
-                    count={toShipCount}
-                />
-                <ScrollableItem
-                    imageSource={shippedIcon}
-                    label="Shipped"
-                    onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
-                    tabName="Shipped"
-                    count={shippedCount}
-                />
-                <ScrollableItem
-                    imageSource={completedIcon}
-                    label="Completed"
-                    onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
-                    tabName="Completed"
-                    count={completedCount}
-                />
-                <ScrollableItem
-                    imageSource={cancelledIcon}
-                    label="Cancelled Orders"
-                    onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
-                    tabName="Cancelled"
-                    count={cancelledCount}
-                />
-                <ScrollableItem
-                    imageSource={approvedIcon}
-                    label="Approved Posts"
-                    onPress={(tabName) => navigation.navigate('ProductPosts', { selectedTab: tabName })}
-                    tabName="Approved Posts"
-                    count={approvedPostsCount}
-                />
-                <ScrollableItem
-                    imageSource={pendingIcon}
-                    label="Pending Posts"
-                    onPress={(tabName) => navigation.navigate('ProductPosts', { selectedTab: tabName })}
-                    tabName="Pending Posts"
-                    count={pendingPostsCount}
-                />
-                </ScrollView>
-            </View>
+            {isSeller && (
+                <View style={styles.scrollableContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <ScrollableItem
+                            imageSource={toApproveIcon}
+                            label="To Approve"
+                            onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
+                            tabName="To Approve"
+                            count={toApproveCount}
+                        />
+                        <ScrollableItem
+                            imageSource={toShipIcon}
+                            label="To Ship"
+                            onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
+                            tabName="To Ship"
+                            count={toShipCount}
+                        />
+                        <ScrollableItem
+                            imageSource={shippedIcon}
+                            label="Shipped"
+                            onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
+                            tabName="Shipped"
+                            count={shippedCount}
+                        />
+                        <ScrollableItem
+                            imageSource={completedIcon}
+                            label="Completed"
+                            onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
+                            tabName="Completed"
+                            count={completedCount}
+                        />
+                        <ScrollableItem
+                            imageSource={cancelledIcon}
+                            label="Cancelled Orders"
+                            onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
+                            tabName="Cancelled"
+                            count={cancelledCount}
+                        />
+                        <ScrollableItem
+                            imageSource={approvedIcon}
+                            label="Approved Posts"
+                            onPress={(tabName) => navigation.navigate('ProductPosts', { selectedTab: tabName })}
+                            tabName="Approved Posts"
+                            count={approvedPostsCount}
+                        />
+                        <ScrollableItem
+                            imageSource={pendingIcon}
+                            label="Pending Posts"
+                            onPress={(tabName) => navigation.navigate('ProductPosts', { selectedTab: tabName })}
+                            tabName="Pending Posts"
+                            count={pendingPostsCount}
+                        />
+                    </ScrollView>
+                </View>
+            )}
         </View>
     );
 };
