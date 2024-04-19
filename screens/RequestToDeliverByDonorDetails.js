@@ -179,12 +179,7 @@ const handleConfirmEndDate = (date) => {
         </View>
         <ScrollView style={styles.container}>
           <View key={request.id} style={styles.requestCard}>
-            {request.donorDetails.map((detail, idx) => {
-                const donation = donations[detail.donationId];
-                if (!donation) return null;
-                return (
-                    <View key={idx}>
-                        <View style={styles.groupHeader}>
+          <View style={styles.groupHeader}>
                         <Text style={styles.donationName}>Requester: {requesterFullName}</Text>
                         <TouchableOpacity
                             style={styles.visitButton}
@@ -193,6 +188,12 @@ const handleConfirmEndDate = (date) => {
                             <Text style={styles.visitButtonText}>Visit</Text>
                         </TouchableOpacity>
                         </View>
+            {request.donorDetails.map((detail, idx) => {
+                const donation = donations[detail.donationId];
+                if (!donation) return null;
+                return (
+                    <View key={idx}>
+                       
                         <View style={styles.donationItem}>
                             <Image source={{ uri: donation.photo }} style={styles.donationImage} />
                             <View style={styles.donationDetails}>

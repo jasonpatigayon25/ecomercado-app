@@ -87,22 +87,24 @@ const RequestReceivingDetails = ({ route, navigation }) => {
   };
 
   useEffect(() => {
-    if (requesterEmail) {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where("email", "==", requesterEmail));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const fetchRequesterName = async () => {
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where("email", "==", request.requesterEmail));
+        const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           const fullName = `${data.firstName} ${data.lastName}`;
           setRequesterFullName(fullName);
         });
-      }, (error) => {
+      } catch (error) {
         console.error("Error fetching requester name: ", error);
-      });
-  
-      return () => unsubscribe();
-    }
-  }, [requesterEmail]);
+      }
+    };
+
+    fetchRequesterName();
+  }, [request.requesterEmail]);
+
 
   useEffect(() => {
     const requestRef = doc(db, 'requests', request.id);
@@ -129,12 +131,7 @@ const RequestReceivingDetails = ({ route, navigation }) => {
         </View>
         <ScrollView style={styles.container}>
           <View key={request.id} style={styles.requestCard}>
-            {request.donorDetails.map((detail, idx) => {
-                const donation = donations[detail.donationId];
-                if (!donation) return null;
-                return (
-                    <View key={idx}>
-                        <View style={styles.groupHeader}>
+          <View style={styles.groupHeader}>
                         <Text style={styles.donationName}>Requester: {requesterFullName}</Text>
                         <TouchableOpacity
                             style={styles.visitButton}
@@ -143,6 +140,12 @@ const RequestReceivingDetails = ({ route, navigation }) => {
                             <Text style={styles.visitButtonText}>Visit</Text>
                         </TouchableOpacity>
                         </View>
+            {request.donorDetails.map((detail, idx) => {
+                const donation = donations[detail.donationId];
+                if (!donation) return null;
+                return (
+                    <View key={idx}>
+                        
                         <View style={styles.donationItem}>
                             <Image source={{ uri: donation.photo }} style={styles.donationImage} />
                             <View style={styles.donationDetails}>

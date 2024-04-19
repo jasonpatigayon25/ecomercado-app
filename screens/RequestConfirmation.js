@@ -21,6 +21,7 @@ const RequestConfirmation = ({ navigation, route }) => {
   
       sections.forEach((section) => {
         const requestDoc = {
+          donorEmail: section.donorEmail,
           donorDetails: section.data.map((donation) => ({
             donorEmail: section.donorEmail,
             donationId: donation.id,
