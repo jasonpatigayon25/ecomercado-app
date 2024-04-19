@@ -251,42 +251,42 @@ const UserVisit = ({ route, navigation }) => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-        setIsProductsLoading(true);
-        const baseQuery = collection(db, 'products');
-        let queryRef = query(
-            baseQuery, 
-            where('seller_email', '==', email),
-            where('publicationStatus', '==', 'approved')
-        );
-
-        if (productTab === 'Latest') {
-            queryRef = query(queryRef, orderBy('createdAt', 'desc'));
-        } else if (productTab === 'Price') {
-            let direction = 'asc'; // Default to ascending order
-            if (priceSort === 'High') {
-                direction = 'desc'; // Sort by descending order for high prices
-            }
-
-            // Convert price field to double for proper sorting
-            queryRef = query(queryRef, orderBy('price', direction, 'number'));
+      setIsProductsLoading(true);
+      const baseQuery = collection(db, 'products');
+      let queryRef = query(
+        baseQuery, 
+        where('seller_email', '==', email),
+        where('publicationStatus', '==', 'approved')
+      );
+    
+      if (productTab === 'Latest') {
+        queryRef = query(queryRef, orderBy('createdAt', 'desc'));
+      } else if (productTab === 'Price') {
+        let direction = 'desc'; 
+        if (priceSort === 'Low') {
+          direction = 'asc'; 
         }
-
-        const querySnapshot = await getDocs(queryRef);
-        const productList = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            // Parse price to double or int
-            price: parseFloat(doc.data().price) // or parseInt(doc.data().price) if price is integer
-        }));
-
-        console.log(productList);
-
-        setProducts(productList);
-        setIsProductsLoading(false);
+        queryRef = query(queryRef, orderBy('price', direction, 'number')); 
+      }
+    
+      const querySnapshot = await getDocs(queryRef);
+      const productList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        price: parseFloat(doc.data().price) // Convert price to a number
+      }));
+    
+      // Sort the products based on their numerical prices
+      productList.sort((a, b) => a.price - b.price);
+    
+      console.log(productList);
+    
+      setProducts(productList);
+      setIsProductsLoading(false);
     };
-
+  
     fetchProducts();
-}, [email, productTab, priceSort]);
+  }, [email, productTab, priceSort]);
 
   const togglePriceSort = () => {
     setPriceSort(prev => (prev === 'High' ? 'Low' : 'High'));
