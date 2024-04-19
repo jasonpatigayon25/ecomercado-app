@@ -616,7 +616,8 @@ messageButton: {
   top: 60,
   right: 10,
   backgroundColor: '#05652D', 
-  borderRadius: 10,
+  borderBottomLeftRadius: 10,
+  borderTopEndRadius: 10,
   padding: 10,
 },
 messageButtonText: {
