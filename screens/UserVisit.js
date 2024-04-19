@@ -6,9 +6,10 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { Rating } from 'react-native-ratings';
 import { getAuth } from 'firebase/auth';
+import ProfileTab from '../navbars/ProfileTab';
 
 const UserVisit = ({ route, navigation }) => {
-
+  const [selectedTab, setSelectedTab] = useState('Products');
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [backgroundProfileUri, setBackgroundProfileUri] = useState(null);
@@ -298,19 +299,19 @@ const UserVisit = ({ route, navigation }) => {
            {/* <Text style={styles.followText}>Following: <Text style={styles.countText}>{followingCount}</Text></Text> */}
         </View>
       </View>
-      
+      <ProfileTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
       <View style={styles.content}>
-        <Text style={styles.productTitle}>Products</Text>
-        <View style={styles.productsContainer}>
+      {selectedTab === 'Products' && (
+        <View style={styles.content}>
           {isProductsLoading ? (
             <ActivityIndicator size="large" color="#05652D" />
           ) : products.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Icon name="shopping-bag" size={24} color="#808080" />
-                <Text style={styles.emptyText}>No products yet</Text>
-              </View>
-            ) : (
-              products.map((product) => (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No products yet</Text>
+            </View>
+          ) : (
+            <View style={styles.productsContainer}>
+              {products.map((product) => (
                 <TouchableOpacity 
                   key={product.id} 
                   onPress={() => handleProductSelect(product)} 
@@ -319,33 +320,13 @@ const UserVisit = ({ route, navigation }) => {
                   <Image source={{ uri: product.photo }} style={styles.productImage} />
                   <Text style={styles.productName}>{product.name}</Text>
                   <Text style={styles.productPrice}>₱{product.price}</Text>
+                  <Text style={styles.productCategory}>{product.category}</Text>
                 </TouchableOpacity>
-              ))
-            )}
-          </View>
-          <View style={styles.divider} />
-          <Text style={styles.productTitle}>Donations</Text>
-          <View style={styles.productsContainer}>
-          {isDonationsLoading ? (
-            <ActivityIndicator size="large" color="#05652D" />
-          ) : donation.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Icon5 name="hand-holding-heart" size={24} color="#808080" />
-                <Text style={styles.emptyText}>No donations yet</Text>
-              </View>
-            ) : (
-              donation.map((donation) => (
-                <TouchableOpacity 
-                  key={donation.id} 
-                  onPress={() => handleDonationSelect(donation)} 
-                  style={styles.productCard}
-                >
-                  <Image source={{ uri: donation.photo }} style={styles.productImage} />
-                  <Text style={styles.productName}>{donation.name}</Text>
-                </TouchableOpacity>
-              ))
-            )}
-          </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
       </View>
       </ScrollView>
       {showSubscriptionMessage && (
@@ -403,7 +384,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    padding: 20,
+
     backgroundColor: '#ccc'
   },
   profileInfoContainer: {
@@ -470,9 +451,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   productCard: {
-    width: '48%',
+    width: '50%',
     backgroundColor: '#FFF',
-    marginBottom: 10,
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
