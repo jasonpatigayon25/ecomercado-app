@@ -262,17 +262,24 @@ const UserVisit = ({ route, navigation }) => {
         if (productTab === 'Latest') {
             queryRef = query(queryRef, orderBy('createdAt', 'desc'));
         } else if (productTab === 'Price') {
-            const direction = priceSort === 'High' ? 'desc' : 'asc';
-            queryRef = query(queryRef, orderBy('price', direction));
+            let direction = 'asc'; // Default to ascending order
+            if (priceSort === 'High') {
+                direction = 'desc'; // Sort by descending order for high prices
+            }
+
+            // Convert price field to double for proper sorting
+            queryRef = query(queryRef, orderBy('price', direction, 'number'));
         }
 
         const querySnapshot = await getDocs(queryRef);
         const productList = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
+            // Parse price to double or int
+            price: parseFloat(doc.data().price) // or parseInt(doc.data().price) if price is integer
         }));
 
-        console.log(productList);  
+        console.log(productList);
 
         setProducts(productList);
         setIsProductsLoading(false);
