@@ -9,6 +9,8 @@ import { getAuth } from 'firebase/auth';
 import ProfileTab from '../navbars/ProfileTab';
 
 const UserVisit = ({ route, navigation }) => {
+  const [productTab, setProductTab] = useState('Latest');  
+  const [priceSort, setPriceSort] = useState('High'); 
   const [selectedTab, setSelectedTab] = useState('Products');
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -247,6 +249,37 @@ const UserVisit = ({ route, navigation }) => {
     }
   };
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsProductsLoading(true);
+      const baseQuery = collection(db, 'products');
+      let queryRef;
+  
+      if (productTab === 'Latest') {
+        queryRef = query(baseQuery, where('seller_email', '==', email), orderBy('createdAt', 'desc'));
+      } else if (productTab === 'Price') {
+        const direction = priceSort === 'High' ? 'desc' : 'asc';
+        queryRef = query(baseQuery, where('seller_email', '==', email), orderBy('price', direction));
+      } else {
+        // Implement logic for 'Popular' if applicable
+      }
+  
+      const querySnapshot = await getDocs(queryRef);
+      const productList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setProducts(productList);
+      setIsProductsLoading(false);
+    };
+  
+    fetchProducts();
+  }, [email, productTab, priceSort]);
+
+  const togglePriceSort = () => {
+    setPriceSort(prev => (prev === 'High' ? 'Low' : 'High'));
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -303,6 +336,19 @@ const UserVisit = ({ route, navigation }) => {
       <View style={styles.content}>
       {selectedTab === 'Products' && (
         <View style={styles.content}>
+          <View style={styles.tabsContainer}>
+  <TouchableOpacity onPress={() => setProductTab('Popular')} style={styles.tab}>
+    <Text style={productTab === 'Popular' ? styles.activeTabText : styles.tabText}>Popular</Text>
+  </TouchableOpacity>
+  <TouchableOpacity onPress={() => setProductTab('Latest')} style={styles.tab}>
+    <Text style={productTab === 'Latest' ? styles.activeTabText : styles.tabText}>Latest</Text>
+  </TouchableOpacity>
+  <TouchableOpacity onPress={() => { setProductTab('Price'); togglePriceSort(); }} style={styles.tab}>
+    <Text style={productTab === 'Price' ? styles.activeTabText : styles.tabText}>
+      Price {priceSort === 'High' ? '🔽' : '🔼'}
+    </Text>
+  </TouchableOpacity>
+</View>
           {isProductsLoading ? (
             <ActivityIndicator size="large" color="#05652D" />
           ) : products.length === 0 ? (
@@ -623,6 +669,27 @@ sellerNameContainer: {
 },
 marketIcon: {
   marginRight: 10,
+},
+tabsContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  backgroundColor: '#E3FCE9',
+  borderBottomWidth: 2,
+  padding: 10,
+  borderColor: '#D3D3D3',
+},
+tab: {
+  flex: 1,
+  padding: 10,
+},
+tabText: {
+  fontSize: 16,
+  color: '#666',
+},
+activeTabText: {
+  fontSize: 16,
+  color: '#05652D',
+  fontWeight: 'bold',
 },
 });
 
