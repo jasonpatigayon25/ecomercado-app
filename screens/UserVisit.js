@@ -34,39 +34,34 @@ const UserVisit = ({ route, navigation }) => {
     fetchCounts();
   }, [email]);
 
-const fetchProfileImages = async () => {
-  const userQuery = query(collection(db, 'users'), where('email', '==', email));
-  const userQuerySnapshot = await getDocs(userQuery);
-  let userProfilePhotoUri = null;
+  const fetchProfileImages = async () => {
 
-  if (!userQuerySnapshot.empty) {
-    const userData = userQuerySnapshot.docs[0].data();
-    if (userData.backgroundProfileUri) {
-      setBackgroundProfileUri(userData.backgroundProfileUri);
+    let userBackgroundUri = null;
+    let userPhotoUri = null;
+  
+    const userQuery = query(collection(db, 'users'), where('email', '==', email));
+    const userSnapshot = await getDocs(userQuery);
+    if (!userSnapshot.empty) {
+      const userData = userSnapshot.docs[0].data();
+      userBackgroundUri = userData.backgroundProfileUri;
+      userPhotoUri = userData.photoUrl;
     }
-    userProfilePhotoUri = userData.photoUrl; 
-  }
-
-  const registeredSellerQuery = query(collection(db, 'registeredSeller'), where('email', '==', email));
-  const registeredSellerSnapshot = await getDocs(registeredSellerQuery);
-  if (!registeredSellerSnapshot.empty) {
-    const registeredSellerData = registeredSellerSnapshot.docs[0].data();
-    if (registeredSellerData.backgroundPhotoUri) {
-      setBackgroundImage({ uri: registeredSellerData.backgroundPhotoUri });
+  
+    const registeredSellerQuery = query(collection(db, 'registeredSeller'), where('email', '==', email));
+    const sellerSnapshot = await getDocs(registeredSellerQuery);
+    if (!sellerSnapshot.empty) {
+      const sellerData = sellerSnapshot.docs[0].data();
+      setBackgroundProfileUri(sellerData.backgroundPhotoUri || userBackgroundUri);
+      setProfilePhotoUri(sellerData.profilePhotoUri || userPhotoUri);
+    } else {
+      setBackgroundProfileUri(userBackgroundUri);
+      setProfilePhotoUri(userPhotoUri);
     }
-
-    // Use profilePhotoUri from registeredSeller if available, otherwise fall back to users' photoUrl
-    setProfilePhotoUri(registeredSellerData.profilePhotoUri || userProfilePhotoUri);
-  } else {
-    // If there's no registeredSeller profile photo, fall back to what's available from users collection
-    setProfilePhotoUri(userProfilePhotoUri);
-  }
-};
-
-useEffect(() => {
-  fetchProfileImages();
-}, [email]);
-
+  };
+  
+  useEffect(() => {
+    fetchProfileImages();
+  }, [email]);
 
   const [profile, setProfile] = useState({});
   const [averageRating, setAverageRating] = useState(0);
@@ -211,12 +206,11 @@ useEffect(() => {
   
       let existingChatId = null;
   
-      // Using for...of to enable breaking out of the loop
       for (const doc of querySnapshot.docs) {
         const chatData = doc.data();
         if (chatData.users.includes(email)) {
           existingChatId = doc.id;
-          break;  // Now it's valid to use break here
+          break;  
         }
       }
   
@@ -243,6 +237,15 @@ useEffect(() => {
     }
   };
   
+  const defaultBackgroundImage = require('../assets/background-user.webp');
+  const defaultProfileImage = require('../assets/default-user.png');
+  
+  const handleViewImage = (imageUrl) => {
+    if (imageUrl !== defaultBackgroundImage && imageUrl !== defaultProfileImage) {
+      navigation.navigate('ViewerImage', { imageUrl });
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -254,18 +257,28 @@ useEffect(() => {
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollableContent}>
+      {backgroundProfileUri ? (
+    <TouchableOpacity onPress={() => handleViewImage(backgroundProfileUri)}>
         <View style={styles.profileHeader}>
-          <Image source={backgroundImage} style={styles.profileBackground} />
+          <Image source={{ uri: backgroundProfileUri }} style={styles.profileBackground} resizeMode="cover" />
         </View>
+      </TouchableOpacity>
+        ) : (
+          <View style={styles.profileHeader}>
+            <Image source={defaultBackgroundImage} style={styles.profileBackground} resizeMode="cover" />
+          </View>
+        )}
 
         <View style={styles.profileInfo}>
         <View style={styles.userPhotoContainer}>
-          {profilePhotoUri ? (
-            <Image source={{ uri: profilePhotoUri }} style={styles.userPhoto} />
-          ) : (
-            <Icon name="user" size={100} color="#05652D" />
-          )}
-        </View>
+      {profilePhotoUri && profilePhotoUri !== defaultProfileImage ? (
+        <TouchableOpacity onPress={() => handleViewImage(profilePhotoUri)}>
+          <Image source={{ uri: profilePhotoUri }} style={styles.userPhoto} />
+        </TouchableOpacity>
+      ) : (
+        <Icon name="user" size={100} color="#05652D" />
+      )}
+    </View>
         <TouchableOpacity onPress={isSubscribed ? handleUnsubscribe : handleSubscribe} style={isSubscribed ? styles.unfollowButton : styles.followButton}>
             <Text style={isSubscribed ? styles.unfollowText : styles.followButtonText}>
               {isSubscribed ? "Unfollow" : "Follow"}

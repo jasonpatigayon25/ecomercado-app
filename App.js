@@ -94,6 +94,7 @@ import SuspendedDonation from './screens/SuspendedDonation';
 import ResubmitDonation from './screens/ResubmitDonation';
 import ResubmitProduct from './screens/ResubmitProduct';
 import EditSellerInfo from './screens/EditSellerInfo';
+import ViewerImage from './screens/ViewerImage';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -314,6 +315,7 @@ const App = () => {
               <Stack.Screen name="AboutUs" component={AboutUs} />
               <Stack.Screen name="ChangePassword" component={ChangePassword} />
               <Stack.Screen name="NotificationSettings" component={NotificationSettings} />
+              <Stack.Screen name="ViewerImage" component={ViewerImage} />
               <Stack.Screen name="EditProfile" component={EditProfile} />
               <Stack.Screen name="EditSellerInfo" component={EditSellerInfo} />
               <Stack.Screen name="EditProduct" component={EditProduct} />
