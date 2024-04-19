@@ -222,6 +222,11 @@ useEffect(() => {
             <Icon name="user" size={100} color="#05652D" />
           )}
         </View>
+        <TouchableOpacity onPress={isSubscribed ? handleUnsubscribe : handleSubscribe} style={isSubscribed ? styles.unfollowButton : styles.followButton}>
+            <Text style={isSubscribed ? styles.unfollowText : styles.followButtonText}>
+              {isSubscribed ? "Unfollow" : "Follow"}
+            </Text>
+          </TouchableOpacity>
         <Text style={styles.sellerName}>{profile.sellerName}</Text> 
         <Text style={styles.userName}>{profile.firstName} {profile.lastName}</Text>
         <Text style={styles.userEmail}>{profile.email}</Text>
@@ -232,23 +237,6 @@ useEffect(() => {
       </View>
       
       <View style={styles.content}>
-      {/* <View style={styles.profileInfoContainer}>
-    <View style={styles.profileImageContainer}>
-        {profile.photoUrl ? (
-            <Image source={{ uri: profile.photoUrl }} style={styles.profileImage} />
-        ) : (
-            <Icon name="user" size={80} color="#05652D" />
-        )}
-    </View>
-    <View style={styles.accountInfoContainer}>
-        <Text style={styles.name}>{profile.firstName} {profile.lastName}</Text>
-        <Text style={styles.email}>{profile.email}</Text>
-        <View style={styles.followerFollowingContainer}>
-            <Text style={styles.followText}>Followers: <Text style={styles.countText}>{followersCount}</Text></Text>
-            <Text style={styles.followText}>Following: <Text style={styles.countText}>{followingCount}</Text></Text>
-        </View>
-          </View>
-      </View> */}
         <View style={styles.divider} />
         <Text style={styles.productTitle}>Products</Text>
         <View style={styles.productsContainer}>
@@ -549,6 +537,32 @@ sellerName: {
   fontWeight: 'bold',
   color: '#05652D',
   marginBottom: 2,
+},
+followButton: {
+  position: 'absolute',
+  top: 0,
+  right: 10, 
+  backgroundColor: '#05652D', 
+  borderRadius: 20,
+  padding: 10,
+},
+unfollowButton: {
+  position: 'absolute',
+  top: 0,
+  right: 10,
+  backgroundColor: '#fff',
+  borderColor: '#05652D', 
+  borderWidth: 1,
+  borderRadius: 20,
+  padding: 10,
+},
+followButtonText: {
+  color: '#FFFFFF', 
+  fontSize: 16,
+},
+unfollowText: {
+  color: '#05652D', 
+  fontSize: 16,
 },
 });
 
