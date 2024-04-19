@@ -12,6 +12,7 @@ import axios from 'axios';
 import { Dimensions } from 'react-native';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -817,25 +818,21 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
               onBlur={handlePriceBlur}
           />
 
-            <Text style={styles.label}>
-                Category:
-                {missingFields.category && <Text style={{ color: 'red' }}> *</Text>}
-              </Text>
-              <TouchableOpacity
-                style={[styles.input, styles.pickerInput, missingFields.category && styles.missingField]}
-                onPress={() => setIsCategoryModalVisible(true)}
-              >
-                <Text style={styles.inputText}>
-                  {productInfo.category || "Select Category"}
-                </Text>
-              </TouchableOpacity>
-
-          <CategoryPickerModal
-            isVisible={isCategoryModalVisible}
-            categories={categories}
-            onCategorySelect={handleCategorySelect}
-            onCancel={() => setIsCategoryModalVisible(false)}
-          />
+          <Text style={styles.label}>
+              Category:
+              {missingFields.category && <Text style={{ color: 'red' }}> *</Text>}
+          </Text>
+          <View style={[styles.input, styles.pickerInput, missingFields.category && styles.missingField]}>
+              <Picker
+                  selectedValue={productInfo.category}
+                  onValueChange={(itemValue, itemIndex) => setProductInfo({ ...productInfo, category: itemValue })}
+                  style={{flex: 1}}>
+                  <Picker.Item label="Select Category" value="" />
+                  {categories.map((category) => (
+                      <Picker.Item key={category.id} label={category.title} value={category.title} />
+                  ))}
+              </Picker>
+          </View>
         <Text style={styles.label}>
             Location
             {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}

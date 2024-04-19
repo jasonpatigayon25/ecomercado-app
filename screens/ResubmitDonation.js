@@ -277,8 +277,8 @@ const ResubmitDonation = ({ route, navigation }) => {
         createdAt,
       });
 
-      Alert.alert("Success", "Donation updated successfully.");
-      navigation.goBack();
+      Alert.alert("Success", "Donation resubmitted successfully.");
+      navigation.navigate('DonationPosts')
     } catch (error) {
       console.error("Error updating donation:", error);
       Alert.alert("Error updating donation", error.message);

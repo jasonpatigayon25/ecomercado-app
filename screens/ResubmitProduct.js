@@ -12,6 +12,7 @@ import axios from 'axios';
 import { Dimensions } from 'react-native';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -382,10 +383,9 @@ const handleSubmit = async () => {
         }
       };
   
-      // Update the document with the new product data
       await updateDoc(productRef, updateData);
-      Alert.alert("Success", "Product updated successfully.");
-      navigation.goBack();  // Navigate back to the previous screen or to the dashboard
+      Alert.alert("Success", "Product resubmitted successfully.");
+      navigation.navigate('ProductPosts');
     } catch (error) {
       console.error("Error updating product:", error);
       Alert.alert("Error updating product", error.message);
@@ -693,7 +693,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
         <TouchableOpacity onPress={handleBackPress}>
           <Icon name="arrow-left" size={24} color="#FFFFFF" style={styles.backButtonIcon} />
         </TouchableOpacity>
-        <Text style={styles.title}>Update Product</Text>
+        <Text style={styles.title}>Resubmit Product</Text>
       </View>
       <ScrollView style={styles.content}>
       <Text style={styles.label}>
@@ -758,25 +758,21 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
               onBlur={handlePriceBlur}
           />
 
-            <Text style={styles.label}>
-                Category:
-                {missingFields.category && <Text style={{ color: 'red' }}> *</Text>}
-              </Text>
-              <TouchableOpacity
-                style={[styles.input, styles.pickerInput, missingFields.category && styles.missingField]}
-                onPress={() => setIsCategoryModalVisible(true)}
-              >
-                <Text style={styles.inputText}>
-                  {productInfo.category || "Select Category"}
-                </Text>
-              </TouchableOpacity>
-
-          <CategoryPickerModal
-            isVisible={isCategoryModalVisible}
-            categories={categories}
-            onCategorySelect={handleCategorySelect}
-            onCancel={() => setIsCategoryModalVisible(false)}
-          />
+          <Text style={styles.label}>
+              Category:
+              {missingFields.category && <Text style={{ color: 'red' }}> *</Text>}
+          </Text>
+          <View style={[styles.input, styles.pickerInput, missingFields.category && styles.missingField]}>
+              <Picker
+                  selectedValue={productInfo.category}
+                  onValueChange={(itemValue, itemIndex) => setProductInfo({ ...productInfo, category: itemValue })}
+                  style={{flex: 1}}>
+                  <Picker.Item label="Select Category" value="" />
+                  {categories.map((category) => (
+                      <Picker.Item key={category.id} label={category.title} value={category.title} />
+                  ))}
+              </Picker>
+          </View>
         <Text style={styles.label}>
             Location
             {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
@@ -890,7 +886,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           numberOfLines={3}
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAddProductToSell}>
-          <Text style={styles.addButtonLabel}>Update</Text>
+          <Text style={styles.addButtonLabel}>Resubmit</Text>
         </TouchableOpacity>
       </ScrollView>
       <Modal
