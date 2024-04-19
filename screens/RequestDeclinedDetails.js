@@ -167,6 +167,27 @@ const RequestDeclinedDetails = ({ route, navigation }) => {
     // 
   };
 
+  const [donorFullName, setDonorFullName] = useState('');
+
+  useEffect(() => {
+    const fetchDonorName = async () => {
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where("email", "==", request.donorEmail));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const fullName = `${data.firstName} ${data.lastName}`;
+          setDonorFullName(fullName);
+        });
+      } catch (error) {
+        console.error("Error fetching requester name: ", error);
+      }
+    };
+
+    fetchDonorName();
+  }, [request.donorEmail]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
     
@@ -178,13 +199,21 @@ const RequestDeclinedDetails = ({ route, navigation }) => {
         </View>
         <ScrollView style={styles.container}>
         <View key={request.id} style={styles.requestCard}>
+        <View style={styles.groupHeader}>
+                        <Text style={styles.donationName}>Requester: {donorFullName}</Text>
+                        <TouchableOpacity
+                            style={styles.visitButton}
+                            onPress={() => navigation.navigate('UserVisit', { email: request.donorEmail })}
+                        >
+                            <Text style={styles.visitButtonText}>Visit</Text>
+                        </TouchableOpacity>
+                        </View>
             {/* <Text style={styles.requestTitle}>#{request.id}</Text> */}
             {request.donorDetails.map((detail, idx) => {
                 const donation = donations[detail.donationId];
                 if (!donation) return null;
                 return (
                     <View key={idx}>
-                        <GroupHeader donorEmail={donation.donor_email} />
                         <View style={styles.donationItem}>
                             <Image source={{ uri: donation.photo }} style={styles.donationImage} />
                             <View style={styles.donationDetails}>

@@ -62,7 +62,6 @@ const RequestDeclinedByDonorDetails = ({ route, navigation }) => {
     fetchRequesterName();
   }, [request.requesterEmail]);
 
-
   return (
     <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
