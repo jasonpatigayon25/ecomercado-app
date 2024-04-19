@@ -251,30 +251,35 @@ const UserVisit = ({ route, navigation }) => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      setIsProductsLoading(true);
-      const baseQuery = collection(db, 'products');
-      let queryRef;
-  
-      if (productTab === 'Latest') {
-        queryRef = query(baseQuery, where('seller_email', '==', email), orderBy('createdAt', 'desc'));
-      } else if (productTab === 'Price') {
-        const direction = priceSort === 'High' ? 'desc' : 'asc';
-        queryRef = query(baseQuery, where('seller_email', '==', email), orderBy('price', direction));
-      } else {
-        // Implement logic for 'Popular' if applicable
-      }
-  
-      const querySnapshot = await getDocs(queryRef);
-      const productList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setProducts(productList);
-      setIsProductsLoading(false);
+        setIsProductsLoading(true);
+        const baseQuery = collection(db, 'products');
+        let queryRef = query(
+            baseQuery, 
+            where('seller_email', '==', email),
+            where('publicationStatus', '==', 'approved')
+        );
+
+        if (productTab === 'Latest') {
+            queryRef = query(queryRef, orderBy('createdAt', 'desc'));
+        } else if (productTab === 'Price') {
+            const direction = priceSort === 'High' ? 'desc' : 'asc';
+            queryRef = query(queryRef, orderBy('price', direction));
+        }
+
+        const querySnapshot = await getDocs(queryRef);
+        const productList = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+
+        console.log(productList);  
+
+        setProducts(productList);
+        setIsProductsLoading(false);
     };
-  
+
     fetchProducts();
-  }, [email, productTab, priceSort]);
+}, [email, productTab, priceSort]);
 
   const togglePriceSort = () => {
     setPriceSort(prev => (prev === 'High' ? 'Low' : 'High'));
@@ -337,18 +342,18 @@ const UserVisit = ({ route, navigation }) => {
       {selectedTab === 'Products' && (
         <View style={styles.content}>
           <View style={styles.tabsContainer}>
-  <TouchableOpacity onPress={() => setProductTab('Popular')} style={styles.tab}>
-    <Text style={productTab === 'Popular' ? styles.activeTabText : styles.tabText}>Popular</Text>
-  </TouchableOpacity>
-  <TouchableOpacity onPress={() => setProductTab('Latest')} style={styles.tab}>
-    <Text style={productTab === 'Latest' ? styles.activeTabText : styles.tabText}>Latest</Text>
-  </TouchableOpacity>
-  <TouchableOpacity onPress={() => { setProductTab('Price'); togglePriceSort(); }} style={styles.tab}>
-    <Text style={productTab === 'Price' ? styles.activeTabText : styles.tabText}>
-      Price {priceSort === 'High' ? '🔽' : '🔼'}
-    </Text>
-  </TouchableOpacity>
-</View>
+            <TouchableOpacity onPress={() => setProductTab('Popular')} style={styles.tab}>
+              <Text style={productTab === 'Popular' ? styles.activeTabText : styles.tabText}>Popular</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setProductTab('Latest')} style={styles.tab}>
+              <Text style={productTab === 'Latest' ? styles.activeTabText : styles.tabText}>Latest</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setProductTab('Price'); togglePriceSort(); }} style={styles.tab}>
+              <Text style={productTab === 'Price' ? styles.activeTabText : styles.tabText}>
+                Price {priceSort === 'High' ? '🔽' : '🔼'}
+              </Text>
+            </TouchableOpacity>
+          </View>
           {isProductsLoading ? (
             <ActivityIndicator size="large" color="#05652D" />
           ) : products.length === 0 ? (
