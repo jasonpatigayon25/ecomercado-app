@@ -20,47 +20,52 @@ const UserVisit = ({ route, navigation }) => {
 
   useEffect(() => {
     const fetchCounts = async () => {
-        if (email) {
-
-            const followersQuery = query(collection(db, 'subscriptions'), where('subscribedTo_email', '==', email));
-            const followersSnapshot = await getDocs(followersQuery);
-            setFollowersCount(followersSnapshot.size);
-
-            const followingQuery = query(collection(db, 'subscriptions'), where('subscriber_email', '==', email));
-            const followingSnapshot = await getDocs(followingQuery);
-            setFollowingCount(followingSnapshot.size);
-        }
-    };
-
-    const fetchProfileImages = async () => {
-      const userQuery = query(collection(db, 'users'), where('email', '==', email));
-      const userQuerySnapshot = await getDocs(userQuery);
-      if (!userQuerySnapshot.empty) {
-        const userData = userQuerySnapshot.docs[0].data();
-        if (userData.backgroundProfileUri) {
-          setBackgroundProfileUri(userData.backgroundProfileUri);
-        }
-        if (userData.profilePhotoUri) {
-          setProfilePhotoUri(userData.profilePhotoUri);
-        }
-      }
+      if (email) {
+        const followersQuery = query(collection(db, 'subscriptions'), where('subscribedTo_email', '==', email));
+        const followersSnapshot = await getDocs(followersQuery);
+        setFollowersCount(followersSnapshot.size);
   
-      const registeredSellerQuery = query(collection(db, 'registeredSeller'), where('email', '==', email));
-      const registeredSellerSnapshot = await getDocs(registeredSellerQuery);
-      if (!registeredSellerSnapshot.empty) {
-        const registeredSellerData = registeredSellerSnapshot.docs[0].data();
-        if (registeredSellerData.backgroundPhotoUri) {
-          setBackgroundImage({ uri: registeredSellerData.backgroundPhotoUri });
-        }
-
-        if (registeredSellerData.profilePhotoUri) {
-          setProfilePhotoUri(registeredSellerData.profilePhotoUri);
-        }
+        const followingQuery = query(collection(db, 'subscriptions'), where('subscriber_email', '==', email));
+        const followingSnapshot = await getDocs(followingQuery);
+        setFollowingCount(followingSnapshot.size);
       }
     };
   
-    fetchProfileImages();
+    fetchCounts();
   }, [email]);
+
+const fetchProfileImages = async () => {
+  const userQuery = query(collection(db, 'users'), where('email', '==', email));
+  const userQuerySnapshot = await getDocs(userQuery);
+  let userProfilePhotoUri = null;
+
+  if (!userQuerySnapshot.empty) {
+    const userData = userQuerySnapshot.docs[0].data();
+    if (userData.backgroundProfileUri) {
+      setBackgroundProfileUri(userData.backgroundProfileUri);
+    }
+    userProfilePhotoUri = userData.photoUrl; 
+  }
+
+  const registeredSellerQuery = query(collection(db, 'registeredSeller'), where('email', '==', email));
+  const registeredSellerSnapshot = await getDocs(registeredSellerQuery);
+  if (!registeredSellerSnapshot.empty) {
+    const registeredSellerData = registeredSellerSnapshot.docs[0].data();
+    if (registeredSellerData.backgroundPhotoUri) {
+      setBackgroundImage({ uri: registeredSellerData.backgroundPhotoUri });
+    }
+
+    // Use profilePhotoUri from registeredSeller if available, otherwise fall back to users' photoUrl
+    setProfilePhotoUri(registeredSellerData.profilePhotoUri || userProfilePhotoUri);
+  } else {
+    // If there's no registeredSeller profile photo, fall back to what's available from users collection
+    setProfilePhotoUri(userProfilePhotoUri);
+  }
+};
+
+useEffect(() => {
+  fetchProfileImages();
+}, [email]);
 
 
   const [profile, setProfile] = useState({});
@@ -210,19 +215,19 @@ const UserVisit = ({ route, navigation }) => {
         </View>
 
         <View style={styles.profileInfo}>
-          <View style={styles.userPhotoContainer}>
-            {profilePhotoUri ? (
-              <Image source={{ uri: profilePhotoUri }} style={styles.userPhoto} />
-            ) : (
-              <Icon name="user" size={100} color="#05652D" />
-            )}
-          </View>
+        <View style={styles.userPhotoContainer}>
+          {profilePhotoUri ? (
+            <Image source={{ uri: profilePhotoUri }} style={styles.userPhoto} />
+          ) : (
+            <Icon name="user" size={100} color="#05652D" />
+          )}
+        </View>
         <Text style={styles.sellerName}>{profile.sellerName}</Text> 
         <Text style={styles.userName}>{profile.firstName} {profile.lastName}</Text>
         <Text style={styles.userEmail}>{profile.email}</Text>
         <View style={styles.followContainer}>
           <Text style={styles.followText}>Followers: <Text style={styles.countText}>{followersCount}</Text></Text>
-          {/* <Text style={styles.followText}>Following: <Text style={styles.countText}>{followingCount}</Text></Text> */}
+           {/* <Text style={styles.followText}>Following: <Text style={styles.countText}>{followingCount}</Text></Text> */}
         </View>
       </View>
       
