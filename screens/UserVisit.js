@@ -198,6 +198,50 @@ useEffect(() => {
     navigation.navigate('DonationDetail', { donation });
   };
   
+  const handleChatWithUser = async () => {
+    if (!currentUserEmail) {
+      console.log('User not authenticated');
+      return;
+    }
+  
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('users', 'array-contains', currentUserEmail));
+      const querySnapshot = await getDocs(q);
+  
+      let existingChatId = null;
+  
+      // Using for...of to enable breaking out of the loop
+      for (const doc of querySnapshot.docs) {
+        const chatData = doc.data();
+        if (chatData.users.includes(email)) {
+          existingChatId = doc.id;
+          break;  // Now it's valid to use break here
+        }
+      }
+  
+      if (existingChatId) {
+        navigation.navigate('Chat', {
+          chatId: existingChatId,
+          receiverEmail: email,
+        });
+      } else {
+        const newChatRef = collection(db, 'chats');
+        const newChat = {
+          users: [currentUserEmail, email],
+          messages: [],
+        };
+  
+        const docRef = await addDoc(newChatRef, newChat);
+        navigation.navigate('Chat', {
+          chatId: docRef.id,
+          receiverEmail: email,
+        });
+      }
+    } catch (error) {
+      console.error('Error handling chat with donor:', error);
+    }
+  };
   
   return (
     <View style={styles.container}>
@@ -226,6 +270,9 @@ useEffect(() => {
             <Text style={isSubscribed ? styles.unfollowText : styles.followButtonText}>
               {isSubscribed ? "Unfollow" : "Follow"}
             </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleChatWithUser} style={styles.messageButton}>
+            <Text style={styles.messageButtonText}>Message</Text>
           </TouchableOpacity>
         <Text style={styles.sellerName}>{profile.sellerName}</Text> 
         <Text style={styles.userName}>{profile.firstName} {profile.lastName}</Text>
@@ -562,6 +609,18 @@ followButtonText: {
 },
 unfollowText: {
   color: '#05652D', 
+  fontSize: 16,
+},
+messageButton: {
+  position: 'absolute',
+  top: 60,
+  right: 10,
+  backgroundColor: '#05652D', 
+  borderRadius: 10,
+  padding: 10,
+},
+messageButtonText: {
+  color: '#FFFFFF',
   fontSize: 16,
 },
 });
