@@ -481,6 +481,21 @@ const decrementWeight = () => {
     setIsSubPhotoPickerModalVisible(false);
   };
 
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const querySnapshot = await getDocs(collection(db, 'donationCategories'));
+      const fetchedCategories = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        title: doc.data().title
+      }));
+      setCategories(fetchedCategories);
+    };
+
+    fetchCategories();
+  }, []);
+
   return (
     <View style={styles.container}>
       <PhotoPickerModal
@@ -626,20 +641,19 @@ const decrementWeight = () => {
           </View>
         ))}
       </View>
-        <Text style={styles.label}>Eco-Bundle Category</Text>
-        <View style={[styles.pickerContainer, missingFields.category && styles.missingField]}>
+      <Text style={styles.label}>Eco-Bundle Category</Text>
+      <View style={[styles.pickerContainer, missingFields.category && styles.missingField]}>
         <Picker
           selectedValue={donationInfo.category}
           onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, category: itemValue })}
           style={[styles.picker]}
         >
           <Picker.Item label="Select a Category" value="" />
-          <Picker.Item label="Clothing" value="Clothing" />
-          <Picker.Item label="Devices" value="Devices" />
-          <Picker.Item label="Furniture" value="Furniture" />
-          <Picker.Item label="Mixed" value="Mixed" />
+          {categories.map((category) => (
+            <Picker.Item key={category.id} label={category.title} value={category.title} />
+          ))}
         </Picker>
-        </View>
+      </View>
         <Text style={styles.label}>Weight (kg)</Text>
         <View style={styles.weightControlContainer}>
             <TouchableOpacity style={styles.weightControlButton} onPress={decrementWeight}>
