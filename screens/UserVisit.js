@@ -287,7 +287,10 @@ const UserVisit = ({ route, navigation }) => {
           <TouchableOpacity onPress={handleChatWithUser} style={styles.messageButton}>
             <Text style={styles.messageButtonText}>Message</Text>
           </TouchableOpacity>
-        <Text style={styles.sellerName}>{profile.sellerName}</Text> 
+          <View style={styles.sellerNameContainer}>
+            <Icon5 name="store" size={24} color="#05652D" style={styles.marketIcon} />
+            <Text style={styles.sellerName}>{profile.sellerName}</Text>
+          </View>
         <Text style={styles.userName}>{profile.firstName} {profile.lastName}</Text>
         <Text style={styles.userEmail}>{profile.email}</Text>
         <View style={styles.followContainer}>
@@ -297,7 +300,6 @@ const UserVisit = ({ route, navigation }) => {
       </View>
       
       <View style={styles.content}>
-        <View style={styles.divider} />
         <Text style={styles.productTitle}>Products</Text>
         <View style={styles.productsContainer}>
           {isProductsLoading ? (
@@ -402,6 +404,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#ccc'
   },
   profileInfoContainer: {
     flexDirection: 'row',
@@ -538,23 +541,18 @@ backButton: {
   top: 16,
   left: 16,
   zIndex: 10,
-  // backgroundColor: '#FFFFFF', 
-  // borderRadius: 20,
-  // padding: 6, 
 },
 subscribeButton: {
   position: 'absolute',
   top: 16,
   right: 16,
   zIndex: 10,
-  // backgroundColor: '#FFFFFF', 
-  // borderRadius: 20,
-  // padding: 6, 
 },
 profileInfo: {
   alignItems: 'left',
   marginTop: -50,
   marginLeft: 20,
+  marginBottom: 20,
 },
 userPhotoContainer: {
   width: 100,
@@ -583,6 +581,7 @@ followContainer: {
   justifyContent: 'left',
   width: '100%',
   marginTop: 8,
+
 },
 followText: {
   fontSize: 14,
@@ -636,6 +635,14 @@ messageButton: {
 messageButtonText: {
   color: '#FFFFFF',
   fontSize: 16,
+},
+sellerNameContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 2,
+},
+marketIcon: {
+  marginRight: 10,
 },
 });
 
