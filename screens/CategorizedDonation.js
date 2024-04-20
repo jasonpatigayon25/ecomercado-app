@@ -54,6 +54,16 @@ const CategorizedDonation = ({ route, navigation }) => {
                 style={styles.productCard}
               >
                 <Image source={{ uri: donation.photo }} style={styles.productImage} />
+                {donation.subPhotos && donation.subPhotos.length > 0 && (
+                    <View style={styles.subPhotosContainer}>
+                      {donation.subPhotos.slice(0, 3).map((subPhoto, index) => (
+                        <Image key={index} source={{ uri: subPhoto }} style={styles.subPhoto} />
+                      ))}
+                      {donation.subPhotos.length > 3 && (
+                        <Text style={styles.morePhotosIndicator}>+{donation.subPhotos.length - 3} more</Text>
+                      )}
+                    </View>
+                  )}
                 <Text style={styles.productName}>{donation.name}</Text>
                 <Text style={styles.productPrice}>{donation.itemNames.join(' · ')}</Text>
                 <Text style={styles.productCategory}>{donation.category} Bundle</Text>
@@ -99,13 +109,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   productCard: {
-    width: '48%',
+    width: '50%',
     backgroundColor: '#f9f9f9',
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ccc',
-    marginBottom: 10,
   },
   productImage: {
     width: '100%',
@@ -148,6 +157,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#808080',
     marginTop: 10,
+  },
+  subPhotosContainer: {
+    flexDirection: 'row',
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  subPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 2,
+  },
+  morePhotosIndicator: {
+    fontSize: 10,
+    color: '#666',
+    marginLeft: 4,
   },
 });
 
