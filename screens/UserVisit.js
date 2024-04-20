@@ -330,8 +330,7 @@ const UserVisit = ({ route, navigation }) => {
       fetchProductCategories();
     }
   }, [categoryTab, selectedTab]);
-  
-  // Fetch donation categories
+
   useEffect(() => {
     const fetchDonationCategories = async () => {
       const querySnapshot = await getDocs(collection(db, 'donationCategories'));
@@ -349,7 +348,8 @@ const UserVisit = ({ route, navigation }) => {
 
   const handleCategorySelect = (category) => {
 
-    navigation.navigate('CategorizedProduct', { categoryTitle: category.title });
+    navigation.navigate('CategorizedProduct', { categoryTitle: category.title, sellerName: profile.sellerName });
+
   };
 
   return (
