@@ -166,8 +166,6 @@ const SearchScreen = ({ navigation, route }) => {
     if (trimmedSearchText === '') {
       return;
     }
-  
-    // Navigate to SearchScreen with the searchQuery parameter
     navigation.navigate('SearchResults', { searchQuery: trimmedSearchText });
   };
 
