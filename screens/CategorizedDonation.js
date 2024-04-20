@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -6,35 +6,26 @@ import { Ionicons } from '@expo/vector-icons';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 
-const CategorizedProduct = ({ route, navigation }) => {
-  
+const CategorizedDonation = ({ route, navigation }) => {
   const { categoryTitle, sellerName } = route.params;
-  const [categoryItems, setCategoryItems] = useState([]);
-
-
+  const [donations, setDonations] = useState([]);
 
   useEffect(() => {
-    const fetchCategoryItems = async () => {
-      try {
-        const q = query(collection(db, 'products'), 
-                        where('category', '==', categoryTitle),
-                        where('publicationStatus', '==', 'approved'));
-        const querySnapshot = await getDocs(q);
-        const items = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setCategoryItems(items);
-      } catch (error) {
-        console.error('Error fetching category items:', error);
-      }
+    const fetchDonationsByCategory = async () => {
+      const donationsQuery = query(collection(db, 'donation'), where('category', '==', categoryTitle));
+      const donationsSnapshot = await getDocs(donationsQuery);
+      const donationsList = donationsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setDonations(donationsList);
     };
 
-    fetchCategoryItems();
+    fetchDonationsByCategory();
   }, [categoryTitle]);
 
-  const handleProductSelect = (item) => {
-    navigation.navigate('ProductDetail', { product: item });
+  const handleDonationSelect = (donation) => {
+    navigation.navigate('DonationDetail', { donation });
   };
 
   return (
@@ -48,21 +39,18 @@ const CategorizedProduct = ({ route, navigation }) => {
       <Text style={styles.title}>{categoryTitle}</Text>
       <ScrollView>
         <View style={styles.productsContainer}>
-          {categoryItems.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No products yet in this category</Text>
-            </View>
-          ) : (
-            categoryItems.map((item) => (
-              <TouchableOpacity key={item.id}
-              onPress={() => handleProductSelect(item)}  style={styles.productCard}>
-                <Image source={{ uri: item.photo }} style={styles.productImage} />
-                <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
-                <Text style={styles.productCategory}>{item.category}</Text>
-                <Text style={styles.productPrice}>₱{item.price}</Text>
-              </TouchableOpacity>
-            ))
-          )}
+          {donations.map((donation) => (
+            <TouchableOpacity
+              key={donation.id}
+              onPress={() => handleDonationSelect(donation)}
+              style={styles.productCard}
+            >
+              <Image source={{ uri: donation.photo }} style={styles.productImage} />
+              <Text style={styles.productName}>{donation.name}</Text>
+              <Text style={styles.productPrice}>{donation.itemNames.join(' · ')}</Text>
+              <Text style={styles.productCategory}>{donation.category} Bundle</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
     </View>
@@ -102,12 +90,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   productCard: {
-    width: '50%',
+    width: '48%',
     backgroundColor: '#f9f9f9',
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ccc',
+    marginBottom: 10,
   },
   productImage: {
     width: '100%',
@@ -125,7 +114,7 @@ const styles = StyleSheet.create({
   productPrice: {
     color: '#05652D',
     fontSize: 14,
-    fontWeight: 'bold',
+    marginLeft: 5,
   },
   productCategory: {
     fontSize: 12,
@@ -140,17 +129,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
     textAlign: 'center',
   },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#808080',
-    marginTop: 10,
-  },
 });
 
-export default CategorizedProduct;
+export default CategorizedDonation;

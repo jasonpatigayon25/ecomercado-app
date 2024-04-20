@@ -347,9 +347,11 @@ const UserVisit = ({ route, navigation }) => {
   }, [categoryTab, selectedTab]);
 
   const handleCategorySelect = (category) => {
-
-    navigation.navigate('CategorizedProduct', { categoryTitle: category.title, sellerName: profile.sellerName });
-
+    if (selectedTab === 'Categories' && categoryTab === 'Product Categories') {
+      navigation.navigate('CategorizedProduct', { categoryTitle: category.title, sellerName: profile.sellerName });
+    } else if (selectedTab === 'Categories' && categoryTab === 'Donation Categories') {
+      navigation.navigate('CategorizedDonation', { categoryTitle: category.title, sellerName: profile.sellerName });
+    }
   };
 
   return (
