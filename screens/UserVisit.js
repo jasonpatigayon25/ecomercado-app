@@ -849,11 +849,13 @@ tab: {
 tabText: {
   fontSize: 16,
   color: '#666',
+  textAlign: 'center',
 },
 activeTabText: {
   fontSize: 16,
   color: '#05652D',
   fontWeight: 'bold',
+  textAlign: 'center',
 },
 categoryContainer: {
   flexDirection: 'row',
