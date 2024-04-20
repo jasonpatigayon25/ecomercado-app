@@ -2,19 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { Ionicons } from '@expo/vector-icons';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import Icon5 from 'react-native-vector-icons/FontAwesome5';
 
 const CategorizedDonation = ({ route, navigation }) => {
-  const { categoryTitle, sellerName } = route.params;
+  const { categoryTitle, sellerName, email } = route.params; // Now includes email
   const [donations, setDonations] = useState([]);
 
   useEffect(() => {
     const fetchDonationsByCategory = async () => {
-      const donationsQuery = query(collection(db, 'donation'), where('category', '==', categoryTitle));
+      const donationsQuery = query(
+        collection(db, 'donation'),
+        where('category', '==', categoryTitle),
+        where('donor_email', '==', email),  // Filter donations by this specific email
+        where('publicationStatus', '==', 'approved')
+      );
       const donationsSnapshot = await getDocs(donationsQuery);
-      const donationsList = donationsSnapshot.docs.map((doc) => ({
+      const donationsList = donationsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       }));
@@ -22,7 +25,7 @@ const CategorizedDonation = ({ route, navigation }) => {
     };
 
     fetchDonationsByCategory();
-  }, [categoryTitle]);
+  }, [categoryTitle, email]);  // Include email in dependency array
 
   const handleDonationSelect = (donation) => {
     navigation.navigate('DonationDetail', { donation });
@@ -39,18 +42,24 @@ const CategorizedDonation = ({ route, navigation }) => {
       <Text style={styles.title}>{categoryTitle}</Text>
       <ScrollView>
         <View style={styles.productsContainer}>
-          {donations.map((donation) => (
-            <TouchableOpacity
-              key={donation.id}
-              onPress={() => handleDonationSelect(donation)}
-              style={styles.productCard}
-            >
-              <Image source={{ uri: donation.photo }} style={styles.productImage} />
-              <Text style={styles.productName}>{donation.name}</Text>
-              <Text style={styles.productPrice}>{donation.itemNames.join(' · ')}</Text>
-              <Text style={styles.productCategory}>{donation.category} Bundle</Text>
-            </TouchableOpacity>
-          ))}
+          {donations.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No donations yet in this category</Text>
+            </View>
+          ) : (
+            donations.map((donation) => (
+              <TouchableOpacity
+                key={donation.id}
+                onPress={() => handleDonationSelect(donation)}
+                style={styles.productCard}
+              >
+                <Image source={{ uri: donation.photo }} style={styles.productImage} />
+                <Text style={styles.productName}>{donation.name}</Text>
+                <Text style={styles.productPrice}>{donation.itemNames.join(' · ')}</Text>
+                <Text style={styles.productCategory}>{donation.category} Bundle</Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </ScrollView>
     </View>
@@ -113,7 +122,7 @@ const styles = StyleSheet.create({
   },
   productPrice: {
     color: '#05652D',
-    fontSize: 14,
+    fontSize: 12,
     marginLeft: 5,
   },
   productCategory: {
@@ -128,6 +137,17 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     marginHorizontal: 2,
     textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#808080',
+    marginTop: 10,
   },
 });
 

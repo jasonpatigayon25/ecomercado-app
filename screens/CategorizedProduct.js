@@ -4,20 +4,17 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import Icon5 from 'react-native-vector-icons/FontAwesome5';
 
 const CategorizedProduct = ({ route, navigation }) => {
-  
-  const { categoryTitle, sellerName } = route.params;
+  const { categoryTitle, sellerName, email } = route.params; // Now includes email
   const [categoryItems, setCategoryItems] = useState([]);
-
-
 
   useEffect(() => {
     const fetchCategoryItems = async () => {
       try {
         const q = query(collection(db, 'products'), 
                         where('category', '==', categoryTitle),
+                        where('seller_email', '==', email),  // Adding this condition
                         where('publicationStatus', '==', 'approved'));
         const querySnapshot = await getDocs(q);
         const items = querySnapshot.docs.map(doc => ({
@@ -31,7 +28,7 @@ const CategorizedProduct = ({ route, navigation }) => {
     };
 
     fetchCategoryItems();
-  }, [categoryTitle]);
+  }, [categoryTitle, email]);  // Depend on email as well
 
   const handleProductSelect = (item) => {
     navigation.navigate('ProductDetail', { product: item });

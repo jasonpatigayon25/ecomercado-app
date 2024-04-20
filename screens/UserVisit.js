@@ -348,9 +348,16 @@ const UserVisit = ({ route, navigation }) => {
 
   const handleCategorySelect = (category) => {
     if (selectedTab === 'Categories' && categoryTab === 'Product Categories') {
-      navigation.navigate('CategorizedProduct', { categoryTitle: category.title, sellerName: profile.sellerName });
+      navigation.navigate('CategorizedProduct', {
+        categoryTitle: category.title,
+        sellerName: profile.sellerName,
+        email: email
+      });
     } else if (selectedTab === 'Categories' && categoryTab === 'Donation Categories') {
-      navigation.navigate('CategorizedDonation', { categoryTitle: category.title, sellerName: profile.sellerName });
+      navigation.navigate('CategorizedDonation', {
+        categoryTitle: category.title,
+        email: email 
+      });
     }
   };
 
