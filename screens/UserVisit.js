@@ -72,7 +72,7 @@ const UserVisit = ({ route, navigation }) => {
   const [averageRating, setAverageRating] = useState(0);
   const { email } = route.params;
   const [products, setProducts] = useState([]);
-  const [donation, setDonations] = useState([]);
+  const [donations, setDonations] = useState([]);
   
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [isDonationsLoading, setIsDonationsLoading] = useState(true);
@@ -193,6 +193,24 @@ const UserVisit = ({ route, navigation }) => {
   const handleProductSelect = (product) => {
     navigation.navigate('ProductDetail', { product });
   };
+
+  useEffect(() => {
+    const fetchDonations = async () => {
+      setIsDonationsLoading(true);
+
+      const donationsQuery = query(collection(db, 'donation'), where('donor_email', '==', email), orderBy('createdAt', 'desc'));
+      const donationsSnapshot = await getDocs(donationsQuery);
+      const donationsList = donationsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setDonations(donationsList);
+      setIsDonationsLoading(false);
+    };
+
+    fetchDonations();
+  }, [email]);
 
   const handleDonationSelect = (donation) => {
     navigation.navigate('DonationDetail', { donation });
@@ -386,6 +404,32 @@ const UserVisit = ({ route, navigation }) => {
           )}
         </View>
       )}
+       {selectedTab === 'Donations' && (
+          <View style={styles.content}>
+            {isDonationsLoading ? (
+              <ActivityIndicator size="large" color="#05652D" />
+            ) : donations.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No donations yet</Text>
+              </View>
+            ) : (
+              <View style={styles.productsContainer}>
+                {donations.map((donation) => (
+                  <TouchableOpacity 
+                    key={donation.id} 
+                    onPress={() => handleDonationSelect(donation)} 
+                    style={styles.productCard}
+                  >
+                    <Image source={{ uri: donation.photo }} style={styles.productImage} />
+                    <Text style={styles.productName}>{donation.name}</Text>
+                    <Text style={styles.productPrice}>{donation.itemNames.join(' · ')}</Text>
+                    <Text style={styles.productCategory}>{donation.category} Bundle</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
       </View>
       </ScrollView>
       {showSubscriptionMessage && (
@@ -532,7 +576,7 @@ const styles = StyleSheet.create({
   },
   productPrice: {
     color: '#05652D',
-
+    fontSize: 12,
     marginLeft: 5,
   },
   productCategory: {
