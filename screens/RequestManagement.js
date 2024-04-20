@@ -239,7 +239,15 @@ useEffect(() => {
         case 'Receiving':
           return (
             <View style={styles.noteButtonContainer}>
-              <TouchableOpacity style={styles.confirmButton}>
+              <TouchableOpacity style={styles.confirmButton}
+              onPress={() => {
+                navigation.navigate('RequestReceivingDetails', {
+                  request: item,
+                  donations: donations,
+                  users: users,
+                  autoConfirmDeliver: true
+                });
+              }}>
                 <Text style={styles.confirmButtonText}>Confirm Delivered</Text>
               </TouchableOpacity>
             </View>

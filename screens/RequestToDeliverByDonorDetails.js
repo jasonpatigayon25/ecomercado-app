@@ -13,7 +13,7 @@ const RequestToDeliverByDonorDetails = ({ route, navigation }) => {
 
   useEffect(() => {
     if (route.params.autoDeliver) {
-      approveToDeliverRequest(request.id);  // This function now will setup initial states and show modal
+      approveToDeliverRequest(request.id);  
     }
   }, [route.params]);
 

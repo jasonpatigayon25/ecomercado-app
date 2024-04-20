@@ -13,6 +13,12 @@ const RequestReceivingDetails = ({ route, navigation }) => {
   const [requestStatus, setRequestStatus] = useState(request.status);
   const [deliveredStatus, setDeliveredStatus] = useState(request.deliveredStatus);
 
+  useEffect(() => {
+    if (route.params.autoConfirmDeliver) {
+      confirmDelivery();  
+    }
+  }, [route.params]);
+
   const [requesterFullName, setRequesterFullName] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
 
