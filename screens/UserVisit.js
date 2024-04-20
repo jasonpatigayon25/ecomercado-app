@@ -269,42 +269,45 @@ const UserVisit = ({ route, navigation }) => {
     }
   };
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setIsProductsLoading(true);
-      const baseQuery = collection(db, 'products');
-      let queryRef = query(
-        baseQuery, 
-        where('seller_email', '==', email),
-        where('publicationStatus', '==', 'approved')
-      );
-  
-      if (productTab === 'Latest') {
-        queryRef = query(queryRef, orderBy('createdAt', 'desc'));
-      } else if (productTab === 'Price') {
-        let direction = 'desc'; 
-        if (priceSort === 'Low') {
-          direction = 'asc'; 
-        }
-        queryRef = query(queryRef, orderBy('price', direction, 'number')); 
-      }
-  
-      const querySnapshot = await getDocs(queryRef);
-      const productList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        price: parseFloat(doc.data().price) 
-      }));
+    useEffect(() => {
+      const fetchProducts = async () => {
+          setIsProductsLoading(true);
+          const baseQuery = collection(db, 'products');
+          let queryRef = query(
+              baseQuery, 
+              where('seller_email', '==', email),
+              where('publicationStatus', '==', 'approved')
+          );
 
-      if (productTab === 'Price') {
-        productList.sort((a, b) => a.price - b.price);
-      }
-  
-      setProducts(productList);
-      setIsProductsLoading(false);
-    };
-  
-    fetchProducts();
+          if (productTab === 'Latest') {
+              queryRef = query(queryRef, orderBy('createdAt', 'desc'));
+          } else if (productTab === 'Price') {
+              const direction = priceSort === 'Low' ? 'asc' : 'desc'; 
+              queryRef = query(queryRef, orderBy('price', direction));
+          }
+
+          const querySnapshot = await getDocs(queryRef);
+          const productList = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+              price: parseFloat(doc.data().price)
+          }));
+
+          if (productTab === 'Price') {
+              productList.sort((a, b) => {
+                  if (priceSort === 'Low') {
+                      return a.price - b.price;
+                  } else {
+                      return b.price - a.price;
+                  }
+              });
+          }
+
+          setProducts(productList);
+          setIsProductsLoading(false);
+      };
+
+      fetchProducts();
   }, [email, productTab, priceSort]);
 
   const togglePriceSort = () => {
@@ -425,10 +428,10 @@ const UserVisit = ({ route, navigation }) => {
               <Text style={productTab === 'Latest' ? styles.activeTabText : styles.tabText}>Latest</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => { setProductTab('Price'); togglePriceSort(); }} style={styles.tab}>
-              <Text style={productTab === 'Price' ? styles.activeTabText : styles.tabText}>
-                Price {priceSort === 'High' ? '🔽' : '🔼'}
-              </Text>
-            </TouchableOpacity>
+        <Text style={productTab === 'Price' ? styles.activeTabText : styles.tabText}>
+            Price {priceSort === 'High' ? '<' : '>'}
+        </Text>
+    </TouchableOpacity>
           </View>
           {isProductsLoading ? (
             <ActivityIndicator size="large" color="#05652D" />
