@@ -278,7 +278,8 @@ const UserVisit = ({ route, navigation }) => {
         where('seller_email', '==', email),
         where('publicationStatus', '==', 'approved')
       );
-    
+  
+      // Apply sorting based on the productTab state
       if (productTab === 'Latest') {
         queryRef = query(queryRef, orderBy('createdAt', 'desc'));
       } else if (productTab === 'Price') {
@@ -288,25 +289,25 @@ const UserVisit = ({ route, navigation }) => {
         }
         queryRef = query(queryRef, orderBy('price', direction, 'number')); 
       }
-    
+  
       const querySnapshot = await getDocs(queryRef);
       const productList = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         price: parseFloat(doc.data().price) 
       }));
-    
-      productList.sort((a, b) => a.price - b.price);
-    
-      console.log(productList);
-    
+  
+      // Sort the products by price if the productTab is 'Price'
+      if (productTab === 'Price') {
+        productList.sort((a, b) => a.price - b.price);
+      }
+  
       setProducts(productList);
       setIsProductsLoading(false);
     };
   
     fetchProducts();
   }, [email, productTab, priceSort]);
-
   const togglePriceSort = () => {
     setPriceSort(prev => (prev === 'High' ? 'Low' : 'High'));
   };
@@ -388,7 +389,7 @@ const UserVisit = ({ route, navigation }) => {
             </View>
           ) : (
             <View style={styles.productsContainer}>
-              {products.map((product) => (
+              {products.filter(product => product.publicationStatus === 'approved').map((product) => (
                 <TouchableOpacity 
                   key={product.id} 
                   onPress={() => handleProductSelect(product)} 
