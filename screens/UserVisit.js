@@ -312,6 +312,29 @@ const UserVisit = ({ route, navigation }) => {
     setPriceSort(prev => (prev === 'High' ? 'Low' : 'High'));
   };
 
+  const [categories, setCategories] = useState([]);
+  const [categoryTab, setCategoryTab] = useState('Product Categories');
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const querySnapshot = await getDocs(collection(db, 'categories'));
+      const categoriesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setCategories(categoriesData);
+    };
+
+    if (productTab === 'Product Categories') {
+      fetchCategories();
+    }
+  }, [productTab]);
+
+  const handleCategorySelect = (category) => {
+
+    navigation.navigate('CategorizedProduct', { categoryTitle: category.title });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -428,6 +451,32 @@ const UserVisit = ({ route, navigation }) => {
                   </TouchableOpacity>
                 ))}
               </View>
+            )}
+          </View>
+          )}
+        {selectedTab === 'Categories' && (
+          <View style={styles.content}>
+            <View style={styles.tabsContainer}>
+            <TouchableOpacity onPress={() => setCategoryTab('Product Categories')} style={styles.tab}>
+              <Text style={productTab === 'Product Categories' ? styles.activeTabText : styles.tabText}>Product Categories</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setCategoryTab('Donation Categories')} style={styles.tab}>
+              <Text style={productTab === 'Donation Categories' ? styles.activeTabText : styles.tabText}>Donation Categories</Text>
+            </TouchableOpacity>
+            </View>
+            {productTab === 'Product Categories' && (
+            <View style={styles.categoryContainer}>
+              {categories.map((category) => (
+                <TouchableOpacity
+                  key={category.id}
+                  style={styles.categoryCard}
+                  onPress={() => handleCategorySelect(category)}
+                >
+                  <Image source={{ uri: category.image }} style={styles.categoryImage} />
+                  <Text style={styles.categoryTitle}>{category.title}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             )}
           </View>
         )}
@@ -761,6 +810,33 @@ tabText: {
 activeTabText: {
   fontSize: 16,
   color: '#05652D',
+  fontWeight: 'bold',
+},
+categoryContainer: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  justifyContent: 'space-around',
+},
+categoryCard: {
+  width: '48%',
+  aspectRatio: 1, 
+  marginBottom: 10,
+  padding: 10,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: '#FFF',
+  borderRadius: 10,
+  elevation: 2,
+},
+categoryImage: {
+  width: 100,
+  height: 100,
+  resizeMode: 'contain',
+},
+categoryTitle: {
+  marginTop: 8,
+  textAlign: 'center',
+  fontSize: 16,
   fontWeight: 'bold',
 },
 });
