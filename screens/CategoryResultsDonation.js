@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -14,12 +14,12 @@ const CategoryResultsDonation = () => {
 
   useEffect(() => {
     const fetchDonations = async () => {
-      const q = query(
-        collection(db, 'donation'),
-        where('category', '==', categoryName),
-        where('publicationStatus', '==', 'approved')
-      );
       try {
+        const q = query(
+          collection(db, 'donation'),
+          where('category', '==', categoryName),
+          where('publicationStatus', '==', 'approved')
+        );
         const querySnapshot = await getDocs(q);
         const fetchedDonations = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setDonations(fetchedDonations);
@@ -33,37 +33,60 @@ const CategoryResultsDonation = () => {
     fetchDonations();
   }, [categoryName]);
 
-  const DonationItem = ({ item }) => (
+  const DonationItem = ({ donation }) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('DonationDetail', { donation: item })}
+      onPress={() => navigation.navigate('DonationDetail', { donation })}
       style={styles.productCard}
     >
-      <Image source={{ uri: item.photo }} style={styles.productImage} />
-      <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productCategory}>{item.category}</Text>
+      <Image source={{ uri: donation.photo }} style={styles.productImage} />
+      {donation.subPhotos && donation.subPhotos.length > 0 && (
+                    <View style={styles.subPhotosContainer}>
+                      {donation.subPhotos.slice(0, 3).map((subPhoto, index) => (
+                        <Image key={index} source={{ uri: subPhoto }} style={styles.subPhoto} />
+                      ))}
+                      {donation.subPhotos.length > 3 && (
+                        <Text style={styles.morePhotosIndicator}>+{donation.subPhotos.length - 3} more</Text>
+                      )}
+                    </View>
+                  )}
+      <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{donation.name}</Text>
+      <Text style={styles.productPrice}>{donation.itemNames.join(' · ')}</Text>
+      <Text style={styles.productCategory}>{donation.category}</Text>
     </TouchableOpacity>
   );
 
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
+  const renderDonations = () => {
+    if (loading) {
+      return <ActivityIndicator size="large" color="#0000ff" />;
+    }
 
-  if (donations.length === 0) {
+    if (donations.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Icon name="shopping-basket" size={50} color="#ccc" />
+          <Text style={styles.emptyText}>No donations yet in this category</Text>
+        </View>
+      );
+    }
+
     return (
-      <View style={styles.emptyContainer}>
-        <Icon name="shopping-basket" size={50} color="#ccc" />
-        <Text style={styles.emptyText}>No donations yet in this category</Text>
-      </View>
+      <ScrollView contentContainerStyle={styles.productsContainer}>
+        {donations.map((donation) => (
+          <DonationItem key={donation.id} donation={donation} />
+        ))}
+      </ScrollView>
     );
-  }
+  };
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.productsContainer}>
-        {donations.map((donation) => (
-          <DonationItem key={donation.id} item={donation} />
-        ))}
-      </ScrollView>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="arrow-left" size={24} />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Category: {categoryName} Bundle</Text>
+      </View>
+      {renderDonations()}
     </View>
   );
 };
@@ -72,6 +95,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  backButton: {
+    marginRight: 10,
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   productsContainer: {
     flexDirection: 'row',
@@ -86,7 +124,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ccc',
-    marginBottom: 10,
   },
   productImage: {
     width: '100%',
@@ -124,6 +161,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#808080',
     marginTop: 10,
+  },
+  subPhotosContainer: {
+    flexDirection: 'row',
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  subPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 2,
+  },
+  morePhotosIndicator: {
+    fontSize: 10,
+    color: '#666',
+    marginLeft: 4,
+  },
+  productPrice: {
+    color: '#05652D',
+    fontSize: 12,
+    marginLeft: 5,
   },
 });
 
