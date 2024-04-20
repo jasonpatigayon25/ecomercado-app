@@ -22,6 +22,7 @@ const DonationWishlist = ({ navigation }) => {
     return userData.length > 0 ? `${userData[0].firstName} ${userData[0].lastName}` : '';
   };
 
+
   useEffect(() => {
     if (user) {
       const wishlistRef = doc(db, 'wishlists', user.email);
@@ -77,7 +78,6 @@ const handleRequest = () => {
     }
   };
   
-  
   const renderEmptyCart = () => (
     <View style={styles.emptyCartContainer}>
       <Icon name="heart" size={50} color="#ccc" />
@@ -96,29 +96,47 @@ const handleRequest = () => {
 }, [wishItems]);
 
 const renderItem = ({ item }) => (
-    <TouchableOpacity
-        style={styles.cartItem}
-        onPress={() => navigation.navigate('DonationDetail', { donation: item })}
-    >
-        <View style={styles.itemLeftSection}>
-            <TouchableOpacity onPress={() => handleSelectItem(item.donationId)}>
-                <Icon
-                    name={selectedItems.has(item.donationId) ? 'check-square' : 'square'}
-                    size={24}
-                    color="#05652D"
-                />
-            </TouchableOpacity>
-            <Image source={{ uri: item.photo }} style={styles.cartImage} />
-        </View>
-        <View style={styles.cartDetails}>
-            <Text style={styles.cartName}>{item.name}</Text>
-            <Text style={styles.cartitemnames}>{item.itemNames && item.itemNames.length > 0 ? `${item.itemNames.join(' · ')}` : ''}</Text>
-            <Text style={styles.cartCategory}>{item.category}</Text>
-            <Text style={styles.cartDescription}>{item.purpose}</Text>
-            <Text style={styles.cartDescription}>{item.message}</Text>
-        </View>
-    </TouchableOpacity>
+  
+  <TouchableOpacity
+      style={styles.cartItem}
+      onPress={() => navigation.navigate('DonationDetail', { donation: item })}
+  >
+      <View style={styles.itemLeftSection}>
+          <TouchableOpacity
+              onPress={() => handleSelectItem(item.donationId)}
+              style={{ marginRight: 10 }}
+          >
+              <Icon
+                  name={selectedItems.has(item.donationId) ? "check-square" : "square"}
+                  size={24}
+                  color="#05652D"
+              />
+          </TouchableOpacity>
+          <Image source={{ uri: item.photo }} style={styles.cartImage} />
+      </View>
+      <View style={styles.cartDetails}>
+          <Text style={styles.cartName}>{item.name}</Text>
+          <Text style={styles.cartitemnames}>{item.itemNames && item.itemNames.length > 0 ? `${item.itemNames.join(' · ')}` : ''}</Text>
+          <Text style={styles.cartCategory}>{item.category}</Text>
+          <Text style={styles.cartDescription}>{item.purpose}</Text>
+          <Text style={styles.cartDescription}>{item.message}</Text>
+      </View>
+  </TouchableOpacity>
 );
+
+const handleSelectItem = (donationId) => {
+  console.log("Toggling selection for:", donationId); // Debugging line to check which ID is toggled
+  setSelectedItems(prevSelectedItems => {
+      const newSelection = new Set(prevSelectedItems);
+      if (newSelection.has(donationId)) {
+          newSelection.delete(donationId);
+      } else {
+          newSelection.add(donationId);
+      }
+      return newSelection;
+  });
+};
+
 
   const renderSectionList = () => {
     const sections = Object.keys(groupedWishItems).map((key) => ({
@@ -139,51 +157,45 @@ const renderItem = ({ item }) => (
   const navigateToUserVisit = (donorEmail) => {
     navigation.navigate('UserVisit', { email: donorEmail });
   };
-
-  const handleSelectItem = (donationId) => {
-    const newSelectedItems = new Set(selectedItems);
-    if (newSelectedItems.has(donationId)) {
-        newSelectedItems.delete(donationId);
-    } else {
-        newSelectedItems.add(donationId);
-    }
-    setSelectedItems(newSelectedItems);
-};
-
-
-  const handleSelectDonorItems = (donorEmail) => {
-    const newSelectedItems = new Set(selectedItems);
-    wishItems.forEach((item) => {
-        if (item.donor_email === donorEmail) {
-            if (newSelectedItems.has(item.donationId)) {
-                newSelectedItems.delete(item.donationId);
-            } else {
-                newSelectedItems.add(item.donationId);
-            }
-        }
-    });
-    setSelectedItems(newSelectedItems);
-};
   
-const renderSectionHeader = ({ section: { title, data } }) => (
-    <View style={styles.sellerHeader}>
-      <TouchableOpacity onPress={() => handleSelectDonorItems(data[0]?.donor_email)} style={styles.sectionSelectAllButton}>
-        <Icon
-          name={data.every(item => selectedItems.has(item.donationId)) ? 'check-square' : 'square'}
-          size={24}
-          color="#05652D"
-        />
-      </TouchableOpacity>
-      <Icon name="heart" size={20} color="#808080" style={styles.shopIcon} />
-      <Text style={styles.sellerName}>{title}</Text>
-      <TouchableOpacity
-        style={styles.visitButton}
-        onPress={() => navigateToUserVisit(data[0]?.donor_email)}
-      >
-        <Text style={styles.visitButtonText}>Visit</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderSectionHeader = ({ section: { title, data } }) => {
+    const isAllSelected = data.every(item => selectedItems.has(item.donationId));
+    return (
+        <View style={styles.sellerHeader}>
+            <TouchableOpacity
+                style={styles.sectionSelectAllButton}
+                onPress={() => handleSelectAllGroup(data, !isAllSelected)}
+            >
+                <Icon
+                    name={isAllSelected ? "check-square" : "square"}
+                    size={20}
+                    color="#808080"
+                />
+            </TouchableOpacity>
+            <Text style={styles.sellerName}>{title}</Text>
+            <TouchableOpacity
+                style={styles.visitButton}
+                onPress={() => navigateToUserVisit(data[0]?.donor_email)}
+            >
+                <Text style={styles.visitButtonText}>Visit</Text>
+            </TouchableOpacity>
+        </View>
+    );
+};
+
+const handleSelectAllGroup = (items, select) => {
+  setSelectedItems(prevSelectedItems => {
+      const newSelection = new Set(prevSelectedItems);
+      items.forEach(item => {
+          if (select) {
+              newSelection.add(item.donationId);
+          } else {
+              newSelection.delete(item.donationId);
+          }
+      });
+      return newSelection;
+  });
+};
 
   const handleRemoveSelected = () => {
     if (selectedItems.size === 0) {
@@ -224,6 +236,20 @@ const renderSectionHeader = ({ section: { title, data } }) => (
       });
   };
 
+  const areAllSelected = () => {
+    return wishItems.length > 0 && wishItems.every(item => selectedItems.has(item.donationId));
+};
+
+const handleSelectAll = (selectAll) => {
+    const newSelection = new Set(selectedItems);
+    if (selectAll) {
+        wishItems.forEach(item => newSelection.add(item.donationId));
+    } else {
+        wishItems.forEach(item => newSelection.delete(item.donationId));
+    }
+    setSelectedItems(newSelection);
+};
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -237,20 +263,26 @@ const renderSectionHeader = ({ section: { title, data } }) => (
       </View>
       {wishItems.length === 0 ? renderEmptyCart() : renderSectionList()}
       <View style={styles.actionBar}>
-        <TouchableOpacity>
-          <Icon name={selectedItems.size === wishItems.length ? "check-square" : "square"} size={24} color="#05652D" />
-          <Text style={styles.selectAllText}>Select All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.removeButton} onPress={handleRemoveSelected}>
-          <Icon name="trash" size={20} color="#D32F2F" />
-          <Text style={styles.removeButtonText}>Remove</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleRequest} style={styles.checkoutButton}>
-          <View>
-            <Text style={styles.checkoutButtonText}>Request </Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+    style={styles.selectAllButton}
+    onPress={() => handleSelectAll(!areAllSelected())}
+>
+    <Icon
+        name={areAllSelected() ? "check-square" : "square"}
+        size={24}
+        color="#05652D"
+    />
+    <Text style={styles.selectAllText}>Select All</Text>
+</TouchableOpacity>
+    <TouchableOpacity style={styles.removeButton} onPress={handleRemoveSelected}>
+        <Icon name="trash" size={20} color="#D32F2F" />
+        <Text style={styles.removeButtonText}>Remove</Text>
+    </TouchableOpacity>
+    <TouchableOpacity onPress={handleRequest} style={styles.checkoutButton}>
+        <Text style={styles.checkoutButtonText}>Request </Text>
+    </TouchableOpacity>
+</View>
+
       <CartModal item={currentItem} visible={modalVisible} onClose={() => setModalVisible(false)} />
     </SafeAreaView>
   );
