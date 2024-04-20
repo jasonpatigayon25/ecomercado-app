@@ -207,14 +207,30 @@ useEffect(() => {
         case 'To Approve':
           return (
             <View style={styles.noteButtonContainer}>
-              <TouchableOpacity style={styles.confirmButton}>
+              <TouchableOpacity style={styles.confirmButton}
+              onPress={() => {
+                navigation.navigate('RequestToApproveByDonorDetails', { 
+                  request: item, 
+                  donations: donations, 
+                  users: users, 
+                  autoApprove: true
+                });
+              }}>
                 <Text style={styles.confirmButtonText}>Approve</Text>
               </TouchableOpacity>
             </View>
           );
         case 'To Deliver':
           return (
-            <View style={styles.noteButtonContainer}>
+            <View style={styles.noteButtonContainer}
+            onPress={() => {
+              navigation.navigate('RequestToDeliverByDonorDetails', {
+                request: item,
+                donations: donations,
+                users: users,
+                autoDeliver: true
+              });
+            }}>
               <TouchableOpacity style={styles.shipButton}>
                 <Text style={styles.confirmButtonText}>Deliver Request</Text>
               </TouchableOpacity>

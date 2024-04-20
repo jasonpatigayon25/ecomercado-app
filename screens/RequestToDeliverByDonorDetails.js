@@ -11,6 +11,12 @@ import moment from 'moment';
 const RequestToDeliverByDonorDetails = ({ route, navigation }) => {
   const { request, donations, users, requesterEmail } = route.params;
 
+  useEffect(() => {
+    if (route.params.autoDeliver) {
+      approveToDeliverRequest(request.id);
+    }
+  }, []);
+
   const [requesterFullName, setRequesterFullName] = useState('');
 
   const rotateAnimation = useRef(new Animated.Value(0)).current;
