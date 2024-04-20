@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -63,7 +64,7 @@ const CategoryResultsDonation = () => {
     if (donations.length === 0) {
       return (
         <View style={styles.emptyContainer}>
-          <Icon name="shopping-basket" size={50} color="#ccc" />
+          <Icon5 name="heart" size={50} color="#ccc" />
           <Text style={styles.emptyText}>No donations yet in this category</Text>
         </View>
       );
