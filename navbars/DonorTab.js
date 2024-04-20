@@ -23,20 +23,15 @@ const DonorTab = ({ selectedTab, setSelectedTab }) => {
     };
 
     useEffect(() => {
-      const unsubscribe = Object.entries(statusMap).map(([tabName, status]) => {
-          const q = query(collection(db, "requests"), where("status", "==", status));
-          return onSnapshot(q, (snapshot) => {
-              const uniqueDonorEmails = new Set();
-              snapshot.forEach((doc) => {
-                  const donorDetails = doc.data().donorDetails || {};
-                  Object.values(donorDetails).forEach(donor => uniqueDonorEmails.add(donor.email)); 
-              });
-              setRequestCounts(prevCounts => ({ ...prevCounts, [tabName]: uniqueDonorEmails.size }));
-          });
-      });
-
-      return () => unsubscribe.forEach(unsub => unsub());
-  }, []);
+        const unsubscribe = Object.entries(statusMap).map(([tabName, status]) => {
+            const q = query(collection(db, "requests"), where("status", "==", status), where("donorEmail", "==", currentUser.email));
+            return onSnapshot(q, (snapshot) => {
+                setRequestCounts(prevCounts => ({ ...prevCounts, [tabName]: snapshot.size }));
+            });
+        });
+    
+        return () => unsubscribe.forEach(unsub => unsub());
+    }, []);
 
     useEffect(() => {
         const tabIndex = tabNames.indexOf(selectedTab);
