@@ -466,20 +466,32 @@ const UserVisit = ({ route, navigation }) => {
                 <Text style={styles.emptyText}>No donations yet</Text>
               </View>
             ) : (
-              <View style={styles.productsContainer}>
-                {donations.map((donation) => (
-                  <TouchableOpacity 
-                    key={donation.id} 
-                    onPress={() => handleDonationSelect(donation)} 
-                    style={styles.productCard}
-                  >
-                    <Image source={{ uri: donation.photo }} style={styles.productImage} />
-                    <Text style={styles.productName}>{donation.name}</Text>
-                    <Text style={styles.productPrice}>{donation.itemNames.join(' · ')}</Text>
-                    <Text style={styles.productCategory}>{donation.category} Bundle</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+          <View style={styles.productsContainer}>
+            {donations.map((donation) => (
+              <TouchableOpacity 
+                key={donation.id} 
+                onPress={() => handleDonationSelect(donation)} 
+                style={styles.productCard}
+              >
+                <Image source={{ uri: donation.photo }} style={styles.productImage} />
+                <View style={styles.donationContent}>
+                {donation.subPhotos && donation.subPhotos.length > 0 && (
+                    <View style={styles.subPhotosContainer}>
+                      {donation.subPhotos.slice(0, 3).map((subPhoto, index) => (
+                        <Image key={index} source={{ uri: subPhoto }} style={styles.subPhoto} />
+                      ))}
+                      {donation.subPhotos.length > 3 && (
+                        <Text style={styles.morePhotosIndicator}>+{donation.subPhotos.length - 3} more</Text>
+                      )}
+                    </View>
+                  )}
+                  <Text style={styles.productName}>{donation.name}</Text>
+                  <Text style={styles.productPrice}>{donation.itemNames.join(' · ')}</Text>
+                  <Text style={styles.productCategory}>{donation.category} Bundle</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
             )}
           </View>
           )}
@@ -883,6 +895,22 @@ categoryTitle: {
   textAlign: 'center',
   fontSize: 16,
   fontWeight: 'bold',
+},
+subPhotosContainer: {
+  flexDirection: 'row',
+  marginTop: 4,
+  alignItems: 'center',
+},
+subPhoto: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  marginRight: 4,
+},
+morePhotosIndicator: {
+  fontSize: 10,
+  color: '#666',
+  marginLeft: 4,
 },
 });
 
