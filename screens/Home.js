@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Image, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Image, ScrollView, TouchableOpacity, Modal, Alert, Button } from 'react-native';
 import { ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { FlatList } from 'react-native-gesture-handler';
@@ -32,6 +32,8 @@ const Home = ({ navigation }) => {
   const wishlistIcon = require('../assets/wishlist-donation.png');
   const [userCity, setUserCity] = useState('');
   const [locationEnabled, setLocationEnabled] = useState(false);
+
+  const [categoryType, setCategoryType] = useState('productCategories');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -78,7 +80,8 @@ const Home = ({ navigation }) => {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const querySnapshot = await getDocs(collection(db, "categories"));
+      const collectionName = categoryType === 'productCategories' ? "categories" : "donationCategories";
+      const querySnapshot = await getDocs(collection(db, collectionName));
       let categories = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -88,7 +91,7 @@ const Home = ({ navigation }) => {
     };
   
     fetchCategories();
-  }, []);
+  }, [categoryType]);
 
   useEffect(() => {
     const fetchMostPopularProducts = async () => {
@@ -356,10 +359,8 @@ const Home = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.mainHeader}>
-      
+      <View style={styles.mainHeader}>  
         <View style={styles.searchContainer}>
-          
         <View style={styles.inputIconContainer}>
           <Icon name="search" size={20} color="#A9A9A9" style={styles.searchIcon} />
           <TextInput
@@ -397,7 +398,20 @@ const Home = ({ navigation }) => {
           </View>
         </View>
       </View>
+      <ScrollView>
       <View style={styles.categoryHeader}>
+      <View style={styles.switchContainer}>
+      <Button
+            title="Product Categories"
+            onPress={() => setCategoryType('productCategories')}
+            color={categoryType === 'productCategories' ? '#05652D' : '#D3D3D3'}
+          />
+          <Button
+            title="Donation Categories"
+            onPress={() => setCategoryType('donationCategories')}
+            color={categoryType === 'donationCategories' ? '#05652D' : '#D3D3D3'}
+          />
+      </View>
         <View style={styles.viewAllIconContainer}>
           <TouchableOpacity onPress={toggleModal}>
             <View style={styles.viewAllIconBackground}>
@@ -441,14 +455,13 @@ const Home = ({ navigation }) => {
             </ScrollView>
           </View>
         </Modal>
-
+        
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContainer}>
           {firestoreCategories.map((category) => (
             <Category key={category.id} id={category.id} image={category.image} title={category.title} />
           ))}
         </ScrollView>
       </View>
-      <ScrollView>
         <View style={[styles.carouselContainer, styles.sectionContainer]}>
         <FlatList
           ref={carouselRef}
@@ -599,7 +612,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   categoriesContainer: {
-    marginTop: 20,
+    marginTop: 10,
     marginBottom: 10,
     marginHorizontal: 10,
   },
@@ -942,7 +955,21 @@ searchSuggestions: {
     height: 24,
     marginLeft: 15,
     resizeMode: 'contain', 
-  }
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  switchButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    color: 'grey',
+  },
+  activeSwitchButton: {
+    fontWeight: 'bold',
+    color: 'green',
+  },
 });
 
 
