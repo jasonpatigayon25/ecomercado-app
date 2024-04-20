@@ -101,7 +101,7 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
   const approveRequest = async () => {
     Alert.alert(
       "Confirm Approval",
-      "Are you sure you want to approve this order?",
+      "Are you sure you want to approve this request?",
       [
         {
           text: "Cancel",
