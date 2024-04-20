@@ -279,7 +279,6 @@ const UserVisit = ({ route, navigation }) => {
         where('publicationStatus', '==', 'approved')
       );
   
-      // Apply sorting based on the productTab state
       if (productTab === 'Latest') {
         queryRef = query(queryRef, orderBy('createdAt', 'desc'));
       } else if (productTab === 'Price') {
@@ -314,19 +313,37 @@ const UserVisit = ({ route, navigation }) => {
 
   const [categories, setCategories] = useState([]);
   const [categoryTab, setCategoryTab] = useState('Product Categories');
+  const [productCategories, setProductCategories] = useState([]);
+  const [donationCategories, setDonationCategories] = useState([]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchProductCategories = async () => {
       const querySnapshot = await getDocs(collection(db, 'categories'));
       const categoriesData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setCategories(categoriesData);
+      setProductCategories(categoriesData);
     };
-
+  
     if (selectedTab === 'Categories' && categoryTab === 'Product Categories') {
-      fetchCategories();
+      fetchProductCategories();
+    }
+  }, [categoryTab, selectedTab]);
+  
+  // Fetch donation categories
+  useEffect(() => {
+    const fetchDonationCategories = async () => {
+      const querySnapshot = await getDocs(collection(db, 'donationCategories'));
+      const categoriesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setDonationCategories(categoriesData);
+    };
+  
+    if (selectedTab === 'Categories' && categoryTab === 'Donation Categories') {
+      fetchDonationCategories();
     }
   }, [categoryTab, selectedTab]);
 
@@ -454,32 +471,46 @@ const UserVisit = ({ route, navigation }) => {
             )}
           </View>
           )}
-        {selectedTab === 'Categories' && (
-          <View style={styles.content}>
-            <View style={styles.tabsContainer}>
-            <TouchableOpacity onPress={() => setCategoryTab('Product Categories')} style={styles.tab}>
-              <Text style={categoryTab === 'Product Categories' ? styles.activeTabText : styles.tabText}>Product Categories</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setCategoryTab('Donation Categories')} style={styles.tab}>
-              <Text style={categoryTab === 'Donation Categories' ? styles.activeTabText : styles.tabText}>Donation Categories</Text>
-            </TouchableOpacity>
-            </View>
-            {selectedTab === 'Categories' && categoryTab === 'Product Categories' && (
-            <View style={styles.categoryContainer}>
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={styles.categoryCard}
-                  onPress={() => handleCategorySelect(category)}
-                >
-                  <Image source={{ uri: category.image }} style={styles.categoryImage} />
-                  <Text style={styles.categoryTitle}>{category.title}</Text>
+          {selectedTab === 'Categories' && (
+            <View style={styles.content}>
+              <View style={styles.tabsContainer}>
+                <TouchableOpacity onPress={() => setCategoryTab('Product Categories')} style={styles.tab}>
+                  <Text style={categoryTab === 'Product Categories' ? styles.activeTabText : styles.tabText}>Product Categories</Text>
                 </TouchableOpacity>
-              ))}
+                <TouchableOpacity onPress={() => setCategoryTab('Donation Categories')} style={styles.tab}>
+                  <Text style={categoryTab === 'Donation Categories' ? styles.activeTabText : styles.tabText}>Donation Categories</Text>
+                </TouchableOpacity>
+              </View>
+              {categoryTab === 'Product Categories' && (
+                <View style={styles.categoryContainer}>
+                  {productCategories.map((category) => (
+                    <TouchableOpacity
+                      key={category.id}
+                      style={styles.categoryCard}
+                      onPress={() => handleCategorySelect(category)}
+                    >
+                      <Image source={{ uri: category.image }} style={styles.categoryImage} />
+                      <Text style={styles.categoryTitle}>{category.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              {categoryTab === 'Donation Categories' && (
+                <View style={styles.categoryContainer}>
+                  {donationCategories.map((category) => (
+                    <TouchableOpacity
+                      key={category.id}
+                      style={styles.categoryCard}
+                      onPress={() => handleCategorySelect(category)}
+                    >
+                      <Image source={{ uri: category.image }} style={styles.categoryImage} />
+                      <Text style={styles.categoryTitle}>{category.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
-            )}
-          </View>
-        )}
+          )}
       </View>
       </ScrollView>
       {showSubscriptionMessage && (
