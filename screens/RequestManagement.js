@@ -236,22 +236,36 @@ useEffect(() => {
               </TouchableOpacity>
             </View>
           );
-        case 'Receiving':
-          return (
-            <View style={styles.noteButtonContainer}>
-              <TouchableOpacity style={styles.confirmButton}
-              onPress={() => {
-                navigation.navigate('RequestReceivingDetails', {
-                  request: item,
-                  donations: donations,
-                  users: users,
-                  autoConfirmDeliver: true
-                });
-              }}>
-                <Text style={styles.confirmButtonText}>Confirm Delivered</Text>
-              </TouchableOpacity>
-            </View>
-          );
+          case 'Receiving':
+            if (item.deliveredStatus === 'Processing') {
+              return (
+                <View style={styles.noteButtonContainer}>
+                  <TouchableOpacity 
+                    style={styles.confirmButton}
+                    onPress={() => {
+                      navigation.navigate('RequestReceivingDetails', {
+                        request: item,
+                        donations: donations,
+                        users: users,
+                        autoConfirmDeliver: true
+                      });
+                    }}>
+                    <Text style={styles.confirmButtonText}>Confirm Delivered</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            } else if (item.deliveredStatus === 'Waiting') {
+              return (
+                <View style={styles.noteButtonContainer}>
+                  <TouchableOpacity 
+                    style={[styles.confirmButton, { backgroundColor: '#ccc' }]}
+                    disabled={true}>
+                    <Text style={styles.confirmButtonText}>Pending Confirmation</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            }
+            return null; 
         case 'Completed':
           return <Text style={styles.completedText}>Donations Acquired</Text>;
         case 'Taken/Declined':

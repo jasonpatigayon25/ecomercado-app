@@ -156,7 +156,7 @@ const handleConfirmEndDate = (date) => {
                             await updateDoc(donationRef, {
                                 deliveryStart: Timestamp.fromDate(new Date(deliveryStart)), 
                                 deliveryEnd: Timestamp.fromDate(new Date(deliveryEnd)), 
-                                deliveryStatus: 'Processing', 
+                                deliveredStatus: 'Processing', 
                                 status: 'Receiving'
                             });
                             setDeliveryDateModalVisible(false);
