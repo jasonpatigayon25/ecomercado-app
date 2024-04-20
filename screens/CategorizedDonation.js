@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   productCard: {
     width: '48%',

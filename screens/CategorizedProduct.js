@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const CategorizedProduct = ({ route, navigation }) => {
-  const { categoryTitle, sellerName, email } = route.params; // Now includes email
+  const { categoryTitle, sellerName, email } = route.params; 
   const [categoryItems, setCategoryItems] = useState([]);
 
   useEffect(() => {
@@ -14,7 +14,7 @@ const CategorizedProduct = ({ route, navigation }) => {
       try {
         const q = query(collection(db, 'products'), 
                         where('category', '==', categoryTitle),
-                        where('seller_email', '==', email),  // Adding this condition
+                        where('seller_email', '==', email), 
                         where('publicationStatus', '==', 'approved'));
         const querySnapshot = await getDocs(q);
         const items = querySnapshot.docs.map(doc => ({
@@ -28,7 +28,7 @@ const CategorizedProduct = ({ route, navigation }) => {
     };
 
     fetchCategoryItems();
-  }, [categoryTitle, email]);  // Depend on email as well
+  }, [categoryTitle, email]);  
 
   const handleProductSelect = (item) => {
     navigation.navigate('ProductDetail', { product: item });
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   productCard: {
     width: '50%',

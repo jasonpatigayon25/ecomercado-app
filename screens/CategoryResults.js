@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -13,13 +13,13 @@ const CategoryResults = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!categoryName) {
-      console.error("Category name is undefined or not passed correctly");
-      setLoading(false);
-      return;
-    }
-
     const fetchProducts = async () => {
+      if (!categoryName) {
+        console.error("Category name is undefined or not passed correctly");
+        setLoading(false);
+        return;
+      }
+
       try {
         const q = query(
           collection(db, 'products'),
@@ -39,131 +39,129 @@ const CategoryResults = () => {
     fetchProducts();
   }, [categoryName]);
 
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
-
   const ProductItem = ({ product }) => (
     <TouchableOpacity
-      style={styles.productItem}
       onPress={() => navigation.navigate('ProductDetail', { product })}
+      style={styles.productCard}
     >
       <Image source={{ uri: product.photo }} style={styles.productImage} />
-      <View style={styles.productInfo}>
-      <Text 
-        style={styles.productName}
-        numberOfLines={1}
-        ellipsizeMode="tail"
-      >
-        {product.name}
-      </Text>
-      <Text 
-        style={styles.productPrice}
-        numberOfLines={1}
-        ellipsizeMode="tail"
-      >
-        ₱{product.price}
-      </Text>
-      <Text 
-        style={styles.productDescription}
-        numberOfLines={1}
-        ellipsizeMode="tail"
-      >
-        {product.description}
-      </Text>
-      </View>
+      <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{product.name}</Text>
+      <Text style={styles.productCategory}>{product.category}</Text>
+      <Text style={styles.productPrice}>₱{product.price}</Text>
     </TouchableOpacity>
   );
 
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-left" size={20} color="#000" />
-      </TouchableOpacity>
-      <Text style={styles.header}>Category: "{categoryName}"</Text>
-    </View>
-  );
+  const renderProducts = () => {
+    if (loading) {
+      return <ActivityIndicator size="large" color="#0000ff" />;
+    }
 
-  const renderEmptyComponent = () => (
-    <View style={styles.emptyContainer}>
-      <Icon name="shopping-basket" size={50} color="#ccc" />
-      <Text style={styles.emptyText}>No Products Yet</Text>
-    </View>
-  );
+    if (products.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Icon name="shopping-basket" size={50} color="#ccc" />
+          <Text style={styles.emptyText}>No Products Yet</Text>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView contentContainerStyle={styles.productsContainer}>
+        {products.map((product) => (
+          <ProductItem key={product.id} product={product} />
+        ))}
+      </ScrollView>
+    );
+  };
 
   return (
-    <FlatList
-      style={styles.container}
-      data={products}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <ProductItem product={item} />}
-      ListHeaderComponent={renderHeader}
-      ListEmptyComponent={renderEmptyComponent} 
-    />
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="arrow-left" size={24} />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Category: {categoryName}</Text>
+      </View>
+      {renderProducts()}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-   container: {
+  container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#fff',
   },
-  headerContainer: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  header: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center', 
-    flex: 1, 
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
   backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  productItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    paddingBottom: 10,
-  },
-  productImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
     marginRight: 10,
   },
-  productInfo: {
-    flex: 1,
-  },
-  productName: {
+  headerText: {
+    fontSize: 18,
     fontWeight: 'bold',
   },
+  productsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  productCard: {
+    width: '50%',
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  productImage: {
+    width: '100%',
+    height: 150,
+    resizeMode: 'cover',
+    marginBottom: 10,
+    borderRadius: 8,
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#05652D',
+    marginBottom: 6,
+  },
   productPrice: {
-    color: 'green',
+    color: '#05652D',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  productCategory: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#ECECEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
+    marginVertical: 4,
+    marginHorizontal: 2,
+    textAlign: 'center',
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 50,
+    justifyContent: 'center',
+    padding: 20,
   },
   emptyText: {
     fontSize: 16,
-    color: '#ccc',
+    color: '#808080',
     marginTop: 10,
-  },
-  productDescription: {
-    fontStyle: 'italic',
-    color: '#333',
-    fontSize: 12,
-    overflow: 'hidden',
   },
 });
 
