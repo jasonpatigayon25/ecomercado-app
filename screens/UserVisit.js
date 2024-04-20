@@ -325,10 +325,10 @@ const UserVisit = ({ route, navigation }) => {
       setCategories(categoriesData);
     };
 
-    if (productTab === 'Product Categories') {
+    if (selectedTab === 'Categories' && categoryTab === 'Product Categories') {
       fetchCategories();
     }
-  }, [productTab]);
+  }, [categoryTab, selectedTab]);
 
   const handleCategorySelect = (category) => {
 
@@ -458,13 +458,13 @@ const UserVisit = ({ route, navigation }) => {
           <View style={styles.content}>
             <View style={styles.tabsContainer}>
             <TouchableOpacity onPress={() => setCategoryTab('Product Categories')} style={styles.tab}>
-              <Text style={productTab === 'Product Categories' ? styles.activeTabText : styles.tabText}>Product Categories</Text>
+              <Text style={categoryTab === 'Product Categories' ? styles.activeTabText : styles.tabText}>Product Categories</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setCategoryTab('Donation Categories')} style={styles.tab}>
-              <Text style={productTab === 'Donation Categories' ? styles.activeTabText : styles.tabText}>Donation Categories</Text>
+              <Text style={categoryTab === 'Donation Categories' ? styles.activeTabText : styles.tabText}>Donation Categories</Text>
             </TouchableOpacity>
             </View>
-            {productTab === 'Product Categories' && (
+            {selectedTab === 'Categories' && categoryTab === 'Product Categories' && (
             <View style={styles.categoryContainer}>
               {categories.map((category) => (
                 <TouchableOpacity
