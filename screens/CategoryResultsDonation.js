@@ -15,7 +15,7 @@ const CategoryResultsDonation = () => {
   useEffect(() => {
     const fetchDonations = async () => {
       const q = query(
-        collection(db, 'donations'),
+        collection(db, 'donation'),
         where('category', '==', categoryName),
         where('publicationStatus', '==', 'approved')
       );

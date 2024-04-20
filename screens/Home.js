@@ -181,14 +181,18 @@ const Home = ({ navigation }) => {
     navigation.navigate('SearchScreen', { searchText });
   };
 
-  const Category = ({ id, image, title }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('CategoryResults', { categoryName: title })}>
-      <View style={styles.category}>
-        <Image source={{ uri: image }} style={styles.categoryImage} />
-        <Text style={styles.categoryTitle}>{title}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const Category = ({ id, image, title, type }) => {
+    const targetScreen = type === 'productCategories' ? 'CategoryResults' : 'CategoryResultsDonation';
+  
+    return (
+      <TouchableOpacity onPress={() => navigation.navigate(targetScreen, { categoryName: title })}>
+        <View style={styles.category}>
+          <Image source={{ uri: image }} style={styles.categoryImage} />
+          <Text style={styles.categoryTitle}>{title}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderProductItem = ({ item }) => (
     <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: item })}>
@@ -458,7 +462,13 @@ const Home = ({ navigation }) => {
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContainer}>
           {firestoreCategories.map((category) => (
-            <Category key={category.id} id={category.id} image={category.image} title={category.title} />
+            <Category
+              key={category.id}
+              id={category.id}
+              image={category.image}
+              title={category.title}
+              type={categoryType} 
+            />
           ))}
         </ScrollView>
       </View>
