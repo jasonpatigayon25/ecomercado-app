@@ -222,16 +222,16 @@ useEffect(() => {
           );
         case 'To Deliver':
           return (
-            <View style={styles.noteButtonContainer}
-            onPress={() => {
-              navigation.navigate('RequestToDeliverByDonorDetails', {
-                request: item,
-                donations: donations,
-                users: users,
-                autoDeliver: true
-              });
-            }}>
-              <TouchableOpacity style={styles.shipButton}>
+            <View style={styles.noteButtonContainer}>
+              <TouchableOpacity style={styles.shipButton}
+                          onPress={() => {
+                            navigation.navigate('RequestToDeliverByDonorDetails', {
+                              request: item,
+                              donations: donations,
+                              users: users,
+                              autoDeliver: true
+                            });
+                          }}>
                 <Text style={styles.confirmButtonText}>Deliver Request</Text>
               </TouchableOpacity>
             </View>
