@@ -148,7 +148,7 @@ const UserVisit = ({ route, navigation }) => {
           setAverageRating(averageRatingData.averageRating || 0);
         }
 
-        const productsQuery = query(collection(db, 'products'), where('seller_email', '==', email), orderBy('createdAt', 'desc'));
+        const productsQuery = query(collection(db, 'products'), where('seller_email', '==', email), where('publicationStatus', '==', 'approved'),  orderBy('createdAt', 'desc'));
         const productsSnapshot = await getDocs(productsQuery);
         const productsList = productsSnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -157,7 +157,7 @@ const UserVisit = ({ route, navigation }) => {
         setProducts(productsList);
         setIsProductsLoading(false);
 
-        const donationsQuery = query(collection(db, 'donation'), where('donor_email', '==', email), orderBy('createdAt', 'desc'));
+        const donationsQuery = query(collection(db, 'donation'), where('donor_email', '==', email), where('publicationStatus', '==', 'approved'), orderBy('createdAt', 'desc'));
         const donationsSnapshot = await getDocs(donationsQuery);
         const donationsList = donationsSnapshot.docs.map(doc => ({
           id: doc.id,
@@ -296,8 +296,7 @@ const UserVisit = ({ route, navigation }) => {
         ...doc.data(),
         price: parseFloat(doc.data().price) 
       }));
-  
-      // Sort the products by price if the productTab is 'Price'
+
       if (productTab === 'Price') {
         productList.sort((a, b) => a.price - b.price);
       }
@@ -308,6 +307,7 @@ const UserVisit = ({ route, navigation }) => {
   
     fetchProducts();
   }, [email, productTab, priceSort]);
+
   const togglePriceSort = () => {
     setPriceSort(prev => (prev === 'High' ? 'Low' : 'High'));
   };
