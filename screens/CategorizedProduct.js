@@ -7,15 +7,18 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 
 const CategorizedProduct = ({ route, navigation }) => {
+  
   const { categoryTitle, sellerName } = route.params;
   const [categoryItems, setCategoryItems] = useState([]);
+
+
 
   useEffect(() => {
     const fetchCategoryItems = async () => {
       try {
         const q = query(collection(db, 'products'), 
                         where('category', '==', categoryTitle),
-                        where('publicationStatus', '==', 'approved')); // Filter by publicationStatus
+                        where('publicationStatus', '==', 'approved'));
         const querySnapshot = await getDocs(q);
         const items = querySnapshot.docs.map(doc => ({
           id: doc.id,
@@ -30,9 +33,10 @@ const CategorizedProduct = ({ route, navigation }) => {
     fetchCategoryItems();
   }, [categoryTitle]);
 
-  const handleItemSelect = (item) => {
-    // Navigate to item detail screen or perform any other action
+  const handleProductSelect = (item) => {
+    navigation.navigate('ProductDetail', { product: item });
   };
+
 
   return (
     <View style={styles.container}>
@@ -51,7 +55,8 @@ const CategorizedProduct = ({ route, navigation }) => {
             </View>
           ) : (
             categoryItems.map((item) => (
-              <TouchableOpacity key={item.id} onPress={() => handleItemSelect(item)} style={styles.productCard}>
+              <TouchableOpacity key={item.id}
+              onPress={() => handleProductSelect(item)}  style={styles.productCard}>
                 <Image source={{ uri: item.photo }} style={styles.productImage} />
                 <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
                 <Text style={styles.productCategory}>{item.category}</Text>
