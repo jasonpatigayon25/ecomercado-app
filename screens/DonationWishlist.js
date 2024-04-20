@@ -35,7 +35,7 @@ const DonationWishlist = ({ navigation }) => {
             if (donationSnap.exists()) {
               const donationData = donationSnap.data();
               const donorName = await fetchDonorName(donationData.donor_email);
-              return { id: donationSnap.id, ...donationData, donorName }; 
+              return { id: donationSnap.id, ...donationData, donorName, donationId: wishItem.donationId }; 
             }
             return null;
           }));
