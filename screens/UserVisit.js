@@ -819,7 +819,7 @@ categoryContainer: {
 },
 categoryCard: {
   width: '48%',
-  aspectRatio: 1, 
+  aspectRatio: 1,
   marginBottom: 10,
   padding: 10,
   justifyContent: 'center',
@@ -831,7 +831,7 @@ categoryCard: {
 categoryImage: {
   width: 100,
   height: 100,
-  resizeMode: 'contain',
+  borderRadius: 20,
 },
 categoryTitle: {
   marginTop: 8,

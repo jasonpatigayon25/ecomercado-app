@@ -95,6 +95,7 @@ import ResubmitDonation from './screens/ResubmitDonation';
 import ResubmitProduct from './screens/ResubmitProduct';
 import EditSellerInfo from './screens/EditSellerInfo';
 import ViewerImage from './screens/ViewerImage';
+import CategorizedProduct from './screens/CategorizedProduct';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -296,6 +297,7 @@ const App = () => {
               <Stack.Screen name="CCC" component={CCCTabs} />
               <Stack.Screen name="UserVisit" component={UserVisit} />
               <Stack.Screen name="CategoryResults" component={CategoryResults} />
+              <Stack.Screen name="CategorizedProduct" component={CategorizedProduct} />
               <Stack.Screen name="SearchScreen" component={SearchScreen} />
               <Stack.Screen name="SearchResults" component={SearchResults} />
               <Stack.Screen name="SearchDonationScreen" component={SearchDonationScreen} />
