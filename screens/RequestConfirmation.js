@@ -16,64 +16,84 @@ const RequestConfirmation = ({ navigation, route }) => {
   const handleProceed = async () => {
     setConfirmModalVisible(false); 
     try {
-      const { sections, address, message } = route.params;
-      const batch = writeBatch(db);
-  
-      sections.forEach((section) => {
-        const requestDoc = {
-          donorEmail: section.donorEmail,
-          donorDetails: section.data.map((donation) => ({
-            donorEmail: section.donorEmail,
-            donationId: donation.id,
-          })),
-          requesterEmail: currentUser?.email,
-          address,
-          message,
-          deliveryFee: section.deliveryFee,
-          disposalFee: section.disposalFee,
-          status: 'Pending',
-          dateRequested: serverTimestamp(),
-          paymentMethod,
-        };
-        const requestDocRef = doc(collection(db, "requests"));
-        batch.set(requestDocRef, requestDoc);
-  
-        // Notification for the requester
-        const requesterNotificationData = {
-          email: currentUser?.email,
-          text: "Your request has been submitted successfully.",
-          timestamp: serverTimestamp(),
-          type: 'request_submitted',
-          requestId: requestDocRef.id
-        };
-        const requesterNotificationRef = doc(collection(db, "notifications"));
-        batch.set(requesterNotificationRef, requesterNotificationData);
-  
-        // Notification for each donor
-        section.data.forEach((donation) => {
-          const donorNotificationMessage = `Your donation is requested by ${currentUser?.email}.`;
-          const donorNotificationData = {
-            email: donation.donorEmail,
-            text: donorNotificationMessage,
-            timestamp: serverTimestamp(),
-            type: 'donation_requested',
-            requestId: requestDocRef.id,
-            donationId: donation.id
-          };
-          const donorNotificationRef = doc(collection(db, "notifications"));
-          batch.set(donorNotificationRef, donorNotificationData);
-        });
-      });
+        const { sections, address, message, paymentMethod } = route.params;
+        const batch = writeBatch(db);
+        const wishRef = doc(db, 'wishlists', currentUser.email);
+        const allRequestedDonationIds = [];
+        const requestHistoryRef = doc(collection(db, 'requestHistory'));
 
-      await batch.commit();
-      setSuccessModalVisible(true);
-      setRequestPlaced(true);
+        // Fetch the wishRef document
+        const wishSnapshot = await getDoc(wishRef);
+
+        sections.forEach((section) => {
+            const requestDoc = {
+                donorEmail: section.donorEmail,
+                donorDetails: section.data.map((donation) => ({
+                    donorEmail: section.donorEmail,
+                    donationId: donation.id,
+                })),
+                requesterEmail: currentUser?.email,
+                address,
+                message,
+                deliveryFee: section.deliveryFee,
+                disposalFee: section.disposalFee,
+                status: 'Pending',
+                dateRequested: serverTimestamp(),
+                paymentMethod,
+            };
+            const requestDocRef = doc(collection(db, "requests"));
+            batch.set(requestDocRef, requestDoc);
+
+            allRequestedDonationIds.push(...section.data.map(donation => donation.id));
+
+            // Notification for the requester
+            const requesterNotificationData = {
+                email: currentUser?.email,
+                text: "Your request has been submitted successfully.",
+                timestamp: serverTimestamp(),
+                type: 'request_submitted',
+                requestId: requestDocRef.id
+            };
+            const requesterNotificationRef = doc(collection(db, "notifications"));
+            batch.set(requesterNotificationRef, requesterNotificationData);
+
+            // Notification for each donor
+            section.data.forEach((donation) => {
+                const donorNotificationMessage = `Your donation is requested by ${currentUser?.email}.`;
+                const donorNotificationData = {
+                    email: donation.donorEmail,
+                    text: donorNotificationMessage,
+                    timestamp: serverTimestamp(),
+                    type: 'donation_requested',
+                    requestId: requestDocRef.id,
+                    donationId: donation.id
+                };
+                const donorNotificationRef = doc(collection(db, "notifications"));
+                batch.set(donorNotificationRef, donorNotificationData);
+            });
+
+            // Update request history
+            if (allRequestedDonationIds.length > 0) {
+                const updatedWishItems = wishSnapshot.data().wishItems.filter(
+                    item => !allRequestedDonationIds.includes(item.donationId)
+                );
+                batch.update(wishRef, { wishItems: updatedWishItems });
+                batch.set(requestHistoryRef, {
+                    donationIds: allRequestedDonationIds,
+                    requesterEmail: currentUser.email,
+                });
+            }
+        });
+
+        await batch.commit();
+        setSuccessModalVisible(true);
+        setRequestPlaced(true);
     } catch (error) {
-      console.error("Error processing the request:", error);
-      Alert.alert("Error", "An error occurred while processing your request. Please try again.");
-      setConfirmModalVisible(true); 
+        console.error("Error processing the request:", error);
+        Alert.alert("Error", "An error occurred while processing your request. Please try again.");
+        setConfirmModalVisible(true); 
     }
-  };
+};
   
 
   const renderItem = ({ item, sectionIndex, itemIndex }) => (
