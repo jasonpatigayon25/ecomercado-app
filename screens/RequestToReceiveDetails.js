@@ -99,37 +99,50 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
   });
 
   const confirmReceipt = async () => {
-
     if (!selectedImage) {
       Alert.alert('Photo Required', 'Please provide a photo of the donation received.');
       return;
     }
-
+  
+    // Upload the image and get the URL
     const imageUrl = await uploadImageAsync(selectedImage.uri);
-
+  
+    // Reference to the request document
     const requestDocRef = doc(db, 'requests', request.id);
+  
+    // Update the request document with the received photo and other details
     await updateDoc(requestDocRef, {
       receivedPhoto: imageUrl,
       status: 'Completed',
       deliveredStatus: 'Confirmed',
-      dateReceived: new Date()
+      dateReceived: new Date(),
+      isTaken: true
     });
-    
+  
+    // Update each donation document associated with the request
+    const donationUpdates = request.donorDetails.map(async (detail) => {
+      // Make sure to use the correct collection name, it should be 'donation' or 'donations'
+      const donationDocRef = doc(db, 'donation', detail.donationId);
+      return updateDoc(donationDocRef, {
+        publicationStatus: 'taken'
+      });
+    });
+  
+    // Wait for all donation updates to complete
+    await Promise.all(donationUpdates);
+  
+    // Close the modal and show a confirmation alert
     setModalVisible(false);
-    
     Alert.alert(
       "Confirmation",
       "Receipt has been confirmed successfully.",
-      [
-        {
-          text: "OK",
-          onPress: () => navigation.navigate('RequestHistory')
-        }
-      ]
+      [{
+        text: "OK",
+        onPress: () => navigation.navigate('RequestHistory')
+      }]
     );
-
   };
-
+  
   const uploadImageAsync = async (uri) => {
     const blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();

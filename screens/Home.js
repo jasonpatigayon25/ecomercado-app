@@ -102,7 +102,7 @@ const Home = ({ navigation }) => {
       const productPromises = querySnapshot.docs.map(async (hit) => {
         const productRef = doc(db, "products", hit.data().productId);
         const productSnap = await getDoc(productRef);
-        return productSnap.exists() ? { id: productSnap.id, ...productSnap.data() } : null;
+        return productSnap.exists() && productSnap.data().publicationStatus === 'approved' ? { id: productSnap.id, ...productSnap.data() } : null;
       });
     
       const products = (await Promise.all(productPromises))
@@ -114,7 +114,7 @@ const Home = ({ navigation }) => {
   
     fetchMostPopularProducts();
   }, []);
-
+  
   useEffect(() => {
     const fetchRecommendedProducts = async () => {
       const auth = getAuth();
@@ -127,7 +127,7 @@ const Home = ({ navigation }) => {
   
       const userEmail = user.email;
       const productsRef = collection(db, 'products');
-  
+      
       const userRecommendRef = doc(db, 'userRecommend', user.uid);
       const userRecommendSnapshot = await getDoc(userRecommendRef);
       const userRecommendData = userRecommendSnapshot.data();
@@ -142,15 +142,20 @@ const Home = ({ navigation }) => {
         const topProductIds = topProductHits.map(([productId]) => productId);
         const topProductsQuery = query(productsRef, where(documentId(), 'in', topProductIds));
         const topProductsSnapshot = await getDocs(topProductsQuery);
-        let topProducts = topProductsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   
+        let topProducts = topProductsSnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(product => product.publicationStatus === 'approved');
+
         let categories = topProducts.map(product => product.category);
         categories = [...new Set(categories)];
   
         const additionalProducts = [];
         for (const category of categories) {
           const categoryProductsSnapshot = await getDocs(query(productsRef, where("category", "==", category), limit(5)));
-          const categoryProducts = categoryProductsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const categoryProducts = categoryProductsSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(product => product.publicationStatus === 'approved');
           additionalProducts.push(...categoryProducts);
         }
   
@@ -158,13 +163,15 @@ const Home = ({ navigation }) => {
       } else {
         const allProductsQuery = query(collection(db, 'products'), orderBy("name"), limit(10));
         const allProductsSnapshot = await getDocs(allProductsQuery);
-        recommendedProducts = allProductsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        recommendedProducts = allProductsSnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(product => product.publicationStatus === 'approved');
       }
-
+  
       recommendedProducts = recommendedProducts.filter(product => 
         !product.isDisabled && product.quantity > 0 && product.seller_email !== userEmail
       );
-
+  
       if (locationEnabled && userCity) {
         recommendedProducts = recommendedProducts.filter(product => 
           product.location && product.location.includes(userCity)
@@ -279,6 +286,7 @@ const Home = ({ navigation }) => {
   
       let donationsList = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(donation => donation.publicationStatus === 'approved') 
         .filter(donation => donation.isDonated !== true)
         .filter(donation => donation.isDisabled !== true)
         .filter(donation => donation.donor_email !== user.email);
