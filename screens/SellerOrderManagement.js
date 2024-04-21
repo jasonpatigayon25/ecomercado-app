@@ -325,13 +325,13 @@ const SellerOrderManagement = ({ navigation }) => {
                             {selectedTab === 'To Approve' && (
                                 <>
                                     <Text style={styles.hintText}>
-                                        Approve the order to prepare it for shipment.
+                                        Please check the buyer's order for approval.
                                     </Text>
                                     <TouchableOpacity
                                         style={styles.approveButton}
-                                        onPress={() => approveOrder(order.id)}
+                                        onPress={() => navigation.navigate('OrderToApproveDetails', { order, products })}
                                     >
-                                        <Text style={styles.approveButtonText}>Approve Order</Text>
+                                        <Text style={styles.approveButtonText}>Check Order</Text>
                                     </TouchableOpacity>
                                 </>
                             )}
