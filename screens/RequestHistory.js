@@ -260,61 +260,77 @@ const handleChatWithDonor = async (request) => {
 
     return (
       <TouchableOpacity onPress={() => handlePress(item)} style={styles.requestCard}>
-        {/* <Text style={styles.requestTitle}>#{item.id}</Text> */}
-        <FlatList
-          data={item.donorDetails}
-          renderItem={({ item: detail }) => {
-            const donation = donations[detail.donationId];
-            if (!donation) return null;
-  
-            if (!uniqueDonorNames[donation.donor_email]) {
-              uniqueDonorNames[donation.donor_email] = true;
-              return (
-                <View>
-                  <GroupHeader donorEmail={donation.donor_email} />
-                  <TouchableOpacity style={styles.donationItem}>
-                    <Image source={{ uri: donation.photo }} style={styles.donationImage} />
-                    <View style={styles.donationDetails}>
-                      <Text style={styles.donationName}>{donation.name}</Text>
-                      <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
-                      <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
-                     {selectedTab === 'Taken/Declined' && donation.publicationStatus === 'taken' && (
-                        <Text style={styles.alreadyTakenText}>Already Taken</Text>
-                      )}
-                    </View>
-                    
-                  </TouchableOpacity>
-                </View>
-              );
-            } else {
-              return (
+      <FlatList
+        data={item.donorDetails}
+        renderItem={({ item: detail }) => {
+          const donation = donations[detail.donationId];
+          if (!donation) return null;
+
+          const isTakenTab = selectedTab === 'Taken/Declined';
+
+          const ViewDetailsButton = () => (
+            isTakenTab && donation.publicationStatus !== 'taken' && (
+              <TouchableOpacity
+                style={styles.viewDetailsButton}
+                onPress={() => navigation.navigate('DonationDetail', { donation })}
+              >
+                <Text style={styles.viewDetailsButtonText}>Request Again</Text>
+              </TouchableOpacity>
+            )
+          );
+
+          if (!uniqueDonorNames[donation.donor_email]) {
+            uniqueDonorNames[donation.donor_email] = true;
+            return (
+              <View>
+                <GroupHeader donorEmail={donation.donor_email} />
                 <TouchableOpacity style={styles.donationItem}>
-                  <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+                  {isTakenTab && donation.publicationStatus === 'taken' ? (
+                    <View style={styles.coveredTextContainer}>
+                      <Text style={styles.coveredText}>TAKEN</Text>
+                    </View>
+                  ) : null}
+                  <ViewDetailsButton />
+                  <Image source={{ uri: donation.photo }} style={[styles.donationImage, donation.publicationStatus === 'taken' && isTakenTab && styles.greyedImage]} />
                   <View style={styles.donationDetails}>
                     <Text style={styles.donationName}>{donation.name}</Text>
                     <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
                     <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
-                     {selectedTab === 'Taken/Declined' && donation.publicationStatus === 'taken' && (
-                        <Text style={styles.alreadyTakenText}>Already Taken</Text>
-                      )}
                   </View>
                 </TouchableOpacity>
-              );
-            }
-          }}
-          keyExtractor={(detail) => detail.donationId}
-        />
-        <View style={styles.feeContainer}>
-          <Text style={styles.feeLabel}>Total Fee:</Text>
-          <Text style={styles.feeValue}>₱{totalFee.toFixed(2)}</Text>
-        </View>
-        <View style={styles.buttonContainer}>
-          {renderButton(selectedTab)}
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
+              </View>
+            );
+          } else {
+            return (
+              <TouchableOpacity style={styles.donationItem}>
+                {isTakenTab && donation.publicationStatus === 'taken' ? (
+                  <View style={styles.coveredTextContainer}>
+                    <Text style={styles.coveredText}>TAKEN</Text>
+                  </View>
+                ) : null}
+                <ViewDetailsButton />
+                <Image source={{ uri: donation.photo }} style={[styles.donationImage, donation.publicationStatus === 'taken' && isTakenTab && styles.greyedImage]} />
+                <View style={styles.donationDetails}>
+                  <Text style={styles.donationName}>{donation.name}</Text>
+                  <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
+                  <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }
+        }}
+        keyExtractor={(detail) => detail.donationId}
+      />
+      <View style={styles.feeContainer}>
+        <Text style={styles.feeLabel}>Total Fee:</Text>
+        <Text style={styles.feeValue}>₱{totalFee.toFixed(2)}</Text>
+      </View>
+      <View style={styles.buttonContainer}>
+        {renderButton(selectedTab)}
+      </View>
+    </TouchableOpacity>
+  );
+};
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -543,6 +559,40 @@ alreadyTakenText: {
 takenDonation: {
   textDecorationLine: 'line-through',
   opacity: 0.5,  
+},
+coveredTextContainer: {
+  position: 'absolute',
+  backgroundColor: 'rgba(192,192,192,0.8)', 
+  top: '50%',
+  left: '50%', 
+  transform: [{ translateX: -40 }, { translateY: -15 }, { rotate: '-14deg' }], 
+  zIndex: 1,
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+},
+coveredText: {
+  color: '#FFF', 
+  fontWeight: 'bold',
+  fontSize: 24,
+  letterSpacing: 4,
+},
+greyedImage: {
+  opacity: 0.5,
+},
+viewDetailsButton: {
+  position: 'absolute',  
+  top: 2,            
+  right: 10,         
+  backgroundColor: '#05652D', 
+  paddingVertical: 5,   
+  paddingHorizontal: 10, 
+  borderRadius: 5,   
+  zIndex: 1, 
+},
+viewDetailsButtonText: {
+  color: '#FFFFFF', 
+  fontSize: 14,
+  fontWeight: 'bold', 
 },
 });
 
