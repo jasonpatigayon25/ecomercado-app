@@ -80,7 +80,7 @@ const OrderCancelledDetails = ({ route, navigation }) => {
                 <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
                 <Text style={styles.productPrice}>₱{product.price}</Text>
                 <TouchableOpacity onPress={() => viewProductDetails(item.productId)} style={styles.viewButton}>
-                  <Text style={styles.viewButtonText}>View</Text>
+                  <Text style={styles.viewButtonText}>Buy Again</Text>
                 </TouchableOpacity>
               </View>
             </View>

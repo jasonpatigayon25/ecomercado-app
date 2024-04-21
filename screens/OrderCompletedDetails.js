@@ -72,6 +72,12 @@ const OrderCompletedDetails = ({ route, navigation }) => {
     (sum, detail) => sum + detail.orderedQuantity,
     0
   );
+
+  const viewProductDetails = (productId) => {
+    const productDetails = products[productId];
+    navigation.navigate('ProductDetail', { product: productDetails });
+  };
+  
   
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -103,6 +109,9 @@ const OrderCompletedDetails = ({ route, navigation }) => {
                 <Text style={styles.productCategory}>{product.category}</Text>   
                 <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
                 <Text style={styles.productPrice}>₱{product.price}</Text>
+                <TouchableOpacity onPress={() => viewProductDetails(item.productId)} style={styles.viewButton}>
+                  <Text style={styles.viewButtonText}>Buy Again</Text>
+                </TouchableOpacity>
               </View>
             </View>
           );
@@ -490,6 +499,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  viewButton: {
+    position: 'absolute',
+    top: -15, 
+    right: 10,
+    backgroundColor: '#05652D',
+    padding: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  viewButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 
