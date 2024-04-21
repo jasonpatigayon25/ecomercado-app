@@ -23,7 +23,7 @@ const RequestHistory = ({ navigation }) => {
     'To Approve': 'Pending',
     'To Deliver': 'Approved',
     'To Receive': 'Receiving',
-    'Completed': 'Completed',
+    'Acquired': 'Completed',
     'Taken/Declined': 'Declined'
   };
 
@@ -41,7 +41,7 @@ const RequestHistory = ({ navigation }) => {
         case 'To Receive':
             icon = 'truck';
             break;
-        case 'Completed':
+        case 'Acquired':
             icon = 'flag-checkered';
             break;
         case 'Taken/Declined':
@@ -213,7 +213,7 @@ const handleChatWithDonor = async (request) => {
           navigation.navigate('RequestToDeliverDetails', { request: request, donations: donations, users: users });
         } else if (selectedTab === 'To Receive') {
           navigation.navigate('RequestToReceiveDetails', { request: request, donations: donations, users: users });
-        } else if (selectedTab === 'Completed') {
+        } else if (selectedTab === 'Acquired') {
           navigation.navigate('RequestCompletedDetails', { request: request, donations: donations, users: users });
         } else if (selectedTab === 'Taken/Declined') {
           navigation.navigate('RequestDeclinedDetails', { request: request, donations: donations, users: users });
@@ -269,7 +269,7 @@ const handleChatWithDonor = async (request) => {
               );
             }
             break;
-        case 'Completed':
+        case 'Acquired':
           return <Text style={styles.completedText}>Donations Acquired</Text>;
         case 'Taken/Declined':
           return <Text style={styles.declinedText}>Donation Already Taken</Text>;
