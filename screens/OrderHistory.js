@@ -315,6 +315,11 @@ const handleChatWithSeller = async (sellerEmail, user, navigation) => {
       }
     };
 
+    const handleViewProduct = (productId) => {
+      const product = products[productId];
+      navigation.navigate('ProductDetail', { product });
+    };
+
     if ((selectedTab === 'To Pay' && order.status !== 'Pending') ||
     (selectedTab === 'To Receive' && order.status !== 'Receiving') ||
     (selectedTab === 'Completed' && order.status !== 'Completed') ||
@@ -354,6 +359,11 @@ const handleChatWithSeller = async (sellerEmail, user, navigation) => {
                     <Text style={styles.productCategory}>{product.category}</Text>   
                     <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
                     <Text style={styles.productPrice}>₱{product.price}</Text>
+                    {selectedTab === 'Cancelled' && (
+                  <TouchableOpacity onPress={() => handleViewProduct(item.productId)} style={styles.viewButton}>
+                    <Text style={styles.viewButtonText}>Buy Again</Text>
+                  </TouchableOpacity>
+                )}
                   </View>
                 </View>
               );
@@ -402,10 +412,7 @@ const handleChatWithSeller = async (sellerEmail, user, navigation) => {
             )}
         {selectedTab === 'Cancelled' && (
           <View style={styles.confirmationContainer}>
-            <Text style={styles.noteText}>Please press button if you wish to cart the items again.</Text>
-            <TouchableOpacity style={styles.confirmButton} onPress={() => confirmReceipt(order.id)}>
-              <Text style={styles.confirmButtonText}>Cart Again</Text>
-            </TouchableOpacity>
+            <Text style={styles.noteText}>Order has been cancelled</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -554,6 +561,7 @@ const styles = StyleSheet.create({
   productInfo: {
     flex: 1,
     justifyContent: 'center',
+    position: 'relative',
   },
   productName: {
     fontSize: 16,
@@ -758,6 +766,20 @@ textAlign: 'center',
 fontWeight: 'bold',
 fontSize: 16,
 marginBottom: 10,
+},
+viewButton: {
+  position: 'absolute',
+  top: -15, 
+  right: 10,
+  backgroundColor: '#05652D',
+  padding: 10,
+  paddingHorizontal: 10,
+  borderRadius: 5,
+},
+viewButtonText: {
+  color: '#FFFFFF',
+  fontSize: 14,
+  textAlign: 'center',
 },
 });
 

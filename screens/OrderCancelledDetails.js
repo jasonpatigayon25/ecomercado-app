@@ -43,6 +43,11 @@ const OrderCancelledDetails = ({ route, navigation }) => {
     (sum, detail) => sum + detail.orderedQuantity,
     0
   );
+
+  const viewProductDetails = (productId) => {
+    const productDetails = products[productId];
+    navigation.navigate('ProductDetail', { product: productDetails });
+  };
   
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -50,7 +55,7 @@ const OrderCancelledDetails = ({ route, navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Order Details</Text>
+        <Text style={styles.title}>Cancelled Order</Text>
       </View>
       <ScrollView style={styles.container}>
       <View style={styles.orderItemContainer}>
@@ -74,6 +79,9 @@ const OrderCancelledDetails = ({ route, navigation }) => {
                 <Text style={styles.productCategory}>{product.category}</Text>   
                 <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
                 <Text style={styles.productPrice}>₱{product.price}</Text>
+                <TouchableOpacity onPress={() => viewProductDetails(item.productId)} style={styles.viewButton}>
+                  <Text style={styles.viewButtonText}>View</Text>
+                </TouchableOpacity>
               </View>
             </View>
           );
@@ -115,11 +123,6 @@ const OrderCancelledDetails = ({ route, navigation }) => {
             </View>
       </View>
       </ScrollView>
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.confirmationButton} disabled>
-          <Text style={styles.confirmationButtonText}>Cart Again</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -441,6 +444,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  viewButton: {
+    position: 'absolute',
+    top: -15, 
+    right: 10,
+    backgroundColor: '#05652D',
+    padding: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  viewButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 
