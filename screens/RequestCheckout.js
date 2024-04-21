@@ -152,7 +152,7 @@ const RequestCheckout = ({ navigation, route }) => {
         const donorAddress = donorData.address;
   
         let deliveryFee = deliveryFeesCache[donorEmail];
-        if (!deliveryFee && donorAddress && address) { 
+        if (!deliveryFee && donorAddress && address) {
           deliveryFee = await getDistanceAndCalculateFee(donorAddress, address);
           deliveryFeesCache[donorEmail] = deliveryFee;
         }
@@ -169,45 +169,50 @@ const RequestCheckout = ({ navigation, route }) => {
           donorFirstName: donorData.firstName,
           donorLastName: donorData.lastName,
           donorEmail: donorEmail,
-          deliveryFee,
           weight: itemWeight
         });
       }
     }
   
     const groupedDonations = donationsWithDonorInfo.reduce((grouped, donation) => {
-      const donorName = `${donation.donorFirstName} ${donation.donorLastName}`;
-      if (!grouped[donorName]) {
-        grouped[donorName] = { 
-          donations: [], 
-          count: 0, 
-          deliveryFee: donation.deliveryFee, 
+      const donorEmail = donation.donorEmail;
+      if (!grouped[donorEmail]) {
+        grouped[donorEmail] = {
+          donations: [],
           totalWeight: 0,
-          donorEmail: donation.donorEmail 
+          deliveryFee: 0,
+          disposalFee: 0 
         };
       }
-      grouped[donorName].donations.push(donation);
-      grouped[donorName].count += 1;
-      grouped[donorName].totalWeight += donation.weight;
+      grouped[donorEmail].donations.push(donation);
+      grouped[donorEmail].totalWeight += donation.weight;
       return grouped;
     }, {});
   
-    Object.values(groupedDonations).forEach(group => {
+    for (const donorEmail in groupedDonations) {
+      const group = groupedDonations[donorEmail];
       const weight = group.totalWeight;
-      group.disposalFee = 0;
-      if (weight > 5) {
-        group.disposalFee = Math.ceil((weight - 5) / 5) * 20;
+      if (weight > 5) { 
+        const excessWeight = weight - 5;
+        group.disposalFee = excessWeight * 20; 
       }
-    });
+      if (weight > 0) {
+        const donorData = await getDonorData(donorEmail); 
+        if (donorData && donorData.address) { 
+          const deliveryFee = await getDistanceAndCalculateFee(donorData.address, address);
+          group.deliveryFee = deliveryFee;
+        } else {
+        }
+      }
+    }
   
-    const sectionListData = Object.keys(groupedDonations).map(donorName => ({
-      title: donorName,
-      donorEmail: groupedDonations[donorName].donorEmail,
-      data: groupedDonations[donorName].donations,
-      itemCount: groupedDonations[donorName].count,
-      deliveryFee: groupedDonations[donorName].deliveryFee,
-      disposalFee: groupedDonations[donorName].disposalFee,
-      totalWeight: groupedDonations[donorName].totalWeight,
+    const sectionListData = Object.keys(groupedDonations).map(donorEmail => ({
+      title: `${groupedDonations[donorEmail].donations[0].donorFirstName} ${groupedDonations[donorEmail].donations[0].donorLastName}`,
+      donorEmail: donorEmail,
+      data: groupedDonations[donorEmail].donations,
+      totalWeight: groupedDonations[donorEmail].totalWeight,
+      deliveryFee: groupedDonations[donorEmail].deliveryFee,
+      disposalFee: groupedDonations[donorEmail].disposalFee
     }));
   
     setSections(sectionListData);
@@ -217,7 +222,24 @@ const RequestCheckout = ({ navigation, route }) => {
     fetchDonationsWithDonorNames();
   }, [selectedDonations, address]);
 
-  const renderSectionHeader = ({ section: { title, donorEmail } }) => ( // Include donorEmail here
+  const getDonorData = async (donorEmail) => {
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where("email", "==", donorEmail));
+      const querySnapshot = await getDocs(q);
+  
+      if (!querySnapshot.empty) {
+        return querySnapshot.docs[0].data();
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching donor data:', error);
+      return null;
+    }
+  };
+
+  const renderSectionHeader = ({ section: { title, donorEmail } }) => ( 
   <View style={styles.sectionHeader}>
     <Text style={styles.sectionHeaderText}>From: {title} ({donorEmail})</Text> 
   </View>

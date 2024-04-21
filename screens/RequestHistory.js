@@ -182,29 +182,10 @@ const handleChatWithDonor = async (request) => {
     );
   };
 
-  // const renderDonationItem = ({ item }) => {
-  //   const donation = donations[item.donationId];
-  //   if (!donation) return null;
-  
-  //   const donationItems = donation.itemNames.join(' · '); 
-  //   return (
-  //     <View>
-  //       <GroupHeader donorEmail={donation.donor_email} />
-  //       <TouchableOpacity style={styles.donationItem}>
-  //         <Image source={{ uri: donation.photo }} style={styles.donationImage} />
-  //         <View style={styles.donationDetails}>
-  //           <Text style={styles.donationName}>{donation.name}</Text>
-  //           <Text style={styles.donationItems}>{donationItems}</Text>
-  //           <Text style={styles.donationCategory}>{donation.category} Bundles</Text>
-  //         </View>
-  //       </TouchableOpacity>
-  //     </View>
-  //   );
-  // };
-
   const renderRequestItem = ({ item }) => {
     const totalFee = item.disposalFee + item.deliveryFee;
     const uniqueDonorNames = {};
+    
 
     const handlePress = (request) => {
         if (selectedTab === 'To Approve') {
@@ -219,7 +200,6 @@ const handleChatWithDonor = async (request) => {
           navigation.navigate('RequestDeclinedDetails', { request: request, donations: donations, users: users });
         }
       };
-  
 
     const renderButton = (status) => {
       switch (status) {
@@ -277,7 +257,13 @@ const handleChatWithDonor = async (request) => {
           return null;
       }
     };
-  
+
+    const handleRequestAgain = (donationId) => {
+      // Define the logic for handling "Request Again" here
+      console.log("Requesting again for donation ID:", donationId);
+      // Example: navigation.navigate('RequestForm', { donationId });
+    };
+
     return (
       <TouchableOpacity onPress={() => handlePress(item)} style={styles.requestCard}>
         {/* <Text style={styles.requestTitle}>#{item.id}</Text> */}
@@ -298,7 +284,16 @@ const handleChatWithDonor = async (request) => {
                       <Text style={styles.donationName}>{donation.name}</Text>
                       <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
                       <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                      {selectedTab === 'Taken/Declined' && donation.publicationStatus !== 'taken' && (
+                        <TouchableOpacity style={styles.requestAgainButton} onPress={() => handleRequestAgain(donation.id)}>
+                          <Text style={styles.buttonText}>Request Again</Text>
+                        </TouchableOpacity>
+                      )}
+                      {donation.publicationStatus === 'taken' && (
+                        <Text style={styles.alreadyTakenText}>Already Taken</Text>
+                      )}
                     </View>
+                    
                   </TouchableOpacity>
                 </View>
               );
@@ -310,6 +305,14 @@ const handleChatWithDonor = async (request) => {
                     <Text style={styles.donationName}>{donation.name}</Text>
                     <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
                     <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                    {selectedTab === 'Taken/Declined' && donation.publicationStatus !== 'taken' && (
+                        <TouchableOpacity style={styles.requestAgainButton} onPress={() => handleRequestAgain(donation.id)}>
+                          <Text style={styles.buttonText}>Request Again</Text>
+                        </TouchableOpacity>
+                      )}
+                      {donation.publicationStatus === 'taken' && (
+                        <Text style={styles.alreadyTakenText}>Already Taken</Text>
+                      )}
                   </View>
                 </TouchableOpacity>
               );
@@ -537,6 +540,25 @@ emptyOrdersText: {
     fontSize: 18,
     color: '#cccccc',
     marginTop: 20
+},
+requestAgainButton: {
+  backgroundColor: '#4CAF50',
+  paddingVertical: 8,
+  paddingHorizontal: 20,
+  borderRadius: 5,
+  alignSelf: 'flex-end',  // To align the button to the right
+},
+alreadyTakenText: {
+  color: '#FF0000',
+  fontSize: 16,
+  fontWeight: 'bold',
+  marginTop: 10,
+  textAlign: 'center',
+  textDecorationLine: 'line-through',  // Striking through the text
+},
+takenDonation: {
+  textDecorationLine: 'line-through',  // Striking through the donation details
+  opacity: 0.5,  // Making text appear disabled
 },
 });
 
