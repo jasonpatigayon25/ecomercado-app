@@ -22,7 +22,6 @@ const RequestConfirmation = ({ navigation, route }) => {
         const allRequestedDonationIds = [];
         const requestHistoryRef = doc(collection(db, 'requestHistory'));
 
-        // Fetch the wishRef document
         const wishSnapshot = await getDoc(wishRef);
 
         sections.forEach((section) => {
@@ -72,7 +71,6 @@ const RequestConfirmation = ({ navigation, route }) => {
                 batch.set(donorNotificationRef, donorNotificationData);
             });
 
-            // Update request history
             if (allRequestedDonationIds.length > 0) {
                 const updatedWishItems = wishSnapshot.data().wishItems.filter(
                     item => !allRequestedDonationIds.includes(item.donationId)
