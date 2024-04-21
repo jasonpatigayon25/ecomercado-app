@@ -34,8 +34,6 @@ const getDistanceAndCalculateFee = async (origin, destination) => {
 
 const screenHeight = Dimensions.get('window').height;
 
-
-
 const RequestCheckout = ({ navigation, route }) => {
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
  const [wishItems, setWishItems] = useState([]);

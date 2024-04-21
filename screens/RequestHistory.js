@@ -252,16 +252,10 @@ const handleChatWithDonor = async (request) => {
         case 'Acquired':
           return <Text style={styles.noteText}>Request has been acquired</Text>;
         case 'Taken/Declined':
-          return <Text style={styles.declinedText}>Donation Already Taken</Text>;
+          return <Text style={styles.noteText}>Request #{item.id.toUpperCase()} has been cancelled.</Text>;
         default:
           return null;
       }
-    };
-
-    const handleRequestAgain = (donationId) => {
-      // Define the logic for handling "Request Again" here
-      console.log("Requesting again for donation ID:", donationId);
-      // Example: navigation.navigate('RequestForm', { donationId });
     };
 
     return (
@@ -284,12 +278,7 @@ const handleChatWithDonor = async (request) => {
                       <Text style={styles.donationName}>{donation.name}</Text>
                       <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
                       <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
-                      {selectedTab === 'Taken/Declined' && donation.publicationStatus !== 'taken' && (
-                        <TouchableOpacity style={styles.requestAgainButton} onPress={() => handleRequestAgain(donation.id)}>
-                          <Text style={styles.buttonText}>Request Again</Text>
-                        </TouchableOpacity>
-                      )}
-                      {donation.publicationStatus === 'taken' && (
+                     {selectedTab === 'Taken/Declined' && donation.publicationStatus === 'taken' && (
                         <Text style={styles.alreadyTakenText}>Already Taken</Text>
                       )}
                     </View>
@@ -305,12 +294,7 @@ const handleChatWithDonor = async (request) => {
                     <Text style={styles.donationName}>{donation.name}</Text>
                     <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
                     <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
-                    {selectedTab === 'Taken/Declined' && donation.publicationStatus !== 'taken' && (
-                        <TouchableOpacity style={styles.requestAgainButton} onPress={() => handleRequestAgain(donation.id)}>
-                          <Text style={styles.buttonText}>Request Again</Text>
-                        </TouchableOpacity>
-                      )}
-                      {donation.publicationStatus === 'taken' && (
+                     {selectedTab === 'Taken/Declined' && donation.publicationStatus === 'taken' && (
                         <Text style={styles.alreadyTakenText}>Already Taken</Text>
                       )}
                   </View>
@@ -546,19 +530,19 @@ requestAgainButton: {
   paddingVertical: 8,
   paddingHorizontal: 20,
   borderRadius: 5,
-  alignSelf: 'flex-end',  // To align the button to the right
+  alignSelf: 'flex-end', 
 },
 alreadyTakenText: {
-  color: '#FF0000',
+  color: '#ccc',
   fontSize: 16,
   fontWeight: 'bold',
   marginTop: 10,
   textAlign: 'center',
-  textDecorationLine: 'line-through',  // Striking through the text
+  textDecorationLine: 'line-through',  
 },
 takenDonation: {
-  textDecorationLine: 'line-through',  // Striking through the donation details
-  opacity: 0.5,  // Making text appear disabled
+  textDecorationLine: 'line-through',
+  opacity: 0.5,  
 },
 });
 
