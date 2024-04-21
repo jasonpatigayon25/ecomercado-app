@@ -270,7 +270,7 @@ const handleChatWithDonor = async (request) => {
             }
             break;
         case 'Acquired':
-          return <Text style={styles.completedText}>Donations Acquired</Text>;
+          return <Text style={styles.noteText}>Request has been acquired</Text>;
         case 'Taken/Declined':
           return <Text style={styles.declinedText}>Donation Already Taken</Text>;
         default:
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
   noteText: {
     textAlign: 'left',
     color: '#666', 
-    marginRight: 30,
+    margin: 10,
   },
   emptyOrdersContainer: {
     flex: 1,
