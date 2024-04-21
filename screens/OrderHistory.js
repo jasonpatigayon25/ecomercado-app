@@ -360,20 +360,47 @@ const handleChatWithSeller = async (sellerEmail, user, navigation) => {
                     <Text style={styles.productQuantity}>x{item.orderedQuantity}</Text>
                     <Text style={styles.productPrice}>₱{product.price}</Text>
                     {selectedTab === 'Cancelled' && (
-                  <TouchableOpacity onPress={() => handleViewProduct(item.productId)} style={styles.viewButton}>
-                    <Text style={styles.viewButtonText}>Buy Again</Text>
-                  </TouchableOpacity>
-                )}
+                      <TouchableOpacity onPress={() => handleViewProduct(item.productId)} style={styles.viewButton}>
+                        <Text style={styles.viewButtonText}>Buy Again</Text>
+                      </TouchableOpacity>
+                    )}
+                    {selectedTab === 'Completed' && (
+                      <TouchableOpacity onPress={() => handleViewProduct(item.productId)} style={styles.viewButton}>
+                        <Text style={styles.viewButtonText}>Buy Again</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               );
             })}
           </View>
         ))}
-      <View style={styles.totalPriceContainer}>
-        <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
-        <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
-      </View>
+        <View style={styles.totalPriceContainer}>
+          {selectedTab === 'Completed' && (
+            <View style={styles.orderTotalRow}>
+              <Text style={styles.orderTotalLabel}>
+                <Icon name="check-circle" size={16} color="#4CAF50" /> Paid Amount:
+              </Text>
+              <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+            </View>
+          )}
+          {selectedTab === 'Cancelled' && (
+            <View style={styles.orderTotalRow}>
+              <Text style={[styles.orderTotalLabel, styles.cancelledText]}>
+                Amount to Pay:
+              </Text>
+              <Text style={[styles.orderTotalPrice, styles.cancelledPrice]}>
+                ₱{order.orderTotalPrice.toFixed(2)}
+              </Text>
+            </View>
+          )}
+          {selectedTab !== 'Completed' && selectedTab !== 'Cancelled' && (
+            <View style={styles.orderTotalRow}>
+              <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
+              <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+            </View>
+          )}
+        </View>
       {selectedTab === 'To Pay' && (
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.pendingButton} disabled={true}>
@@ -585,13 +612,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 10,
     paddingHorizontal: 10,
-    borderBottomWidth: 1,  
+    borderBottomWidth: 1,
     borderBottomColor: '#ccc',
   },
   orderTotalLabel: {
     fontSize: 16,
     color: '#666', 
     marginBottom: 10,
+  },
+  cancelledText: {
+    color: '#ccc',
+    textDecorationLine: 'line-through', 
+  },
+  cancelledPrice: {
+    color: '#ccc', 
+    textDecorationLine: 'line-through', 
+  },
+  orderTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
   },
   orderTotalPrice: {
     fontWeight: 'bold',
