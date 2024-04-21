@@ -267,9 +267,9 @@ useEffect(() => {
             }
             return null; 
         case 'Completed':
-          return <Text style={styles.completedText}>Donations Acquired</Text>;
+          return <Text style={styles.noteText}>Donation has been Acquired</Text>;
         case 'Taken/Declined':
-          return <Text style={styles.declinedText}>Donation Already Taken</Text>;
+          return <Text style={styles.noteText}>Cancelled Request</Text>;
         default:
           return null;
       }
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
   noteText: {
     textAlign: 'left',
     color: '#666', 
-    marginRight: 30,
+    margin: 10,
   },
   emptyOrdersContainer: {
     flex: 1,
