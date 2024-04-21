@@ -201,6 +201,7 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
                                     <Text style={styles.coveredText}>TAKEN</Text>
                                   </View>
                                 )}
+                               
                             </View>
                         </View>
                     </View>

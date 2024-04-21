@@ -213,10 +213,10 @@ useEffect(() => {
                   request: item, 
                   donations: donations, 
                   users: users, 
-                  autoApprove: true
+                  // autoApprove: true
                 });
               }}>
-                <Text style={styles.confirmButtonText}>Approve</Text>
+                <Text style={styles.confirmButtonText}>Check</Text>
               </TouchableOpacity>
             </View>
           );
