@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated, Alert, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
@@ -11,8 +11,8 @@ const OrderToApproveDetails = ({ route, navigation }) => {
 
   const cancelOrder = async () => {
     Alert.alert(
-      "Cancel Order",
-      "Are you sure you want to cancel this order?",
+      "Decline Order",
+      "Are you sure you want to decline this order?",
       [
         {
           text: "No",
@@ -28,8 +28,8 @@ const OrderToApproveDetails = ({ route, navigation }) => {
               });
   
               Alert.alert(
-                "Order Cancelled",
-                "Your order has been cancelled successfully.",
+                "Order Declined",
+                "Order has been declined.",
                 [
                   { text: "OK", onPress: () => navigation.navigate('SellerOrderManagement') }
                 ]
@@ -74,6 +74,8 @@ const OrderToApproveDetails = ({ route, navigation }) => {
     );
   };
 
+  const hasOutOfStockProduct = order.productDetails.some(item => products[item.productId].quantity === 0);
+
   const subtotal = order.productDetails.reduce(
     (sum, detail) => sum + detail.orderedQuantity * products[detail.productId].price,
     0
@@ -84,9 +86,46 @@ const OrderToApproveDetails = ({ route, navigation }) => {
     0
   );
 
+  const goToProductPosts = () => {
+    navigation.navigate('ProductPosts');
+  };
+
+  const [showOutOfStockModal, setShowOutOfStockModal] = useState(false);
+
+  const OutOfStockModal = ({ isVisible, onClose, onCancelOrder, onGoToProductPosts }) => {
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isVisible}
+        onRequestClose={onClose}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>One of the products is out of stock.</Text>
+            <Text style={styles.modalText}>What would you like to do?</Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={[styles.modalButton, styles.goToProductButton]} onPress={onGoToProductPosts}>
+                <Text style={styles.goToProductButtonText}>Go to Product Posts</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.declineOrderButton]} onPress={onCancelOrder}>
+                <Text style={styles.declineOrderButtonText}>Decline Order</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-    
+    <OutOfStockModal
+        isVisible={showOutOfStockModal}
+        onClose={() => setShowOutOfStockModal(false)}
+        onCancelOrder={cancelOrder}
+        onGoToProductPosts={goToProductPosts}
+      />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#000" />
@@ -155,20 +194,34 @@ const OrderToApproveDetails = ({ route, navigation }) => {
           <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
         </View>
         <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.approveButton} onPress={approveOrder}>
-          <Text style={styles.approveButtonText}>Approve Order</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.cancelButton} onPress={cancelOrder}>
-            <Text style={styles.cancelbuttonText}>Cancel Order</Text>
+          {hasOutOfStockProduct ? (
+            <TouchableOpacity style={[styles.outOfStockButton, styles.cancelButton]} onPress={() => setShowOutOfStockModal(true)}>
+              <Text style={styles.cancelbuttonText}>Out of Stock</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.approveButton} onPress={approveOrder}>
+              <Text style={styles.approveButtonText}>Approve Order</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.cancelButton} onPress={cancelOrder}>
+            <Text style={styles.cancelbuttonText}>Decline Order</Text>
           </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
-    <View style={styles.footer}>
-        <TouchableOpacity style={styles.approveButtonMain} onPress={approveOrder}>
-          <Text style={styles.approveButtonTextMain}>Approve Order</Text>
-        </TouchableOpacity>
-      </View>
+    {hasOutOfStockProduct ? (
+        <View style={styles.footer}>
+          <TouchableOpacity style={[styles.outOfStockButton, styles.outButtonMain]} onPress={() => setShowOutOfStockModal(true)}>
+            <Text style={styles.outButtonTextMain}>Out of Stock</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.approveButtonMain} onPress={approveOrder}>
+            <Text style={styles.approveButtonTextMain}>Approve Order</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -529,6 +582,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  outButtonMain: {
+    backgroundColor: '#ff0000',
+    padding: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: '80%',
+    borderRadius: 10,
+  },
+  outButtonTextMain: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   orderId: {
     color: '#333',
     fontSize: 12,
@@ -537,6 +604,59 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     top: -10,
   },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    elevation: 5,
+  },
+  modalText: {
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  modalButton: {
+
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  goToProductButton: {
+    backgroundColor: '#05652D', 
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  goToProductButtonText: {
+    color: 'white', 
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  declineOrderButton: {
+    borderWidth: 2,
+    borderColor: 'red',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  declineOrderButtonText: {
+    color: 'red', 
+    fontWeight: 'bold',
+    textAlign: 'center',
+  }
 });
 
 export default OrderToApproveDetails;
