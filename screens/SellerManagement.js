@@ -303,7 +303,7 @@ const SellerManagement = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#E6E6E6',
     },
     centered: {
         flex: 1,
@@ -375,8 +375,15 @@ const styles = StyleSheet.create({
     sellerInfoContainer: {
         paddingVertical: 20,
         paddingHorizontal: 15,
-        borderBottomWidth: 2,
-        borderColor: 'ccc',
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 5, 
     },
     sellerName: {
         fontSize: 22,

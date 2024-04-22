@@ -236,7 +236,7 @@ const DonorManagement = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#E6E6E6',
     },
     centered: {
         flex: 1,
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     optionItemCube: {
-        backgroundColor: '#05652D',
+        backgroundColor: '#088F8F',
         borderRadius: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
         width: 100, 
         height: 100, 
         borderRadius: 10,
-        backgroundColor: '#E3FCE9',
+        backgroundColor: '#E6F7FF',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.22,
