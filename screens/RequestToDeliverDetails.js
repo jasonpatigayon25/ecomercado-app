@@ -214,11 +214,31 @@ const RequestToDeliverDetails = ({ route, navigation }) => {
                     <View key={idx}>
                         
                         <View style={styles.donationItem}>
+                        <TouchableOpacity 
+                          onPress={() => navigation.navigate('ViewerImage', { imageUrl: donation.photo })}
+                             >
                             <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+                            </TouchableOpacity>
                             <View style={styles.donationDetails}>
                                 <Text style={styles.donationName}>{donation.name}</Text>
                                 <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
                                 <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                                <View style={styles.subPhotosContainer}>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                  {donation.subPhotos.map((subPhoto, index) => (
+                                    <TouchableOpacity 
+                                    key={index} 
+                                    onPress={() => navigation.navigate('ViewerImage', { imageUrl: subPhoto })}
+                                  >
+                                    <Image
+                                      key={index}
+                                      source={{ uri: subPhoto }}
+                                      style={styles.subPhoto}
+                                    />
+                                    </TouchableOpacity>
+                                  ))}
+                                </ScrollView>
+                              </View>
                             </View>
                         </View>
                     </View>
@@ -588,6 +608,16 @@ orderTotalRow: {
   flexDirection: 'row',
   justifyContent: 'space-between',
   paddingVertical: 5,
+},
+subPhotosContainer: {
+  marginTop: 10,
+  marginBottom: 10,
+},
+subPhoto: {
+  width: 50,
+  height: 50,
+  marginRight: 5,
+  borderRadius: 25,
 },
 });
 

@@ -19,7 +19,7 @@ const RequesterTab = ({ selectedTab, setSelectedTab }) => {
     const statusMap = {
         'To Approve': 'Pending',
         'To Deliver': 'Approved',
-        'To Acquired': 'Receiving',
+        'To Receive': 'Receiving',
         'Acquired': 'Completed',
         'Taken/Declined': 'Declined'
     };

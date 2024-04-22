@@ -208,23 +208,42 @@ const RequestCompletedDetails = ({ route, navigation }) => {
                             <Text style={styles.visitButtonText}>Visit</Text>
                         </TouchableOpacity>
                         </View>
-            {/* <Text style={styles.requestTitle}>#{request.id}</Text> */}
-            {request.donorDetails.map((detail, idx) => {
-                const donation = donations[detail.donationId];
-                if (!donation) return null;
-                return (
-                    <View key={idx}>
-                        <View style={styles.donationItem}>
-                            <Image source={{ uri: donation.photo }} style={styles.donationImage} />
-                            <View style={styles.donationDetails}>
-                                <Text style={styles.donationName}>{donation.name}</Text>
-                                <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
-                                <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
-                            </View>
-                        </View>
-                    </View>
-                );
-            })}
+              {request.donorDetails.map((detail, idx) => {
+                  const donation = donations[detail.donationId];
+                  if (!donation) return null;
+                  return (
+                      <View key={idx}>
+                          <View style={styles.donationItem}>
+                          <TouchableOpacity 
+                            onPress={() => navigation.navigate('ViewerImage', { imageUrl: donation.photo })}
+                              >
+                              <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+                              </TouchableOpacity>
+                              <View style={styles.donationDetails}>
+                                  <Text style={styles.donationName}>{donation.name}</Text>
+                                  <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
+                                  <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                                  <View style={styles.subPhotosContainer}>
+                                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    {donation.subPhotos.map((subPhoto, index) => (
+                                      <TouchableOpacity 
+                                      key={index} 
+                                      onPress={() => navigation.navigate('ViewerImage', { imageUrl: subPhoto })}
+                                    >
+                                      <Image
+                                        key={index}
+                                        source={{ uri: subPhoto }}
+                                        style={styles.subPhoto}
+                                      />
+                                      </TouchableOpacity>
+                                    ))}
+                                  </ScrollView>
+                                </View>
+                              </View>
+                          </View>
+                      </View>
+                  );
+              })}
             {/* <View style={styles.feeContainer}>
                 <Text style={styles.feeLabel}>Total Fee:</Text>
                 <Text style={styles.feeValue}>₱{(request.disposalFee + request.deliveryFee).toFixed(2)}</Text>
@@ -259,12 +278,6 @@ const RequestCompletedDetails = ({ route, navigation }) => {
             </View>
             <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Request Time:</Text>
-                <Text style={styles.detailValue}>
-                {moment(request.dateRequested.toDate()).format('DD-MM-YYYY HH:mm')}
-                </Text>
-            </View>
-            <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Delivery Time:</Text>
                 <Text style={styles.detailValue}>
                 {moment(request.dateRequested.toDate()).format('DD-MM-YYYY HH:mm')}
                 </Text>
@@ -712,6 +725,16 @@ confirmationModalButtonText: {
 },
 confirmationModalIconStyle: {
   marginTop: 2,
+},
+subPhotosContainer: {
+  marginTop: 10,
+  marginBottom: 10,
+},
+subPhoto: {
+  width: 50,
+  height: 50,
+  marginRight: 5,
+  borderRadius: 25,
 },
 });
 

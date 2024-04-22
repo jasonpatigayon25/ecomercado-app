@@ -217,11 +217,31 @@ const RequestDeclinedDetails = ({ route, navigation }) => {
 
                         return (
                             <View key={idx} style={styles.donationItem}>
+                              <TouchableOpacity 
+                            onPress={() => navigation.navigate('ViewerImage', { imageUrl: donation.photo })}
+                              >
                                 <Image source={{ uri: donation.photo }} style={[styles.donationImage, isTaken && styles.greyedImage]} />
+                                </TouchableOpacity>
                                 <View style={styles.donationDetails}>
                                     <Text style={styles.donationName}>{donation.name}</Text>
                                     <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
                                     <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                                    <View style={styles.subPhotosContainer}>
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    {donation.subPhotos.map((subPhoto, index) => (
+                                      <TouchableOpacity 
+                                      key={index} 
+                                      onPress={() => navigation.navigate('ViewerImage', { imageUrl: subPhoto })}
+                                    >
+                                      <Image
+                                        key={index}
+                                        source={{ uri: subPhoto }}
+                                        style={[styles.subPhoto, donation.publicationStatus === 'taken' && isTaken && styles.greyedImage]}
+                                      />
+                                      </TouchableOpacity>
+                                    ))}
+                                  </ScrollView>
+                                  </View>
                                     {isTaken && (
                                         <View style={styles.coveredTextContainer}>
                                             <Text style={styles.coveredText}>TAKEN</Text>
@@ -742,6 +762,16 @@ viewDetailsButtonText: {
   color: '#FFFFFF',
   fontSize: 14,
   fontWeight: 'bold',
+},
+subPhotosContainer: {
+  marginTop: 10,
+  marginBottom: 10,
+},
+subPhoto: {
+  width: 50,
+  height: 50,
+  marginRight: 5,
+  borderRadius: 25,
 },
 });
 
