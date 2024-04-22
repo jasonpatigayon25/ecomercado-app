@@ -354,14 +354,28 @@ const SellerOrderManagement = ({ navigation }) => {
                             )}
                             {selectedTab === 'Shipped' && (
                                 <>
-                                    <Text style={styles.hintText}>
-                                        Waiting for buyer to approve if items are received.
-                                    </Text>
-                                    <TouchableOpacity
-                                        style={styles.pendingToReceiveButton}
-                                    >
-                                        <Text style={styles.shipButtonText}>Pending to Receive</Text>
-                                    </TouchableOpacity>
+                                    {order.deliveredStatus === 'Waiting' && (
+                                        <View style={styles.buttonContainer}>
+                                            <Text style={styles.hintText}>
+                                                Waiting for buyer to confirm receipt of the order.
+                                                </Text>
+                                            <TouchableOpacity style={[styles.pendingButton, { backgroundColor: '#ccc' }]} disabled>
+                                                <Text style={styles.pendingButtonText}>Delivery In Progress...</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                    {order.deliveredStatus === 'Processing' && (
+                                        <View style={styles.buttonContainer}>
+                                           <Text style={styles.hintText}>Please confirm that the order has been delivered and received by the buyer.</Text>
+                                            <TouchableOpacity
+                                                style={styles.approveButton}
+                                                onPress={() => {navigation.navigate('OrderShippedDetails', { order, products, shouldOpenConfirmModal: true });
+                                                }}
+                                            >
+                                                <Text style={styles.confirmButtonText}>Confirm Delivered Order</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
                                 </>
                             )}
                             {selectedTab === 'Completed' && (
@@ -611,6 +625,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 10,
     alignItems: 'center',
+  },
+  confirmationContainer: {
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   pendingButton: {
     backgroundColor: '#ccc',

@@ -14,10 +14,10 @@ const OrderShippedDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
 
   useEffect(() => {
-    if (route.params.shouldOpenConfirmModal) {
+    if (route.params?.shouldOpenConfirmModal) {
       confirmDelivery();
     }
-  }, [route.params.shouldOpenConfirmModal]);
+  }, [route.params?.shouldOpenConfirmModal]);
 
   const [deliveredStatus, setDeliveredStatus] = useState(order.deliveredStatus);
 
@@ -201,7 +201,7 @@ const OrderShippedDetails = ({ route, navigation }) => {
                 style={styles.approveButtonMain}
                 onPress={confirmDelivery}
             >
-                <Text style={styles.approveButtonTextMain}>Confirm Delivered</Text>
+                <Text style={styles.approveButtonTextMain}>Confirm Delivered Order</Text>
             </TouchableOpacity>
         )}
     </View>
