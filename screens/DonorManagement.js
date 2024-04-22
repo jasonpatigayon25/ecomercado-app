@@ -27,10 +27,61 @@ const DonorManagement = ({ navigation }) => {
     const [isSeller, setIsSeller] = useState(false);
     const [sellerInfo, setSellerInfo] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+
     const auth = getAuth();
     const user = auth.currentUser;
 
     const scaleAnimation = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (!user) return;
+    
+        const fetchRequests = async () => {
+            const requestsRef = collection(db, 'requests');
+            const q = query(requestsRef, where('donorEmail', '==', user.email));
+    
+            const querySnapshot = await getDocs(q);
+            const statusCounts = { Pending: 0, Approved: 0, Receiving: 0, Completed: 0, Declined: 0 };
+    
+            querySnapshot.forEach((doc) => {
+                const { status } = doc.data();
+                if (status in statusCounts) statusCounts[status]++;
+            });
+    
+            setToApproveCount(statusCounts['Pending']);
+            setToShipCount(statusCounts['Approved']);
+            setShippedCount(statusCounts['Receiving']);
+            setCompletedCount(statusCounts['Completed']);
+            setCancelledCount(statusCounts['Declined']);
+        };
+    
+        fetchRequests();
+    }, [user]);
+
+    useEffect(() => {
+        if (!user) return;
+    
+        const fetchProductData = async () => {
+            const productsRef = collection(db, 'donation');
+            const q = query(productsRef, where('donor_email', '==', user.email));
+            const productSnapshot = await getDocs(q);
+            const productStatusCounts = { approved: 0, pending: 0 };
+    
+            productSnapshot.forEach((doc) => {
+                const { publicationStatus } = doc.data();
+                if (publicationStatus === 'approved') {
+                    productStatusCounts.approved++;
+                } else if (publicationStatus === 'pending') {
+                    productStatusCounts.pending++;
+                }
+            });
+    
+            setApprovedPostsCount(productStatusCounts.approved);
+            setPendingPostsCount(productStatusCounts.pending);
+        };
+    
+        fetchProductData();
+    }, [user]);
 
 
     const ScrollableItem = ({ imageSource, label, onPress, tabName, count }) => {
@@ -122,6 +173,59 @@ const DonorManagement = ({ navigation }) => {
                         <OptionItemCube onPress={() => navigation.navigate('RequestManagement')} icon="heart" label="Donor Management" />
                         <OptionItemCube onPress={() => navigation.navigate('SuspendedDonation')} icon="ban" label="Suspended Products" />
                     </View>
+                    <View style={styles.scrollableContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <ScrollableItem
+                            imageSource={toApproveIcon}
+                            label="To Approve"
+                            onPress={(tabName) => navigation.navigate('RequestManagement', { selectedTab: tabName })}
+                            tabName="To Approve"
+                            count={toApproveCount}
+                        />
+                        <ScrollableItem
+                            imageSource={toShipIcon}
+                            label="To Deliver"
+                            onPress={(tabName) => navigation.navigate('RequestManagement', { selectedTab: tabName })}
+                            tabName="To Deliver"
+                            count={toShipCount}
+                        />
+                        <ScrollableItem
+                            imageSource={shippedIcon}
+                            label="Shipped"
+                            onPress={(tabName) => navigation.navigate('RequestManagement', { selectedTab: tabName })}
+                            tabName="Shipped"
+                            count={shippedCount}
+                        />
+                        <ScrollableItem
+                            imageSource={completedIcon}
+                            label="Completed"
+                            onPress={(tabName) => navigation.navigate('RequestManagement', { selectedTab: tabName })}
+                            tabName="Completed"
+                            count={completedCount}
+                        />
+                        <ScrollableItem
+                            imageSource={cancelledIcon}
+                            label="Declined Requests"
+                            onPress={(tabName) => navigation.navigate('RequestManagement', { selectedTab: tabName })}
+                            tabName="Taken/Declined"
+                            count={cancelledCount}
+                        />
+                        <ScrollableItem
+                            imageSource={approvedIcon}
+                            label="Approved Posts"
+                            onPress={(tabName) => navigation.navigate('DonationPosts', { selectedTab: tabName })}
+                            tabName="Approved Posts"
+                            count={approvedPostsCount}
+                        />
+                        <ScrollableItem
+                            imageSource={pendingIcon}
+                            label="Pending Posts"
+                            onPress={(tabName) => navigation.navigate('DonationPosts', { selectedTab: tabName })}
+                            tabName="Pending For Approval"
+                            count={pendingPostsCount}
+                        />
+                    </ScrollView>
+                </View>
             </ScrollView>
             <View style={styles.scrollableContainer}>
             </View>
@@ -276,6 +380,53 @@ const styles = StyleSheet.create({
         color: '#05652D',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    scrollableContainer: {
+        paddingVertical: 15,
+        paddingHorizontal: 15,
+    },
+    scrollableItem: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 15,
+        paddingVertical: 10, 
+        width: 100, 
+        height: 100, 
+        borderRadius: 10,
+        backgroundColor: '#E3FCE9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.22,
+        shadowRadius: 2.22,
+        elevation: 3,
+        marginBottom: 15,
+    },
+    scrollableItemText: {
+        marginTop: 5,
+        fontSize: 12,
+        color: '#05652D',
+        textAlign: 'center',
+    },
+    countBadge: {
+        position: 'absolute',
+        right: 10,
+        top: 10,
+        backgroundColor: '#00FF7F',
+        borderRadius: 12,
+        width: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    countText: {
+        color: '#05652D',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    editIcon: {
+        position: 'absolute',
+        top: 20,
+        right: 20, 
     },
 });
 

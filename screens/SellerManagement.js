@@ -445,8 +445,8 @@ const styles = StyleSheet.create({
     },
     editIcon: {
         position: 'absolute',
-        top: 20, // Adjust as needed to position the icon vertically
-        right: 20, // Adjust as needed to position the icon horizontally
+        top: 20,
+        right: 20, 
     },
 });
 
