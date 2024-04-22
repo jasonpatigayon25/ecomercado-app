@@ -17,6 +17,7 @@ const SearchProducts = () => {
           collection(db, 'products'),
           where('name', '>=', searchQuery),
           where('name', '<=', searchQuery + '\uf8ff'),
+
         );
         const querySnapshot = await getDocs(q);
         const results = querySnapshot.docs.map(doc => doc.data());
