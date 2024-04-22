@@ -307,7 +307,11 @@ const SellerOrderManagement = ({ navigation }) => {
                         </View>
                         {productDetails.map((item, index) => (
                             <View key={index} style={styles.productContainer}>
+                                 <TouchableOpacity 
+                                    onPress={() => navigation.navigate('ViewerImage', { imageUrl: item.photo })}
+                                >
                                 <Image source={{ uri: item.photo }} style={styles.productImage} />
+                                </TouchableOpacity>
                                 <View style={styles.productInfo}>
                                     <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text>
                                     <Text style={styles.productName}>{item.name}</Text>

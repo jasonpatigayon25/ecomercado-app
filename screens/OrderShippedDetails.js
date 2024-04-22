@@ -13,6 +13,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 const OrderShippedDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
 
+  useEffect(() => {
+    if (route.params.shouldOpenConfirmModal) {
+      confirmDelivery();
+    }
+  }, [route.params.shouldOpenConfirmModal]);
+
   const [deliveredStatus, setDeliveredStatus] = useState(order.deliveredStatus);
 
   const rotateAnimation = useRef(new Animated.Value(0)).current;
@@ -124,7 +130,11 @@ const OrderShippedDetails = ({ route, navigation }) => {
           return (
             <View key={index} style={styles.productContainer}>
 
+              <TouchableOpacity 
+                onPress={() => navigation.navigate('ViewerImage', { imageUrl: product.photo })}
+                  >
               <Image source={{ uri: product.photo }} style={styles.productImage} />
+              </TouchableOpacity>
               <View style={styles.productInfo}>
                 <Text style={styles.orderId}>Order ID: #{order.id.toUpperCase()}</Text>
                 <Text style={styles.productName}>{product.name}</Text>
