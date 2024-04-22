@@ -191,9 +191,9 @@ const DonorManagement = ({ navigation }) => {
                         />
                         <ScrollableItem
                             imageSource={shippedIcon}
-                            label="Shipped"
+                            label="Receiving"
                             onPress={(tabName) => navigation.navigate('RequestManagement', { selectedTab: tabName })}
-                            tabName="Shipped"
+                            tabName="Receiving"
                             count={shippedCount}
                         />
                         <ScrollableItem

@@ -8,7 +8,7 @@ import DonorTab from '../navbars/DonorTab';
 
 const windowWidth = Dimensions.get('window').width;
 
-const RequestManagement = ({ navigation }) => {
+const RequestManagement = ({ navigation, route }) => {
   const [requests, setRequests] = useState([]);
   const [donations, setDonations] = useState({});
   const [loading, setLoading] = useState(true);
@@ -16,6 +16,12 @@ const RequestManagement = ({ navigation }) => {
   const auth = getAuth();
   const currentUser = auth.currentUser;
   const [selectedTab, setSelectedTab] = useState('To Approve');
+
+  useEffect(() => {
+    if (route.params?.selectedTab) {
+        setSelectedTab(route.params.selectedTab);
+    }
+  }, [route.params?.selectedTab]);
 
   const [requesters, setRequesters] = useState({});
 
