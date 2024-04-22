@@ -452,7 +452,11 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
           const product = products[item.productId];
           return (
             <View key={index} style={styles.productContainer}>
+              <TouchableOpacity 
+                onPress={() => navigation.navigate('ViewerImage', { imageUrl: product.photo })}
+                 >
               <Image source={{ uri: product.photo }} style={styles.productImage} />
+              </TouchableOpacity>
               <View style={styles.productInfo}>
                 <Text style={styles.productName}>{product.name}</Text> 
                 <Text style={styles.productCategory}>{product.category}</Text>   
