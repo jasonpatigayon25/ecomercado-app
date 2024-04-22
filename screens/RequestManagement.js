@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
 import { collection, getDocs, query, where, doc, getDoc, orderBy, onSnapshot } from 'firebase/firestore';
@@ -289,26 +289,66 @@ useEffect(() => {
               return (
                 <View>
                   <GroupHeader requesterEmail={requesterEmail} /> 
-                  <TouchableOpacity style={styles.donationItem}>
+                  <View style={styles.donationItem}>
+                  <TouchableOpacity 
+                         onPress={() => navigation.navigate('ViewerImage', { imageUrl: donation.photo })}
+                       >
                     <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+                    </TouchableOpacity>
                     <View style={styles.donationDetails}>
                       <Text style={styles.donationName}>{donation.name}</Text>
                       <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
                       <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                      <View style={styles.subPhotosContainer}>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        {donation.subPhotos.map((subPhoto, index) => (
+                          <TouchableOpacity 
+                          key={index} 
+                          onPress={() => navigation.navigate('ViewerImage', { imageUrl: subPhoto })}
+                        >
+                          <Image
+                            key={index}
+                            source={{ uri: subPhoto }}
+                            style={styles.subPhoto}
+                          />
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                     </View>
                     </View>
-                  </TouchableOpacity>
+                  </View>
                 </View>
               );
             } else {
               return (
-                <TouchableOpacity style={styles.donationItem}>
-                  <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+                <View style={styles.donationItem}>
+                  <TouchableOpacity 
+                         onPress={() => navigation.navigate('ViewerImage', { imageUrl: donation.photo })}
+                       >
+                    <Image source={{ uri: donation.photo }} style={styles.donationImage} />
+                    </TouchableOpacity>
                   <View style={styles.donationDetails}>
                     <Text style={styles.donationName}>{donation.name}</Text>
                     <Text style={styles.donationItems}>{donation.itemNames.join(' · ')}</Text>
                     <Text style={styles.donationCategory}>{donation.category} Bundle</Text>
+                    <View style={styles.subPhotosContainer}>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        {donation.subPhotos.map((subPhoto, index) => (
+                          <TouchableOpacity 
+                          key={index} 
+                          onPress={() => navigation.navigate('ViewerImage', { imageUrl: subPhoto })}
+                        >
+                          <Image
+                            key={index}
+                            source={{ uri: subPhoto }}
+                            style={styles.subPhoto}
+                          />
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                     </View>
                   </View>
-                </TouchableOpacity>
+                </View>
               );
             }
           }}
@@ -439,7 +479,9 @@ const styles = StyleSheet.create({
   donationImage: {
     width: 50,
     height: 50,
-    borderRadius: 25,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc'
   },
   donationCategory: {
     fontSize: 12,
@@ -534,6 +576,16 @@ emptyOrdersText: {
     fontSize: 18,
     color: '#cccccc',
     marginTop: 20
+},
+subPhotosContainer: {
+  marginTop: 10,
+  marginBottom: 10,
+},
+subPhoto: {
+  width: 50,
+  height: 50,
+  marginRight: 5,
+  borderRadius: 25,
 },
 });
 
