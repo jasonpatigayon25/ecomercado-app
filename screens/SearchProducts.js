@@ -15,7 +15,6 @@ const SearchProducts = () => {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      // Focus on the search input when the screen is focused
       if (searchInputRef.current) {
         searchInputRef.current.focus();
       }
