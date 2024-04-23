@@ -131,7 +131,7 @@ const SearchProducts = () => {
         />
       )}
 
-      {recommendedProducts.length > 0 && (
+      {searchQuery.length === 0 && recommendedProducts.length > 0 && (
         <>
           <Text style={styles.recommendedText}>Products You May Like</Text>
           <FlatList
