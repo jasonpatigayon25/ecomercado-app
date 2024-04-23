@@ -69,9 +69,18 @@ const SearchProducts = () => {
           <Icon name="search" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
-      {searchQuery.length > 0 && (
-        <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
-      )}
+      {/* <View style={styles.filterContainer}>
+          <Text style={styles.filterText}>Cebu<Icon name="filter" size={20} color="#666" style={styles.filterIcon} /></Text>
+        </View> */}
+      <View style={styles.textContainer}>
+        {searchQuery.length > 0 && (
+          <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
+        )}
+      </View>
+      <View style={styles.filterContainer}>
+          <Text style={styles.filterText}>Cebu<Icon name="filter" size={20} color="#666" style={styles.filterIcon} /></Text>
+        </View>
+
       <FlatList
         data={searchResults}
         renderItem={renderProductItem}
@@ -101,7 +110,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     paddingVertical: 10,
-    paddingHorizontal: 35,
+    paddingHorizontal: 15,
     marginRight: 10,
   },
   searchButton: {
@@ -166,6 +175,33 @@ const styles = StyleSheet.create({
     right: 10,
     width: 20,
     height: 20,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    position: 'absolute',
+    top: 50,
+    right: 10,
+  },
+  filterText: {
+    color: '#05652D',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  textContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  filterIcon: {
+    marginRight: 5,
   },
 });
 
