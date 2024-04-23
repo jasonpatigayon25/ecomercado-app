@@ -5,35 +5,47 @@ import { db } from '../config/firebase';
 import { Rating } from 'react-native-ratings';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-const RatingReview = ({ route }) => {
+const RatingReview = ({ route, navigation }) => {
   const { prodId } = route.params;
   const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
     const fetchReviews = async () => {
       const reviewsRef = collection(db, 'productRatings');
       const q = query(reviewsRef, where('prodId', '==', prodId));
-  
+
       const querySnapshot = await getDocs(q);
-      const fetchedReviews = [];
-      for (const doc of querySnapshot.docs) {
-        let data = doc.data();
-        let ratedAtFormatted = data.ratedAt ? data.ratedAt.toDate().toLocaleDateString('en-US') : 'N/A';
-        const userRef = collection(db, 'users');
-        const userQuery = query(userRef, where('email', '==', data.ratedBy));
-        const userSnapshot = await getDocs(userQuery);
-        const userData = userSnapshot.docs[0]?.data() || {};
-        fetchedReviews.push({
-          ...data,
-          id: doc.id,
-          fullName: `${userData.firstName || ''} ${userData.lastName || ''}`,
-          photoUrl: userData.photoUrl,
-          ratedAt: ratedAtFormatted,
-        });
+      if (querySnapshot.docs.length === 0) {
+        setReviews([]); // No reviews fetched
+        setReviewCount(0);
+        setAverageRating(0);
+      } else {
+        const fetchedReviews = [];
+        let totalRating = 0;
+        for (const doc of querySnapshot.docs) {
+          let data = doc.data();
+          let ratedAtFormatted = data.ratedAt ? data.ratedAt.toDate().toLocaleDateString('en-US') : 'N/A';
+          const userRef = collection(db, 'users');
+          const userQuery = query(userRef, where('email', '==', data.ratedBy));
+          const userSnapshot = await getDocs(userQuery);
+          const userData = userSnapshot.docs[0]?.data() || {};
+          fetchedReviews.push({
+            ...data,
+            id: doc.id,
+            fullName: `${userData.firstName || ''} ${userData.lastName || ''}`,
+            photoUrl: userData.photoUrl,
+            ratedAt: ratedAtFormatted,
+          });
+          totalRating += Number(data.rating);
+        }
+        setReviews(fetchedReviews);
+        setReviewCount(querySnapshot.docs.length);
+        setAverageRating(totalRating / querySnapshot.docs.length);
       }
-      setReviews(fetchedReviews);
     };
-  
+
     fetchReviews();
   }, [prodId]);
 
@@ -73,6 +85,25 @@ const RatingReview = ({ route }) => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Product Reviews</Text>
       </View>
+      <View style={styles.overallRating}>
+        <Text style={styles.overallRatingText}>Overall Rating</Text>
+        {reviewCount > 0 ? (
+          <>
+            <Text style={styles.overallRatingValue}>{averageRating.toFixed(1)}</Text>
+            <Rating
+              type="star"
+              ratingCount={5}
+              imageSize={20}
+              readonly
+              startingValue={averageRating}
+              style={styles.ratingAverage}
+            />
+            <Text style={styles.ratingInfo}>Based on {reviewCount} reviews</Text>
+          </>
+        ) : (
+          <Text style={styles.noReviews}>No reviews yet for this product.</Text>
+        )}
+      </View>
       <FlatList
         data={reviews}
         renderItem={renderItem}
@@ -89,13 +120,33 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e1e1e1',
-    backgroundColor: '#f8f8f8',  // Soft background color for the header
+    backgroundColor: '#fff',
   },
   headerTitle: {
     fontWeight: 'bold',
     fontSize: 20,
     marginLeft: 16,
-    color: '#333', 
+    color: '#333',
+  },
+  overallRating: {
+    padding: 16,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e1e1',
+    backgroundColor: '#fff',
+  },
+  overallRatingText: {
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  overallRatingValue: {
+    fontWeight: 'bold',
+    fontSize: 24,
+  },
+  ratingInfo: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 4,
   },
   reviewCard: {
     padding: 16,
@@ -124,6 +175,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginVertical: 8, 
   },
+  rating: {
+    alignSelf: 'center',
+    marginVertical: 8, 
+    backgroundColor: '#ccc'
+  },
   comment: {
     fontSize: 14,
     color: 'grey',
@@ -140,6 +196,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#05652D',
     marginTop: 4,
+  },
+  noReviews: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 8,
   },
 });
 
