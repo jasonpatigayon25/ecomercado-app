@@ -14,7 +14,6 @@ const SearchDonationResults = ({ route, navigation }) => {
     const fetchDonations = async () => {
       setLoading(true);
       
-      // Fetch donations based on search query
       try {
         const donationsQuery = query(
           collection(db, "donation"),

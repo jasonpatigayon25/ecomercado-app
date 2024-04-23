@@ -36,7 +36,7 @@ const SearchDonations = () => {
   
         const itemNameQuery = query(
           collection(db, 'donation'),
-          where('itemNames', 'array-contains-any', [searchQuery]), // Change array-contains to array-contains-any
+          where('itemNames', 'array-contains-any', [searchQuery]),
           limit(5),
         );
   
@@ -48,8 +48,17 @@ const SearchDonations = () => {
         const nameData = nameResults.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const itemNameData = itemNameResults.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   
-        const results = [...nameData, ...itemNameData];
-        setSearchResults(results);
+        const combinedResults = [...nameData, ...itemNameData];
+        const uniqueResults = combinedResults.reduce((acc, current) => {
+          const x = acc.find(item => item.id === current.id);
+          if (!x) {
+            return acc.concat([current]);
+          } else {
+            return acc;
+          }
+        }, []);
+  
+        setSearchResults(uniqueResults);
       } catch (error) {
         console.error("Error searching donations: ", error);
       }
