@@ -193,10 +193,10 @@ const SellerManagement = ({ navigation }) => {
 
     const SellerInfoView = () => (
         sellerInfo && (
-            <View style={styles.sellerInfoContainer}>
+            <TouchableOpacity onPress={() => navigation.navigate('EditSellerInfo')} style={styles.sellerInfoContainer}>
                 <TouchableOpacity onPress={() => navigation.navigate('EditSellerInfo')} style={styles.editIcon}>
                 <Icon name="edit" size={30} color="#05652D" />
-            </TouchableOpacity>
+                </TouchableOpacity>
                 <Text style={styles.sellerName}>{sellerInfo.sellerName}</Text>
                 <Text style={styles.fullName}>{sellerInfo.registeredName}</Text>
                 <View style={styles.infoRow}>
@@ -207,8 +207,7 @@ const SellerManagement = ({ navigation }) => {
                     <MaterialIcons name="place" size={20} color="#05652D" />
                     <Text style={styles.miniSubText}>{sellerInfo.sellerAddress}</Text>
                 </View>
-              
-            </View>
+            </TouchableOpacity>
         )
     );
 
