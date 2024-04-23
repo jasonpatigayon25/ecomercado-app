@@ -12,7 +12,6 @@ import axios from 'axios';
 import { Dimensions } from 'react-native';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Picker } from '@react-native-picker/picker';
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -483,44 +482,43 @@ const resetProductInfo = () => {
   }, []);
 
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
 
-const handleCategorySelect = (category) => {
-  setProductInfo({ ...productInfo, category: category.title });
-  setIsCategoryModalVisible(false);
-};
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category.title);
+    setIsCategoryModalVisible(false); 
+  };
 
-const CategoryPickerModal = ({ isVisible, categories, onCategorySelect, onCancel }) => (
-  <Modal
-    visible={isVisible}
-    onRequestClose={onCancel}
-    animationType="slide"
-    transparent={true}
-  >
-    <View style={styles.modalOverlay}>
-      <View style={styles.modalContainer}>
-        <ScrollView>
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              style={styles.categoryOption}
-              onPress={() => onCategorySelect(category)}
-            >
-              <Image
-                source={{ uri: category.image }}
-                style={styles.categoryImage}
-                resizeMode="cover"
-              />
-              <Text style={styles.categoryOptionText}>{category.title}</Text>
+  const CategoryPickerModal = ({ isVisible, onCancel, onCategorySelect, categories }) => {
+    return (
+      <Modal
+        visible={isVisible}
+        onRequestClose={onCancel}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalCategoryOverlay}>
+          <View style={styles.modalCategoryContainer}>
+            <TouchableOpacity onPress={onCancel} style={styles.modalHeaderCategory}>
+              <Text style={styles.modalHeaderCategoryTitle}>Select Category</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <TouchableOpacity style={styles.cancelButtonCategories} onPress={onCancel}>
-          <Text style={styles.cancelTextCategories}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </Modal>
-);
+            <ScrollView>
+              {categories.map((category, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.categoryOption}
+                  onPress={() => onCategorySelect(category)}
+                >
+                  <Text style={styles.categoryOptionText}>{category.title}</Text>
+                  <Image source={{ uri: category.image }} style={styles.categoryImage} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
 
 const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
   return (
@@ -758,21 +756,16 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
               onBlur={handlePriceBlur}
           />
 
-          <Text style={styles.label}>
+           <Text style={styles.label}>
               Category:
               {missingFields.category && <Text style={{ color: 'red' }}> *</Text>}
-          </Text>
-          <View style={[styles.input, styles.pickerInput, missingFields.category && styles.missingField]}>
-              <Picker
-                  selectedValue={productInfo.category}
-                  onValueChange={(itemValue, itemIndex) => setProductInfo({ ...productInfo, category: itemValue })}
-                  style={{flex: 1}}>
-                  <Picker.Item label="Select Category" value="" />
-                  {categories.map((category) => (
-                      <Picker.Item key={category.id} label={category.title} value={category.title} />
-                  ))}
-              </Picker>
-          </View>
+            </Text>
+            <TouchableOpacity
+              style={[styles.input, styles.pickerInput, missingFields.category && styles.missingField]}
+              onPress={() => setIsCategoryModalVisible(true)}
+            >
+              <Text>{selectedCategory || 'Select Category'}</Text>
+            </TouchableOpacity>
         <Text style={styles.label}>
             Location
             {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
@@ -930,6 +923,12 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           setSuccessModalVisible(false);
           navigation.navigate('ProductPosts');
         }}
+      />
+      <CategoryPickerModal
+        isVisible={isCategoryModalVisible}
+        categories={categories}
+        onCategorySelect={handleCategorySelect}
+        onCancel={() => setIsCategoryModalVisible(false)}
       />
     </View>
   );
@@ -1429,7 +1428,50 @@ const styles = StyleSheet.create({
     marginTop: 5,
     textAlign: 'center',
   },
-                                  
+  modalCategoryOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+  },
+  modalCategoryContainer: {
+    backgroundColor: '#FFF',
+    // borderRadius: 20,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    marginBottom: 20,
+  },
+  modalHeaderCategory: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+    marginBottom: 10,
+  },
+  modalHeaderCategoryTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#05652D', 
+    textAlign: 'center',
+  },
+
+  categoryOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  categoryOptionText: {
+    flex: 1, 
+    fontSize: 16,
+    color: '#333',
+    paddingRight: 10,  
+  },
+  categoryImage: {
+    width: 50,
+    height: 50, 
+    borderRadius: 25,
+  },                                    
 });
 
 export default ResubmitProduct;
