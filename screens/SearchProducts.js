@@ -38,6 +38,34 @@ const SearchProducts = () => {
     navigation.navigate('ProductDetail', { product });
   };
 
+  const fetchRecommendations = async (userEmail) => {
+    try {
+      const recQuery = query(collection(db, 'userRecommend'), where('userEmail', '==', userEmail));
+      const querySnapshot = await getDocs(recQuery);
+      
+      if (querySnapshot.empty) {
+        // Fallback to other user's recommendations if current user has none
+        const fallbackQuery = query(collection(db, 'userRecommend'), orderBy('userEmail'), limit(1));
+        const fallbackSnapshot = await getDocs(fallbackQuery);
+        if (!fallbackSnapshot.empty) {
+          processRecommendations(fallbackSnapshot.docs[0].data());
+        }
+      } else {
+        processRecommendations(querySnapshot.docs[0].data());
+      }
+    } catch (error) {
+      console.error("Error fetching recommendations: ", error);
+    }
+  };
+
+  const processRecommendations = (recommendationsData) => {
+    const sortedRecommendations = Object.entries(recommendationsData.productHits)
+      .sort((a, b) => b[1] - a[1]) // Sort by click count descending
+      .map(([productId, _]) => productId);
+    
+    fetchRecommendedProducts(sortedRecommendations);
+  };
+
   const renderProductItem = ({ item }) => (
     <TouchableOpacity onPress={() => navigateToProduct(item)} style={styles.productCard}>
       <Image source={{ uri: item.photo }} style={styles.productImage} />
