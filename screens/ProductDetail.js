@@ -110,7 +110,7 @@ const ProductDetail = ({ navigation, route }) => {
   useEffect(() => {
     const fetchRatings = async () => {
       if (product && product.id) {
-        const ratingsRef = collection(db, 'rateItems');
+        const ratingsRef = collection(db, 'productRatings');
         const q = query(ratingsRef, where('prodId', '==', product.id));
     
         const querySnapshot = await getDocs(q);

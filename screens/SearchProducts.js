@@ -17,10 +17,10 @@ const SearchProducts = () => {
           collection(db, 'products'),
           where('name', '>=', searchQuery),
           where('name', '<=', searchQuery + '\uf8ff'),
-
+          where('publicationStatus', '==', 'approved'),
         );
         const querySnapshot = await getDocs(q);
-        const results = querySnapshot.docs.map(doc => doc.data());
+        const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setSearchResults(results);
       } catch (error) {
         console.error("Error searching products: ", error);
