@@ -1,14 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { query, where, getDocs, collection } from 'firebase/firestore';
+import { query, where, getDocs, collection, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const SearchProducts = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
   const navigation = useNavigation();
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // Focus on the search input when the screen is focused
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     const handleSearch = async () => {
@@ -17,7 +30,6 @@ const SearchProducts = () => {
           collection(db, 'products'),
           where('name', '>=', searchQuery),
           where('name', '<=', searchQuery + '\uf8ff'),
-          // where('publicationStatus', '==', 'approved'),
         );
         const querySnapshot = await getDocs(q);
         const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -34,12 +46,34 @@ const SearchProducts = () => {
     }
   }, [searchQuery]);
 
+  useEffect(() => {
+    const fetchRecommendedProducts = async () => {
+      try {
+        const recommendedQ = query(
+          collection(db, 'products'),
+          limit(5)
+        );
+        const recommendedSnapshot = await getDocs(recommendedQ);
+        const recommendedResults = recommendedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setRecommendedProducts(recommendedResults);
+      } catch (error) {
+        console.error("Error fetching recommended products: ", error);
+      }
+    };
+
+    fetchRecommendedProducts();
+  }, []);
+
   const navigateToProduct = (product) => {
     navigation.navigate('ProductDetail', { product });
   };
 
   const navigateToWish = () => {
     navigation.navigate('Wish');
+  };
+
+  const navigateToSearchResults = () => {
+    navigation.navigate('SearchProductResults');
   };
 
   const renderProductItem = ({ item }) => (
@@ -51,11 +85,20 @@ const SearchProducts = () => {
     </TouchableOpacity>
   );
 
+  const renderLikeProductItem = ({ item }) => (
+    <TouchableOpacity onPress={() => navigateToProduct(item)} style={styles.productCard}>
+      <Image source={{ uri: item.photo }} style={styles.productImage} />
+      <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
+      <Text style={styles.productCategory}>{item.category}</Text>
+      <Text style={styles.productPrice}>₱{item.price}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        
         <TextInput
+          ref={searchInputRef}
           style={styles.input}
           placeholder="Search products..."
           value={searchQuery}
@@ -64,31 +107,43 @@ const SearchProducts = () => {
         <TouchableOpacity style={styles.searchImageButton} onPress={navigateToWish}>
           <Image source={require('../assets/zoom-in.png')} style={styles.searchImageIcon} />
         </TouchableOpacity>
-      
-         <TouchableOpacity style={styles.searchButton}>
+        <TouchableOpacity style={styles.searchButton} onPress={navigateToSearchResults}>
           <Icon name="search" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
-      {/* <View style={styles.filterContainer}>
-          <Text style={styles.filterText}>Cebu<Icon name="filter" size={20} color="#666" style={styles.filterIcon} /></Text>
-        </View> */}
       <View style={styles.textContainer}>
         {searchQuery.length > 0 && (
           <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
         )}
       </View>
       <View style={styles.filterContainer}>
-          <Text style={styles.filterText}>Cebu<Icon name="filter" size={20} color="#666" style={styles.filterIcon} /></Text>
-        </View>
+        <Text style={styles.filterText}>Cebu<Icon name="filter" size={20} color="#666" style={styles.filterIcon} /></Text>
+      </View>
 
-      <FlatList
-        data={searchResults}
-        renderItem={renderProductItem}
-        keyExtractor={(item, index) => index.toString()}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        key={"two-columns"}
-      />
+      {searchResults.length > 0 && (
+        <FlatList
+          data={searchResults}
+          renderItem={renderProductItem}
+          keyExtractor={(item, index) => index.toString()}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          key={"searched-products"}
+        />
+      )}
+
+      {recommendedProducts.length > 0 && (
+        <>
+          <Text style={styles.recommendedText}>Products You May Like</Text>
+          <FlatList
+            data={recommendedProducts}
+            renderItem={renderLikeProductItem}
+            keyExtractor={(item, index) => index.toString()}
+            numColumns={2}
+            columnWrapperStyle={styles.row}
+            contentContainerStyle={styles.recommendedContainer}
+          />
+        </>
+      )}
     </View>
   );
 };
@@ -202,6 +257,16 @@ const styles = StyleSheet.create({
   },
   filterIcon: {
     marginRight: 5,
+  },
+  recommendedText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginHorizontal: 20,
+    marginBottom: 10,
+    marginTop: 20,
+  },
+  recommendedContainer: {
+    paddingHorizontal: 10,
   },
 });
 
