@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { query, where, getDocs, collection, orderBy, startAt, endAt } from 'firebase/firestore';
+import { query, where, getDocs, collection } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const SearchProducts = () => {
@@ -17,7 +17,7 @@ const SearchProducts = () => {
           collection(db, 'products'),
           where('name', '>=', searchQuery),
           where('name', '<=', searchQuery + '\uf8ff'),
-          where('publicationStatus', '==', 'approved'),
+          // where('publicationStatus', '==', 'approved'),
         );
         const querySnapshot = await getDocs(q);
         const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -26,7 +26,7 @@ const SearchProducts = () => {
         console.error("Error searching products: ", error);
       }
     };
-  
+
     if (searchQuery) {
       handleSearch();
     } else {
@@ -56,7 +56,13 @@ const SearchProducts = () => {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
+        <TouchableOpacity style={styles.searchButton}>
+          <Icon name="search" size={20} color="#05652D" />
+        </TouchableOpacity>
       </View>
+      {searchQuery.length > 0 && (
+        <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
+      )}
       <FlatList
         data={searchResults}
         renderItem={renderProductItem}
@@ -77,7 +83,7 @@ const styles = StyleSheet.create({
     searchContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 20,
+      marginBottom: 10,
       paddingHorizontal: 20,
     },
     input: {
@@ -88,6 +94,9 @@ const styles = StyleSheet.create({
       paddingVertical: 10,
       paddingHorizontal: 15,
       marginRight: 10,
+    },
+    searchButton: {
+      padding: 10,
     },
     row: {
       flex: 1,
@@ -114,11 +123,6 @@ const styles = StyleSheet.create({
       color: '#05652D',
       marginBottom: 6,
     },
-    productPrice: {
-      color: '#05652D',
-      fontSize: 14,
-      fontWeight: 'bold',
-    },
     productCategory: {
       fontSize: 12,
       color: '#666',
@@ -132,16 +136,16 @@ const styles = StyleSheet.create({
       marginHorizontal: 2,
       textAlign: 'center',
     },
-    emptyContainer: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 20,
+    productPrice: {
+      color: '#05652D',
+      fontSize: 14,
+      fontWeight: 'bold',
     },
-    emptyText: {
-      fontSize: 16,
-      color: '#808080',
-      marginTop: 10,
+    searchingText: {
+      fontSize: 14,
+      color: '#666',
+      marginLeft: 20,
+      marginBottom: 10,
     },
 });
 
