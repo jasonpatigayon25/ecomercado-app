@@ -454,7 +454,7 @@ const Notification = ({ navigation }) => {
         iconName = 'bell'; 
         break;
       default:
-        iconName = 'comment'; 
+        iconName = 'shopping-bag'; 
         break;
     }
   
