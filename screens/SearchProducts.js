@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { query, where, getDocs, collection, limit } from 'firebase/firestore';
+import { query, where, getDocs, collection, limit, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const SearchProducts = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
 
@@ -30,6 +31,8 @@ const SearchProducts = () => {
           collection(db, 'products'),
           where('name', '>=', searchQuery),
           where('name', '<=', searchQuery + '\uf8ff'),
+          limit(5),
+          orderBy('name'),
         );
         const querySnapshot = await getDocs(q);
         const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -64,6 +67,31 @@ const SearchProducts = () => {
     fetchRecommendedProducts();
   }, []);
 
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        const q = query(
+          collection(db, 'products'),
+          where('name', '>=', searchQuery),
+          where('name', '<=', searchQuery + '\uf8ff'),
+          limit(5),
+          orderBy('name'),
+        );
+        const querySnapshot = await getDocs(q);
+        const suggestionTexts = querySnapshot.docs.map(doc => doc.data().name);
+        setSuggestions(suggestionTexts);
+      } catch (error) {
+        console.error("Error fetching suggestions: ", error);
+      }
+    };
+
+    if (searchQuery) {
+      fetchSuggestions();
+    } else {
+      setSuggestions([]);
+    }
+  }, [searchQuery]);
+
   const navigateToProduct = (product) => {
     navigation.navigate('ProductDetail', { product });
   };
@@ -74,6 +102,10 @@ const SearchProducts = () => {
 
   const navigateToSearchResults = () => {
     navigation.navigate('SearchProductResults');
+  };
+
+  const handleSuggestionPress = (suggestion) => {
+    setSearchQuery(suggestion);
   };
 
   const renderProductItem = ({ item }) => (
@@ -91,6 +123,12 @@ const SearchProducts = () => {
       <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
       <Text style={styles.productCategory}>{item.category}</Text>
       <Text style={styles.productPrice}>₱{item.price}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderSuggestionItem = ({ item }) => (
+    <TouchableOpacity onPress={() => handleSuggestionPress(item)} style={styles.suggestionItem}>
+      <Text>{item}</Text>
     </TouchableOpacity>
   );
 
@@ -119,6 +157,18 @@ const SearchProducts = () => {
       <View style={styles.filterContainer}>
         <Text style={styles.filterText}>Cebu<Icon name="filter" size={20} color="#666" style={styles.filterIcon} /></Text>
       </View>
+
+      {searchQuery.length > 0 && suggestions.length > 0 && (
+        <View style={styles.suggestionsContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {suggestions.map((suggestion, index) => (
+              <TouchableOpacity key={index} onPress={() => handleSuggestionPress(suggestion)} style={styles.suggestionItem}>
+                <Text>{suggestion}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       {searchResults.length > 0 && (
         <FlatList
@@ -267,6 +317,17 @@ const styles = StyleSheet.create({
   },
   recommendedContainer: {
     paddingHorizontal: 10,
+  },
+  suggestionsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  suggestionItem: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginRight: 10,
+    backgroundColor: '#E0F7FA',
+    borderRadius: 10,
   },
 });
 
