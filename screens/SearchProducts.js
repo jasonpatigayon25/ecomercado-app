@@ -38,32 +38,8 @@ const SearchProducts = () => {
     navigation.navigate('ProductDetail', { product });
   };
 
-  const fetchRecommendations = async (userEmail) => {
-    try {
-      const recQuery = query(collection(db, 'userRecommend'), where('userEmail', '==', userEmail));
-      const querySnapshot = await getDocs(recQuery);
-      
-      if (querySnapshot.empty) {
-        // Fallback to other user's recommendations if current user has none
-        const fallbackQuery = query(collection(db, 'userRecommend'), orderBy('userEmail'), limit(1));
-        const fallbackSnapshot = await getDocs(fallbackQuery);
-        if (!fallbackSnapshot.empty) {
-          processRecommendations(fallbackSnapshot.docs[0].data());
-        }
-      } else {
-        processRecommendations(querySnapshot.docs[0].data());
-      }
-    } catch (error) {
-      console.error("Error fetching recommendations: ", error);
-    }
-  };
-
-  const processRecommendations = (recommendationsData) => {
-    const sortedRecommendations = Object.entries(recommendationsData.productHits)
-      .sort((a, b) => b[1] - a[1]) // Sort by click count descending
-      .map(([productId, _]) => productId);
-    
-    fetchRecommendedProducts(sortedRecommendations);
+  const navigateToWish = () => {
+    navigation.navigate('Wish');
   };
 
   const renderProductItem = ({ item }) => (
@@ -78,14 +54,19 @@ const SearchProducts = () => {
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
+        
         <TextInput
           style={styles.input}
           placeholder="Search products..."
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-        <TouchableOpacity style={styles.searchButton}>
-          <Icon name="search" size={20} color="#05652D" />
+        <TouchableOpacity style={styles.searchImageButton} onPress={navigateToWish}>
+          <Image source={require('../assets/zoom-in.png')} style={styles.searchImageIcon} />
+        </TouchableOpacity>
+      
+         <TouchableOpacity style={styles.searchButton}>
+          <Icon name="search" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
       {searchQuery.length > 0 && (
@@ -104,77 +85,88 @@ const SearchProducts = () => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#fff',
-    },
-    searchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 10,
-      paddingHorizontal: 20,
-    },
-    input: {
-      flex: 1,
-      borderWidth: 1,
-      borderColor: '#ccc',
-      borderRadius: 5,
-      paddingVertical: 10,
-      paddingHorizontal: 15,
-      marginRight: 10,
-    },
-    searchButton: {
-      padding: 10,
-    },
-    row: {
-      flex: 1,
-      justifyContent: 'space-between',
-    },
-    productCard: {
-      width: '50%',
-      backgroundColor: '#f9f9f9',
-      padding: 10,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: '#ccc',
-    },
-    productImage: {
-      width: '100%',
-      height: 150,
-      resizeMode: 'cover',
-      marginBottom: 10,
-      borderRadius: 8,
-    },
-    productName: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: '#05652D',
-      marginBottom: 6,
-    },
-    productCategory: {
-      fontSize: 12,
-      color: '#666',
-      backgroundColor: '#ECECEC',
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      borderRadius: 10,
-      alignSelf: 'flex-start',
-      overflow: 'hidden',
-      marginVertical: 4,
-      marginHorizontal: 2,
-      textAlign: 'center',
-    },
-    productPrice: {
-      color: '#05652D',
-      fontSize: 14,
-      fontWeight: 'bold',
-    },
-    searchingText: {
-      fontSize: 14,
-      color: '#666',
-      marginLeft: 20,
-      marginBottom: 10,
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingHorizontal: 20,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 35,
+    marginRight: 10,
+  },
+  searchButton: {
+    padding: 10,
+    backgroundColor: '#05652D',
+    borderRadius: 10,
+  },
+  searchImageButton: {
+    padding: 10,
+  },
+  row: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  productCard: {
+    width: '50%',
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  productImage: {
+    width: '100%',
+    height: 150,
+    resizeMode: 'cover',
+    marginBottom: 10,
+    borderRadius: 8,
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#05652D',
+    marginBottom: 6,
+  },
+  productCategory: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#ECECEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
+    marginVertical: 4,
+    marginHorizontal: 2,
+    textAlign: 'center',
+  },
+  productPrice: {
+    color: '#05652D',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  searchingText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 20,
+    marginBottom: 10,
+  },
+  searchIcon: {
+    position: 'absolute',
+    right: 10,
+    width: 20,
+    height: 20,
+  },
 });
 
 export default SearchProducts;
