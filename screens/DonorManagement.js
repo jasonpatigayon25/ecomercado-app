@@ -220,7 +220,7 @@ const DonorManagement = ({ navigation }) => {
                         <ScrollableItem
                             imageSource={pendingIcon}
                             label="Pending Posts"
-                            onPress={(tabName) => navigation.navigate('SuspendedDonations', { selectedTab: tabName })}
+                            onPress={(tabName) => navigation.navigate('DonationPosts', { selectedTab: tabName })}
                             tabName="Pending For Approval"
                             count={pendingPostsCount}
                         />
