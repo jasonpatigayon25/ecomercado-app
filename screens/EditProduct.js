@@ -75,6 +75,7 @@ const EditProduct = ({ route, navigation }) => {
             length: shipping?.length || '',
             weight: shipping?.weight || ''
           });
+          setSelectedCategory(category);
         }
       }, [route.params?.productInfo]);
 
@@ -482,7 +483,11 @@ const resetProductInfo = () => {
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category.title);
-    setIsCategoryModalVisible(false); 
+    setDonationInfo(prevState => ({
+      ...prevState,
+      category: category.title 
+    }));
+    setIsCategoryModalVisible(false);
   };
 
   const CategoryPickerModal = ({ isVisible, onCancel, onCategorySelect, categories }) => {

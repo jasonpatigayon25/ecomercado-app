@@ -510,7 +510,7 @@ const showOptions = (item, event) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>Suspended Posts</Text>
+        <Text style={styles.title}>Suspended Products</Text>
         <Animated.View style={[styles.addProductButton, animatedStyle]}>
         <TouchableOpacity onPress={() => navigation.navigate('SellAddProduct')}>
           <Icon name="plus" size={24} color="#ffffff" />

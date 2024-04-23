@@ -235,7 +235,7 @@ const SuspendedDonation = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>Suspended Donation Posts</Text>
+        <Text style={styles.title}>Suspended Donations</Text>
         <Animated.View style={[styles.addProductButton, animatedStyle]}>
         <TouchableOpacity onPress={() => navigation.navigate('DonationAddDonation')}>
           <Icon name="plus" size={24} color="#ffffff" />

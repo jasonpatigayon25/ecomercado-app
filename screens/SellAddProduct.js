@@ -52,7 +52,7 @@ const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, naviga
   );
 };
 
-const Sell = ({ navigation }) => {
+const SellAddProduct = ({ navigation }) => {
 
   const [subPhotos, setSubPhotos] = useState([]);
   const MAX_SUB_PHOTOS = 15;
@@ -1527,4 +1527,4 @@ const styles = StyleSheet.create({
   },                     
 });
 
-export default Sell;
+export default SellAddProduct;

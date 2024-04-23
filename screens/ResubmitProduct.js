@@ -75,6 +75,7 @@ const ResubmitProduct = ({ route, navigation }) => {
             length: shipping?.length || '',
             weight: shipping?.weight || ''
           });
+          setSelectedCategory(category);
         }
       }, [route.params?.productInfo]);
 
@@ -485,8 +486,12 @@ const resetProductInfo = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const handleCategorySelect = (category) => {
-    setSelectedCategory(category.title);
-    setIsCategoryModalVisible(false); 
+    setSelectedCategory(category.title); 
+    setProductInfo(prevState => ({
+      ...prevState,
+      category: category.title
+    }));
+    setIsCategoryModalVisible(false);
   };
 
   const CategoryPickerModal = ({ isVisible, onCancel, onCategorySelect, categories }) => {

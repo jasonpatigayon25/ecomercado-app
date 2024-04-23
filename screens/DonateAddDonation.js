@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Modal, Alert } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -566,13 +565,53 @@ const decrementWeight = () => {
       const querySnapshot = await getDocs(collection(db, 'donationCategories'));
       const fetchedCategories = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        title: doc.data().title
+        title: doc.data().title,
+        image: doc.data().image
       }));
       setCategories(fetchedCategories);
     };
 
     fetchCategories();
   }, []);
+
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category.title);
+    setIsCategoryModalVisible(false); 
+  };
+
+  const CategoryPickerModal = ({ isVisible, onCancel, onCategorySelect, categories }) => {
+    return (
+      <Modal
+        visible={isVisible}
+        onRequestClose={onCancel}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalCategoryOverlay}>
+          <View style={styles.modalCategoryContainer}>
+            <TouchableOpacity onPress={onCancel} style={styles.modalHeaderCategory}>
+              <Text style={styles.modalHeaderCategoryTitle}>Select Category</Text>
+            </TouchableOpacity>
+            <ScrollView>
+              {categories.map((category, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.categoryOption}
+                  onPress={() => onCategorySelect(category)}
+                >
+                  <Text style={styles.categoryOptionText}>{category.title}</Text>
+                  <Image source={{ uri: category.image }} style={styles.categoryImage} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -719,38 +758,35 @@ const decrementWeight = () => {
           </View>
         ))}
       </View>
-      <Text style={styles.label}>Eco-Bundle Category</Text>
-      <View style={[styles.pickerContainer, missingFields.category && styles.missingField]}>
-        <Picker
-          selectedValue={donationInfo.category}
-          onValueChange={(itemValue) => setDonationInfo({ ...donationInfo, category: itemValue })}
-          style={[styles.picker]}
+      <Text style={styles.label}>
+          Eco-Bundle Category:
+          {missingFields.category && <Text style={{ color: 'red' }}> *</Text>}
+        </Text>
+        <TouchableOpacity
+          style={[styles.input, styles.pickerInput, missingFields.category && styles.missingField]}
+          onPress={() => setIsCategoryModalVisible(true)}
         >
-          <Picker.Item label="Select a Category" value="" />
-          {categories.map((category) => (
-            <Picker.Item key={category.id} label={category.title} value={category.title} />
-          ))}
-        </Picker>
-      </View>
+          <Text>{selectedCategory || 'Select Category'}</Text>
+        </TouchableOpacity>
         <Text style={styles.label}>Weight (kg)</Text>
         <View style={styles.weightControlContainer}>
-  <TouchableOpacity style={styles.weightControlButton} onPress={decrementWeight}>
-    <Text style={styles.weightControlButtonText}>-</Text>
-  </TouchableOpacity>
-  <TextInput
-    style={[styles.weightInput, missingFields.weightError && styles.missingField]}
-    placeholder="Enter total weight (1-30 kg)"
-    value={donationInfo.weight}
-    keyboardType="numeric"
-    onChangeText={handleWeightChange}
-  />
-  <TouchableOpacity style={styles.weightControlButton} onPress={incrementWeight}>
-    <Text style={styles.weightControlButtonText}>+</Text>
-  </TouchableOpacity>
-</View>
-{missingFields.weightError && (
-  <Text style={styles.validationText}>Please do not exceed 30kg.</Text>
-)}
+          <TouchableOpacity style={styles.weightControlButton} onPress={decrementWeight}>
+            <Text style={styles.weightControlButtonText}>-</Text>
+          </TouchableOpacity>
+          <TextInput
+            style={[styles.weightInput, missingFields.weightError && styles.missingField]}
+            placeholder="Enter total weight (1-30 kg)"
+            value={donationInfo.weight}
+            keyboardType="numeric"
+            onChangeText={handleWeightChange}
+          />
+          <TouchableOpacity style={styles.weightControlButton} onPress={incrementWeight}>
+            <Text style={styles.weightControlButtonText}>+</Text>
+          </TouchableOpacity>
+        </View>
+        {missingFields.weightError && (
+          <Text style={styles.validationText}>Please do not exceed 30kg.</Text>
+        )}
 
         {/* <Text style={styles.label}>Donation Packaging (cm)</Text>
         <View style={styles.dimensionsContainer}>
@@ -850,6 +886,12 @@ const decrementWeight = () => {
           setSuccessModalVisible(false);
           navigation.navigate('DonationPosts');
         }}
+      />
+       <CategoryPickerModal
+        isVisible={isCategoryModalVisible}
+        categories={categories}
+        onCategorySelect={handleCategorySelect}
+        onCancel={() => setIsCategoryModalVisible(false)}
       />
     </View>
   );
@@ -1324,7 +1366,50 @@ const styles = StyleSheet.create({
     marginTop: 5,
     textAlign: 'center',
   },
+  modalCategoryOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+  },
+  modalCategoryContainer: {
+    backgroundColor: '#FFF',
+    // borderRadius: 20,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    marginBottom: 20,
+  },
+  modalHeaderCategory: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+    marginBottom: 10,
+  },
+  modalHeaderCategoryTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#05652D', 
+    textAlign: 'center',
+  },
 
+  categoryOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  categoryOptionText: {
+    flex: 1, 
+    fontSize: 16,
+    color: '#333',
+    paddingRight: 10,  
+  },
+  categoryImage: {
+    width: 50,
+    height: 50, 
+    borderRadius: 25,
+  },     
 });
 
 export default DonateAddDonation;
