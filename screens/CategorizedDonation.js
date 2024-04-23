@@ -5,7 +5,7 @@ import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const CategorizedDonation = ({ route, navigation }) => {
-  const { categoryTitle, sellerName, email } = route.params; // Now includes email
+  const { categoryTitle, sellerName, email } = route.params; 
   const [donations, setDonations] = useState([]);
 
   useEffect(() => {
@@ -13,7 +13,7 @@ const CategorizedDonation = ({ route, navigation }) => {
       const donationsQuery = query(
         collection(db, 'donation'),
         where('category', '==', categoryTitle),
-        where('donor_email', '==', email),  // Filter donations by this specific email
+        where('donor_email', '==', email),  
         where('publicationStatus', '==', 'approved')
       );
       const donationsSnapshot = await getDocs(donationsQuery);
@@ -25,7 +25,7 @@ const CategorizedDonation = ({ route, navigation }) => {
     };
 
     fetchDonationsByCategory();
-  }, [categoryTitle, email]);  // Include email in dependency array
+  }, [categoryTitle, email]);  
 
   const handleDonationSelect = (donation) => {
     navigation.navigate('DonationDetail', { donation });

@@ -185,7 +185,7 @@ const Home = ({ navigation }) => {
   }, [locationEnabled, userCity]);
   
   const handleSearchFocus = () => {
-    navigation.navigate('SearchProducts', { searchText });
+    navigation.navigate('SearchDonations', { searchText });
   };
 
   const Category = ({ id, image, title, type }) => {
