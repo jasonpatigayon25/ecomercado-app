@@ -100,7 +100,7 @@ const SearchProducts = () => {
   };
 
   const navigateToSearchResults = () => {
-    navigation.navigate('SearchProductResults');
+    navigation.navigate('SearchProductResults', { searchQuery: searchQuery });
   };
 
   const handleSuggestionPress = (suggestion) => {
@@ -144,7 +144,7 @@ const SearchProducts = () => {
         <TouchableOpacity style={styles.searchImageButton} onPress={navigateToWish}>
           <Image source={require('../assets/zoom-in.png')} style={styles.searchImageIcon} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.searchButton} onPress={navigateToSearchResults}>
+        <TouchableOpacity style={styles.searchButton} onPress={searchQuery.length > 0 ? navigateToSearchResults : null}>
           <Icon name="search" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
