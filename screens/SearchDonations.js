@@ -122,6 +122,11 @@ const SearchDonations = () => {
     navigation.navigate('Wish');
   };
 
+  const navigateToSearchProducts = () => {
+    navigation.navigate('SearchProducts');
+  };
+
+
   const navigateToSearchResults = () => {
     navigation.navigate('SearchDonationResults', { searchQuery });
   };
@@ -177,8 +182,13 @@ const SearchDonations = () => {
           <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
         )}
       </View>
-      <View style={styles.filterContainer}>
-        <Text style={styles.filterText}>Cebu<Icon name="filter" size={20} color="#666" style={styles.filterIcon} /></Text>
+      <View style={styles.optionsContainer}>
+        <TouchableOpacity style={styles.switchContainer} onPress={navigateToSearchProducts}>
+          <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Products</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterContainer} onPress={() => {  }}>
+          <Text style={styles.filterText}>Cebu <Icon name="filter" size={20} color="#666" /></Text>
+        </TouchableOpacity>
       </View>
 
       {searchQuery.length > 0 && suggestions.length > 0 && (
@@ -297,20 +307,6 @@ const styles = StyleSheet.create({
     marginLeft: 20,
     marginBottom: 10,
   },
-  filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#05652D',
-    borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    position: 'absolute',
-    top: 50,
-    right: 10,
-  },
   filterText: {
     color: '#05652D',
     fontSize: 14,
@@ -402,6 +398,32 @@ const styles = StyleSheet.create({
   },
   searchImageButton: {
     padding: 10,
+  },
+  optionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginVertical: 10,
+  },
+  switchContainer: {
+    backgroundColor: '#05652D',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderRadius: 5,
+  },
+  filterContainer: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  switchText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+    paddingHorizontal: 5,
   },
 });
 

@@ -30,11 +30,10 @@ const SearchDonationResults = ({ route, navigation }) => {
         console.error("Error fetching donations:", error);
       }
 
-      // Fetch other random donations
       try {
         const otherDonationsQuery = query(
           collection(db, "donation"),
-          limit(10) // Limit to 10 documents
+          limit(10)
         );
         const otherSnapshot = await getDocs(otherDonationsQuery);
         const randomDonations = otherSnapshot.docs

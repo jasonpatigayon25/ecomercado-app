@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView, Animated  } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { query, where, getDocs, collection, limit, orderBy } from 'firebase/firestore';
@@ -99,6 +99,10 @@ const SearchProducts = () => {
     navigation.navigate('Wish');
   };
 
+  const navigateToSearchDonation = () => {
+    navigation.navigate('SearchDonations');
+  };
+
   const navigateToSearchResults = () => {
     navigation.navigate('SearchProductResults', { searchQuery: searchQuery });
   };
@@ -148,14 +152,22 @@ const SearchProducts = () => {
           <Icon name="search" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
+      <View style={styles.optionsContainer}>
+        <TouchableOpacity style={styles.switchContainer} onPress={navigateToSearchDonation}>
+          <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Donation</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterContainer} onPress={() => {  }}>
+          <Text style={styles.filterText}>Cebu <Icon name="filter" size={20} color="#666" /></Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.textContainer}>
         {searchQuery.length > 0 && (
           <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
         )}
       </View>
-      <View style={styles.filterContainer}>
-        <Text style={styles.filterText}>Cebu<Icon name="filter" size={20} color="#666" style={styles.filterIcon} /></Text>
-      </View>
+
+
 
       {searchQuery.length > 0 && suggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
@@ -223,7 +235,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   searchImageButton: {
-    padding: 10,
+    marginRight: 10,
+  },
+  switchButton: {
+    marginRight: 10,
+    borderColor: '#05652D',
+    borderWidth: 2,
+    paddingHorizontal: 2,
+    paddingVertical: 10,
+    borderRadius: 20,
   },
   row: {
     flex: 1,
@@ -280,19 +300,11 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
   },
-  filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#05652D',
-    borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    position: 'absolute',
-    top: 50,
-    right: 10,
+  switchText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+    paddingHorizontal: 5,
   },
   filterText: {
     color: '#05652D',
@@ -327,6 +339,26 @@ const styles = StyleSheet.create({
     marginRight: 10,
     backgroundColor: '#E0F7FA',
     borderRadius: 10,
+  },
+  optionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginVertical: 10,
+  },
+  switchContainer: {
+    backgroundColor: '#088F8F',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderRadius: 5,
+  },
+  filterContainer: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
   },
 });
 
