@@ -81,18 +81,35 @@ const SearchDonations = () => {
       try {
         const recommendedQ = query(
           collection(db, 'donation'),
-          limit(5)
+          limit(10) 
         );
         const recommendedSnapshot = await getDocs(recommendedQ);
         const recommendedResults = recommendedSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(donation => donation.publicationStatus === 'approved');
-        setRecommendedDonations(recommendedResults);
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(donation => donation.publicationStatus === 'approved');
+
+        recommendedResults.sort((a, b) => {
+          const hitsA = (a.donationHits && a.donationHits.hits) || 0;
+          const hitsB = (b.donationHits && b.donationHits.hits) || 0;
+          return hitsB - hitsA;
+        });
+
+        const recommendedWithHits = recommendedResults.filter(donation => donation.donationHits);
+        const recommendedRandom = recommendedResults.filter(donation => !donation.donationHits);
+
+        for (let i = recommendedRandom.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [recommendedRandom[i], recommendedRandom[j]] = [recommendedRandom[j], recommendedRandom[i]];
+        }
+  
+        const prioritizedRecommended = [...recommendedWithHits, ...recommendedRandom];
+  
+        setRecommendedDonations(prioritizedRecommended);
       } catch (error) {
         console.error("Error fetching recommended donations: ", error);
       }
     };
-
+  
     fetchRecommendedDonations();
   }, []);
 
@@ -132,34 +149,22 @@ const SearchDonations = () => {
         return;
       }
   
-      // Get the current user's email
       const userEmail = user.email;
   
-      // Check if the donation's donor email matches the current user's email
       if (donation.donor_email === userEmail) {
         return;
       }
-    
+  
       const userRecommendRef = doc(db, 'userRecommendDonation', user.uid);
       const userRecommendSnapshot = await getDoc(userRecommendRef);
       const userRecommendData = userRecommendSnapshot.data();
-    
-      let updatedDonationHits;
-    
-      if (!userRecommendData) {
-        updatedDonationHits = { [donation.id]: { hits: 1, userEmail: userEmail } };
-        await setDoc(userRecommendRef, { donationHits: updatedDonationHits });
-      } else {
-        const donationHits = userRecommendData.donationHits || {};
-        updatedDonationHits = {
-          ...donationHits,
-          [donation.id]: {
-            hits: (donationHits[donation.id]?.hits || 0) + 1,
-            userEmail: userEmail
-          },
-        };
-        await setDoc(userRecommendRef, { donationHits: updatedDonationHits }, { merge: true });
-      }
+  
+      const updatedDonationHits = {
+        ...(userRecommendData?.donationHits || {}),
+        [donation.id]: (userRecommendData?.donationHits?.[donation.id] || 0) + 1,
+      };
+  
+      await setDoc(userRecommendRef, { donationHits: updatedDonationHits, userEmail });
     } catch (error) {
       console.error("Error updating product count in userRecommend: ", error);
     }
@@ -266,7 +271,7 @@ const SearchDonations = () => {
         <>
           <Text style={styles.recommendedText}>Donations You Can Request</Text>
           <FlatList
-            data={recommendedDonations}
+            data={recommendedDonations.slice(0, 10)}
             renderItem={renderDonationItem}
             keyExtractor={(item, index) => index.toString()}
             numColumns={2}
