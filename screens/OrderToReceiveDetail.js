@@ -12,6 +12,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import CameraIcon from 'react-native-vector-icons/MaterialIcons';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
+import { registerIndieID, unregisterIndieDevice } from 'native-notify';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const OrderToReceiveDetails = ({ route, navigation }) => {
   const scrollViewRef = useRef();
@@ -70,7 +73,6 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     inputRange: [0, 1],
     outputRange: [0, 20] 
   });
-
 
   useEffect(() => {
     if (route.params.shouldOpenConfirmModal) {
@@ -264,6 +266,59 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     }
   };
 
+  useEffect(() => {
+    const auth = getAuth();
+    setUser(auth.currentUser);
+
+    registerIndieID(auth.currentUser.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
+      .then(() => console.log("Device registered for notifications"))
+      .catch(err => console.error("Error registering device:", err));
+
+    return () => {
+      unregisterIndieDevice(auth.currentUser.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
+        .then(() => console.log("Device unregistered for notifications"))
+        .catch(err => console.error("Error unregistering device:", err));
+    };
+  }, []);
+
+  const shouldSendNotification = async (email) => {
+    try {
+      const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
+      return sellingNotifications === null || JSON.parse(sellingNotifications);
+    } catch (error) {
+      console.error('Error reading notification settings:', error);
+      return true;
+    }
+  };
+
+  const sendPushNotification = async (subID, title, message) => {
+    if (!(await shouldSendNotification(subID))) {
+      console.log('Notifications are muted for:', subID);
+      return;
+    }
+
+    const notificationData = {
+      subID: subID,
+      appId: 18345,
+      appToken: 'TdOuHYdDSqcy4ULJFVCN7l',
+      title: 'ECOMercado',
+      message: message
+    };
+  
+    for (let attempt = 1; attempt <= 3; attempt++) { 
+      try {
+        await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
+        console.log('Push notification sent to:', subID);
+        break; 
+      } catch (error) {
+        console.error(`Attempt ${attempt} - Error sending push notification:`, error);
+        if (attempt === 3) {
+          console.error('Unable to send push notification at this time.'); 
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  };
 
   const confirmReceipt = async () => {
     if (!selectedImage) {
@@ -284,6 +339,38 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
       deliveredStatus: 'Confirmed',
       dateReceived: new Date()
     });
+
+    const auth = getAuth();
+                            const currentUser = auth.currentUser;
+                            const userEmail = currentUser ? currentUser.email : '';
+
+                            const buyerNotificationMessage = `Order recieved. Order #${order.id.toUpperCase()}.`
+                            const sellerNotificationMessage = `The order #${order.id.toUpperCase()} has been confirmed by ${order.buyerEmail}.`
+                            try {
+                              await sendPushNotification(order.buyerEmail, 'Order Receive Confirmation', buyerNotificationMessage);
+                              await sendPushNotification(userEmail, 'Order Delivered', sellerNotificationMessage);
+                            } catch (error) {
+                              console.error("Error sending notifications:", error);
+                              Alert.alert("Error", "Could not send notifications.");
+                            }
+                
+                            const notificationsRef = collection(db, 'notifications');
+                            const buyerNotificationData = {
+                              email: userEmail,
+                              text: buyerNotificationMessage,
+                              timestamp: new Date(),
+                              type: 'completed',
+                              orderId: order.id
+                            };
+                            const sellerNotificationData = {
+                              email: order.sellerEmail,
+                              text: sellerNotificationMessage,
+                              timestamp: new Date(),
+                              type: 'completed',
+                              orderId: order.id
+                            };
+                            await addDoc(notificationsRef, buyerNotificationData);
+                            await addDoc(notificationsRef, sellerNotificationData);
   
     try {
       const batch = writeBatch(db);
