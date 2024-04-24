@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, ScrollView } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { query, where, getDocs, collection, orderBy } from 'firebase/firestore';
+import { query, where, getDocs, collection, limit, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { getAuth } from 'firebase/auth';
 
 const SearchProductResults = () => {
   const [searchedItems, setSearchedItems] = useState([]);
@@ -56,8 +57,42 @@ const SearchProductResults = () => {
     }
   }, [searchedItems]);
 
-  const navigateToProduct = (product) => {
-    navigation.navigate('ProductDetail', { product });
+  const navigateToProduct = async (product) => {
+    try {
+      navigation.navigate('ProductDetail', { product });
+    
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No user logged in");
+        return;
+      }
+  
+      if (product.seller_email === user.email) {
+
+        return;
+      }
+    
+      const userRecommendRef = doc(db, 'userRecommend', user.uid);
+      const userRecommendSnapshot = await getDoc(userRecommendRef);
+      const userRecommendData = userRecommendSnapshot.data();
+    
+      let updatedProductHits;
+    
+      if (!userRecommendData) {
+        updatedProductHits = { [product.id]: 1 };
+        await setDoc(userRecommendRef, { productHits: updatedProductHits });
+      } else {
+        const productHits = userRecommendData.productHits || {};
+        updatedProductHits = {
+          ...productHits,
+          [product.id]: (productHits[product.id] || 0) + 1,
+        };
+        await setDoc(userRecommendRef, { productHits: updatedProductHits }, { merge: true });
+      }
+    } catch (error) {
+      console.error("Error updating product count in userRecommend: ", error);
+    }
   };
 
   const renderSearchedItem = (item) => (
