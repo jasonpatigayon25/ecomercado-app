@@ -4,7 +4,7 @@ import { Rating } from 'react-native-ratings';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { getDocs, query, collection, where, updateDoc, doc, addDoc, writeBatch, getDoc, onSnapshot } from 'firebase/firestore';
+import { getDocs, query, collection, where, updateDoc, doc, addDoc, writeBatch, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import { db } from '../config/firebase';
 import moment from 'moment';
@@ -233,11 +233,47 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     ]);
   };
 
+  const incrementProductHits = async (productId) => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No user logged in");
+        return;
+      }
+
+      const userRecommendRef = doc(db, 'userRecommend', user.uid);
+      const userRecommendSnapshot = await getDoc(userRecommendRef);
+      const userRecommendData = userRecommendSnapshot.data();
+
+      let updatedProductHits;
+
+      if (!userRecommendData) {
+        updatedProductHits = { [productId]: 1 };
+        await setDoc(userRecommendRef, { productHits: updatedProductHits });
+      } else {
+        const productHits = userRecommendData.productHits || {};
+        updatedProductHits = {
+          ...productHits,
+          [productId]: (productHits[productId] || 0) + 1,
+        };
+        await setDoc(userRecommendRef, { productHits: updatedProductHits }, { merge: true });
+      }
+    } catch (error) {
+      console.error("Error updating product count in userRecommend: ", error);
+    }
+  };
+
+
   const confirmReceipt = async () => {
     if (!selectedImage) {
       Alert.alert('Photo Required', 'Please provide a photo of the item received.');
       return;
     }
+
+    order.productDetails.forEach(async (detail) => {
+      await incrementProductHits(detail.productId);
+    });
   
     const imageUrl = await uploadImageAsync(selectedImage.uri);
   
