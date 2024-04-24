@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { query, where, getDocs, collection, limit, orderBy } from 'firebase/firestore';
+import { query, where, getDocs, collection, limit, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { getAuth } from 'firebase/auth';
 
 const SearchDonations = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -120,9 +121,50 @@ const SearchDonations = () => {
     }
   }, [searchQuery]);
 
-  const navigateToDonationDetail = (donation) => {
-    navigation.navigate('DonationDetail', { donation });
+  const navigateToDonationDetail = async (donation) => {
+    try {
+      navigation.navigate('DonationDetail', { donation });
+    
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No user logged in");
+        return;
+      }
+  
+      // Get the current user's email
+      const userEmail = user.email;
+  
+      // Check if the donation's donor email matches the current user's email
+      if (donation.donor_email === userEmail) {
+        return;
+      }
+    
+      const userRecommendRef = doc(db, 'userRecommendDonation', user.uid);
+      const userRecommendSnapshot = await getDoc(userRecommendRef);
+      const userRecommendData = userRecommendSnapshot.data();
+    
+      let updatedDonationHits;
+    
+      if (!userRecommendData) {
+        updatedDonationHits = { [donation.id]: { hits: 1, userEmail: userEmail } };
+        await setDoc(userRecommendRef, { donationHits: updatedDonationHits });
+      } else {
+        const donationHits = userRecommendData.donationHits || {};
+        updatedDonationHits = {
+          ...donationHits,
+          [donation.id]: {
+            hits: (donationHits[donation.id]?.hits || 0) + 1,
+            userEmail: userEmail
+          },
+        };
+        await setDoc(userRecommendRef, { donationHits: updatedDonationHits }, { merge: true });
+      }
+    } catch (error) {
+      console.error("Error updating product count in userRecommend: ", error);
+    }
   };
+  
 
   const navigateToWish = () => {
     navigation.navigate('Wish');

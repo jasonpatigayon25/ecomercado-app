@@ -192,6 +192,11 @@ const ProductDetail = ({ navigation, route }) => {
       console.log('User not authenticated');
       return;
     }
+
+    if (product.quantity === 0) {
+      Alert.alert("Out of Stock", "This product is currently out of stock.");
+      return;
+    }
   
     //cannot cart your own product
     if (product.seller_email === user.email) {
@@ -488,7 +493,7 @@ const ProductDetail = ({ navigation, route }) => {
             {product.quantity > 0 ? (
               <Text style={styles.infoText}>{product.quantity}</Text>
             ) : (
-              <Text style={styles.soldOutText}>SOLD OUT</Text>
+              <Text style={styles.soldOutText}>OUT OF STOCK</Text>
             )}
           </View>
           {/* <View style={styles.infoItem}>
