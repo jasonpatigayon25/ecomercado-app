@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, ScrollView } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { query, where, getDocs, collection, orderBy } from 'firebase/firestore';
+import { query, where, getDocs, collection, limit, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { getAuth } from 'firebase/auth';
 
 const SearchDonationResults = () => {
   const [searchedItems, setSearchedItems] = useState([]);
@@ -56,8 +57,36 @@ const SearchDonationResults = () => {
     }
   }, [searchedItems]);
 
-  const navigateToDonationDetail = (donation) => {
-    navigation.navigate('DonationDetail', { donation });
+  const navigateToDonationDetail = async (donation) => {
+    try {
+      navigation.navigate('DonationDetail', { donation });
+    
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No user logged in");
+        return;
+      }
+  
+      const userEmail = user.email;
+  
+      if (donation.donor_email === userEmail) {
+        return;
+      }
+  
+      const userRecommendRef = doc(db, 'userRecommendDonation', user.uid);
+      const userRecommendSnapshot = await getDoc(userRecommendRef);
+      const userRecommendData = userRecommendSnapshot.data();
+  
+      const updatedDonationHits = {
+        ...(userRecommendData?.donationHits || {}),
+        [donation.id]: (userRecommendData?.donationHits?.[donation.id] || 0) + 1,
+      };
+  
+      await setDoc(userRecommendRef, { donationHits: updatedDonationHits, userEmail });
+    } catch (error) {
+      console.error("Error updating product count in userRecommend: ", error);
+    }
   };
 
   const renderSearchedItem = (item) => (
