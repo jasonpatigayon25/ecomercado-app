@@ -174,7 +174,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
             allOrderedProductIds.push(...products.map(product => product.productId));
 
             // Notification for the buyer
-            const buyerNotificationMessage = `Your order with ${sellerName} has been placed successfully.`;
+            const buyerNotificationMessage = `You placed your order #${orderDocRef.id.toUpperCase()}, Please wait for approval of ${sellerName}.`;
             const buyerNotificationData = {
                 email: user.email,
                 text: buyerNotificationMessage,
@@ -187,12 +187,12 @@ const OrdersConfirmation = ({ route, navigation }) => {
 
             // Notification for the seller
             for (const product of products) {
-                const sellerNotificationMessage = `${user.email} has placed an order for ${product.name}.`;
+              const sellerNotificationMessage = `${user.email} has placed an order. Order #${orderDocRef.id.toUpperCase()}, please review and approve.`;
                 const sellerNotificationData = {
                     email: product.seller_email,
                     text: sellerNotificationMessage,
                     timestamp: new Date(),
-                    type: 'new_order_received',
+                    type: 'new_order',
                     orderId: orderDocRef.id,
                     productId: product.productId,
                     productName: product.name
