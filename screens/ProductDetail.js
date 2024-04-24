@@ -392,37 +392,45 @@ const ProductDetail = ({ navigation, route }) => {
   };
   
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!user) {
-      console.log('User not authenticated');
+      Alert.alert("Error", "You must be logged in to make a purchase.");
       return;
     }
-
-    // cannot proceed to checkout if the product is sold out
-  if (product.quantity === 0) {
-    Alert.alert("Product Sold Out", "This product is currently sold out.");
-    return;
-  }
-
-    //cannot buy your own product
-    if (product.seller_email === user.email) {
-      Alert.alert("You cannot buy your own product.");
+  
+    // Assuming we are using a fixed ordered quantity of 1 for Buy Now functionality
+    const orderedQuantity = 1;
+  
+    // Checking stock availability
+    if (product.quantity < orderedQuantity) {
+      Alert.alert("Out of Stock", "There is not enough stock available to complete your purchase.");
       return;
     }
-    
-    const selectedProduct = {
-      productId: product.id,
+  
+    // Preparing product details for checkout
+    if (!product.id || !product.name || !product.photo || !product.price || !product.seller_email || !product.category || !product.location) {
+      console.error('Missing product details');
+      Alert.alert("Error", "Product details are incomplete.");
+      return;
+    }
+  
+    const productForCheckout = {
+      id: product.id,
       name: product.name,
-      price: parseFloat(product.price),
       photo: product.photo,
-      category: product.category,
+      price: product.price,
+      orderedQuantity: orderedQuantity,
       seller_email: product.seller_email,
-      description: product.description,
-      quantity: parseInt(product.quantity, 10),
-      location: product.location
+      sellerName: sellerDetails.sellerName || 'Unknown Seller', // Default to 'Unknown Seller' if not available
+      category: product.category,
+      location: product.location,
     };
   
-    navigation.navigate('CheckOutScreen', { selectedProduct });
+    // Navigate to CheckoutProducts with the product details
+    navigation.navigate('CheckoutProducts', {
+      selectedProducts: [productForCheckout], // Wrap productForCheckout in an array to match expected structure
+      buyerAddress: user.address || 'Unknown Address', // Default to 'Unknown Address' if not available
+    });
   };
 
   const SellerDetailsCard = () => (
