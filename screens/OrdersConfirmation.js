@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert } from 'r
 import { ScrollView } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
-import { collection, addDoc, doc, updateDoc, getDoc, runTransaction, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDoc, runTransaction, writeBatch, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
@@ -92,6 +92,37 @@ const OrdersConfirmation = ({ route, navigation }) => {
     }
   };
 
+  const incrementProductHits = async (productId) => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No user logged in");
+        return;
+      }
+
+      const userRecommendRef = doc(db, 'userRecommend', user.uid);
+      const userRecommendSnapshot = await getDoc(userRecommendRef);
+      const userRecommendData = userRecommendSnapshot.data();
+
+      let updatedProductHits;
+
+      if (!userRecommendData) {
+        updatedProductHits = { [productId]: 1 };
+        await setDoc(userRecommendRef, { productHits: updatedProductHits });
+      } else {
+        const productHits = userRecommendData.productHits || {};
+        updatedProductHits = {
+          ...productHits,
+          [productId]: (productHits[productId] || 0) + 1,
+        };
+        await setDoc(userRecommendRef, { productHits: updatedProductHits }, { merge: true });
+      }
+    } catch (error) {
+      console.error("Error updating product count in userRecommend: ", error);
+    }
+  };
+
   const handleProceed = async () => {
     if (orderPlaced) {
         Alert.alert('Order already placed');
@@ -104,6 +135,12 @@ const OrdersConfirmation = ({ route, navigation }) => {
     const batch = writeBatch(db);
 
     try {
+      for (const sellerProducts of Object.values(groupedProducts)) {
+        for (const product of sellerProducts) {
+          await incrementProductHits(product.productId);
+        }
+      }
+
       const cartRef = doc(db, 'carts', user.email);
       const orderHistoryRef = doc(collection(db, 'orderHistory'));
       const allOrderedProductIds = [];
