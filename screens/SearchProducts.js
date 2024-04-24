@@ -125,6 +125,14 @@ const SearchProducts = () => {
         recommendedProducts.push(...selectedProducts);
       }
   
+      if (!userRecommendData || !userRecommendData.productHits) {
+        const allProductsQuery = query(collection(db, 'products'), limit(10));
+        const allProductsSnapshot = await getDocs(allProductsQuery);
+        recommendedProducts = allProductsSnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((product) => product.publicationStatus === 'approved');
+      }
+  
       recommendedProducts = recommendedProducts.reduce((unique, o) => {
         if (!unique.some((obj) => obj.id === o.id)) {
           unique.push(o);
@@ -135,8 +143,8 @@ const SearchProducts = () => {
       recommendedProducts = recommendedProducts.slice(0, 10);
   
       if (
-        Object.keys(userRecommendData.productHits).length >= 1 &&
-        Object.keys(userRecommendData.productHits).length <= 9
+        Object.keys(userRecommendData?.productHits || {}).length >= 1 &&
+        Object.keys(userRecommendData?.productHits || {}).length <= 9
       ) {
         const category = recommendedProducts[0].category;
         const top3CategoryProducts = recommendedProducts
