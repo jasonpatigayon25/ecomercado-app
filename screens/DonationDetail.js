@@ -198,23 +198,38 @@ const DonationDetail = ({ navigation, route }) => {
     }
   };
   
-  const handleRequestNowPress = () => {
+  const handleRequestNowPress = async () => {
     if (!user) {
-      console.log('User not authenticated');
+      Alert.alert("Error", "You need to be logged in to make a request.");
       return;
     }
-
-    if (donation.isDonated) {
-      Alert.alert("Unavailable", "This donation has already been donated.");
-      return;
+  
+    const donationData = {
+      id: donation.id,
+      name: donation.name,
+      photo: donation.photo,
+      donor_email: donation.donor_email,
+      location: donation.location,
+      weight: donation.weight,
+      category: donation.category,
+      purpose: donation.purpose,
+      itemNames: donation.itemNames || []
+    };
+  
+    try {
+      const donationRef = doc(db, 'donation', donation.id);
+      const donationDoc = await getDoc(donationRef);
+      if (donationDoc.exists()) {
+        navigation.navigate('RequestCheckout', {
+          selectedDonations: [donationData],
+        });
+      } else {
+        Alert.alert("Error", "Donation details are not available at the moment.");
+      }
+    } catch (error) {
+      console.error("Error retrieving donation details:", error);
+      Alert.alert("Error", "Failed to retrieve donation details.");
     }
-
-    if (donation.donor_email === user.email) {
-      Alert.alert("Error", "You can't request your own donation.");
-      return;
-    }
-
-    navigation.navigate('RequestDonationScreen', { donation });
   };
 
   return (
