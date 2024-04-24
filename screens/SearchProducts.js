@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView, Animated  } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { query, where, getDocs, collection, limit, orderBy } from 'firebase/firestore';
+import { query, where, getDocs, collection, limit, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { getAuth } from 'firebase/auth';
 
 const SearchProducts = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,25 +51,111 @@ const SearchProducts = () => {
     }
   }, [searchQuery]);
 
-  useEffect(() => {
-    const fetchRecommendedProducts = async () => {
-      try {
-        const recommendedQ = query(
-          collection(db, 'products'),
-          limit(5)
-        );
-        const recommendedSnapshot = await getDocs(recommendedQ);
-        const recommendedResults = recommendedSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(product => product.publicationStatus === 'approved');
-      setRecommendedProducts(recommendedResults);
-      } catch (error) {
-        console.error("Error fetching recommended products: ", error);
+  const fetchRecommendedProducts = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+  
+      if (!user) {
+        console.error("No user logged in");
+        return;
       }
-    };
+  
+      const userRecommendRef = doc(db, 'userRecommend', user.uid);
+      const userRecommendSnapshot = await getDoc(userRecommendRef);
+      const userRecommendData = userRecommendSnapshot.data();
+  
+      let recommendedProducts = [];
+  
+      if (userRecommendData && userRecommendData.productHits) {
+        const productHits = userRecommendData.productHits;
+        const topProducts = Object.keys(productHits)
+          .sort((a, b) => productHits[b] - productHits[a])
+          .slice(0, 5);
+  
+        for (const productId of topProducts) {
+          const productRef = doc(db, 'products', productId);
+          const productSnapshot = await getDoc(productRef);
+          const productData = productSnapshot.data();
+  
+          if (
+            productData &&
+            productData.publicationStatus === 'approved' &&
+            productData.seller_email !== user.email
+          ) {
+            recommendedProducts.push({ id: productId, ...productData });
+          }
+        }
+      }
+  
+      if (recommendedProducts.length < 5) {
+        const categories = recommendedProducts.map((product) => product.category);
+        const categoryProducts = await Promise.all(
+          categories.map(async (category) => {
+            const categoryQuery = query(
+              collection(db, 'products'),
+              where('category', '==', category),
+              limit(5)
+            );
+            const categorySnapshot = await getDocs(categoryQuery);
+            return categorySnapshot.docs
+              .map((doc) => ({ id: doc.id, ...doc.data() }))
+              .filter((product) => product.publicationStatus === 'approved');
+          })
+        );
+  
+        for (const products of categoryProducts) {
+          recommendedProducts.push(...products.slice(0, 5 - recommendedProducts.length));
+          if (recommendedProducts.length >= 5) {
+            break;
+          }
+        }
+      }
+  
+      if (recommendedProducts.length < 5) {
+        const allProductsQuery = query(collection(db, 'products'), limit(25));
+        const allProductsSnapshot = await getDocs(allProductsQuery);
+        const allProducts = allProductsSnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((product) => product.publicationStatus === 'approved');
+  
+        const shuffledProducts = allProducts.sort(() => 0.5 - Math.random());
+        const selectedProducts = shuffledProducts.slice(0, 5 - recommendedProducts.length);
+  
+        recommendedProducts.push(...selectedProducts);
+      }
+  
+      recommendedProducts = recommendedProducts.reduce((unique, o) => {
+        if (!unique.some((obj) => obj.id === o.id)) {
+          unique.push(o);
+        }
+        return unique;
+      }, []);
+  
+      recommendedProducts = recommendedProducts.slice(0, 10);
+  
+      if (
+        Object.keys(userRecommendData.productHits).length >= 1 &&
+        Object.keys(userRecommendData.productHits).length <= 9
+      ) {
+        const category = recommendedProducts[0].category;
+        const top3CategoryProducts = recommendedProducts
+          .filter((product) => product.category === category)
+          .slice(0, 3);
+  
+        recommendedProducts = recommendedProducts.filter((product) => product.category !== category);
+        recommendedProducts.push(...top3CategoryProducts);
+      }
+  
+      setRecommendedProducts(recommendedProducts);
+    } catch (error) {
+      console.error("Error fetching recommended products: ", error);
+    }
+  };
 
-    fetchRecommendedProducts();
-  }, []);
+    useEffect(() => {
+      fetchRecommendedProducts();
+    }, []);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -95,8 +182,42 @@ const SearchProducts = () => {
     }
   }, [searchQuery]);
 
-  const navigateToProduct = (product) => {
-    navigation.navigate('ProductDetail', { product });
+  const navigateToProduct = async (product) => {
+    try {
+      navigation.navigate('ProductDetail', { product });
+    
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No user logged in");
+        return;
+      }
+  
+      if (product.seller_email === user.email) {
+
+        return;
+      }
+    
+      const userRecommendRef = doc(db, 'userRecommend', user.uid);
+      const userRecommendSnapshot = await getDoc(userRecommendRef);
+      const userRecommendData = userRecommendSnapshot.data();
+    
+      let updatedProductHits;
+    
+      if (!userRecommendData) {
+        updatedProductHits = { [product.id]: 1 };
+        await setDoc(userRecommendRef, { productHits: updatedProductHits });
+      } else {
+        const productHits = userRecommendData.productHits || {};
+        updatedProductHits = {
+          ...productHits,
+          [product.id]: (productHits[product.id] || 0) + 1,
+        };
+        await setDoc(userRecommendRef, { productHits: updatedProductHits }, { merge: true });
+      }
+    } catch (error) {
+      console.error("Error updating product count in userRecommend: ", error);
+    }
   };
 
   const navigateToWish = () => {
