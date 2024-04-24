@@ -380,9 +380,7 @@ const ProductDetail = ({ navigation, route }) => {
         productPrice: product.price,
       });
   
-      // check if the seller has muted notifications
       if (await shouldSendNotification(sellerEmail)) {
-        // send push notification
         sendPushNotification(sellerEmail, 'Product Interest', interestNotificationMessage);
       }
   
@@ -414,24 +412,29 @@ const ProductDetail = ({ navigation, route }) => {
       return;
     }
   
-    const productForCheckout = {
-      id: product.id,
+    const productForCheckout = [{
+      productId: product.id,
       name: product.name,
       photo: product.photo,
-      price: product.price,
+      price: parseFloat(product.price),
       orderedQuantity: orderedQuantity,
       seller_email: product.seller_email,
       sellerName: sellerDetails.sellerName || 'Unknown Seller', // Default to 'Unknown Seller' if not available
       category: product.category,
       location: product.location,
-    };
+    }];
   
-    // Navigate to CheckoutProducts with the product details
+    // Calculate total price and other details if necessary
+    const totalPrice = productForCheckout.reduce((acc, item) => acc + (item.price * item.orderedQuantity), 0);
+  
     navigation.navigate('CheckoutProducts', {
-      selectedProducts: [productForCheckout], // Wrap productForCheckout in an array to match expected structure
+      selectedProducts: productForCheckout,
       buyerAddress: user.address || 'Unknown Address', // Default to 'Unknown Address' if not available
+      totalPrice: totalPrice,
+      shippingFee: 0, // Placeholder for shipping fee calculation
     });
   };
+  
 
   const SellerDetailsCard = () => (
     <View style={styles.sellerCard}>
