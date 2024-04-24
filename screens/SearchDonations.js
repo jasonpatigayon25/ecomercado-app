@@ -45,8 +45,12 @@ const SearchDonations = () => {
           getDocs(itemNameQuery),
         ]);
   
-        const nameData = nameResults.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const itemNameData = itemNameResults.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const nameData = nameResults.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(donation => donation.publicationStatus === 'approved');
+        const itemNameData = itemNameResults.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(donation => donation.publicationStatus === 'approved');
   
         const combinedResults = [...nameData, ...itemNameData];
         const uniqueResults = combinedResults.reduce((acc, current) => {
@@ -79,7 +83,9 @@ const SearchDonations = () => {
           limit(5)
         );
         const recommendedSnapshot = await getDocs(recommendedQ);
-        const recommendedResults = recommendedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const recommendedResults = recommendedSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(donation => donation.publicationStatus === 'approved');
         setRecommendedDonations(recommendedResults);
       } catch (error) {
         console.error("Error fetching recommended donations: ", error);
