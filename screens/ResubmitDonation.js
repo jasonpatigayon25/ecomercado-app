@@ -770,7 +770,7 @@ const decrementWeight = () => {
         />
 
         <TouchableOpacity style={styles.donateButton} onPress={handleDonate}>
-          <Text style={styles.buttonText}>Donate</Text>
+          <Text style={styles.buttonText}>Resubmit</Text>
         </TouchableOpacity>
       </View>
       </ScrollView>

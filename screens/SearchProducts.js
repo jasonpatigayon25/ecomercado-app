@@ -34,13 +34,15 @@ const SearchProducts = () => {
           orderBy('name'),
         );
         const querySnapshot = await getDocs(q);
-        const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const results = querySnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(product => product.publicationStatus === 'approved');
         setSearchResults(results);
       } catch (error) {
         console.error("Error searching products: ", error);
       }
     };
-
+  
     if (searchQuery) {
       handleSearch();
     } else {
@@ -56,8 +58,10 @@ const SearchProducts = () => {
           limit(5)
         );
         const recommendedSnapshot = await getDocs(recommendedQ);
-        const recommendedResults = recommendedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setRecommendedProducts(recommendedResults);
+        const recommendedResults = recommendedSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(product => product.publicationStatus === 'approved');
+      setRecommendedProducts(recommendedResults);
       } catch (error) {
         console.error("Error fetching recommended products: ", error);
       }
@@ -111,23 +115,33 @@ const SearchProducts = () => {
     setSearchQuery(suggestion);
   };
 
-  const renderProductItem = ({ item }) => (
-    <TouchableOpacity onPress={() => navigateToProduct(item)} style={styles.productCard}>
-      <Image source={{ uri: item.photo }} style={styles.productImage} />
-      <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
-      <Text style={styles.productCategory}>{item.category}</Text>
-      <Text style={styles.productPrice}>₱{item.price}</Text>
-    </TouchableOpacity>
-  );
+  const renderProductItem = ({ item }) => {
+    if (item.publicationStatus === 'approved') {
+      return (
+        <TouchableOpacity onPress={() => navigateToProduct(item)} style={styles.productCard}>
+          <Image source={{ uri: item.photo }} style={styles.productImage} />
+          <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
+          <Text style={styles.productCategory}>{item.category}</Text>
+          <Text style={styles.productPrice}>₱{item.price}</Text>
+        </TouchableOpacity>
+      );
+    }
+    return null; 
+  };
 
-  const renderLikeProductItem = ({ item }) => (
-    <TouchableOpacity onPress={() => navigateToProduct(item)} style={styles.productCard}>
-      <Image source={{ uri: item.photo }} style={styles.productImage} />
-      <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
-      <Text style={styles.productCategory}>{item.category}</Text>
-      <Text style={styles.productPrice}>₱{item.price}</Text>
-    </TouchableOpacity>
-  );
+  const renderLikeProductItem = ({ item }) => {
+    if (item.publicationStatus === 'approved') {
+      return (
+        <TouchableOpacity onPress={() => navigateToProduct(item)} style={styles.productCard}>
+          <Image source={{ uri: item.photo }} style={styles.productImage} />
+          <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
+          <Text style={styles.productCategory}>{item.category}</Text>
+          <Text style={styles.productPrice}>₱{item.price}</Text>
+        </TouchableOpacity>
+      );
+    }
+    return null; // Do not render anything if the product is not approved
+  };
 
   const renderSuggestionItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleSuggestionPress(item)} style={styles.suggestionItem}>
