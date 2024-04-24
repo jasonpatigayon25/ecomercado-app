@@ -319,7 +319,6 @@ const ProductDetail = ({ navigation, route }) => {
       return;
     }
   
-    // cannot chat about your own product
     if (product.seller_email === user.email) {
       Alert.alert("You are trying to chat about your product.");
       return;
@@ -343,14 +342,14 @@ const ProductDetail = ({ navigation, route }) => {
       });
   
       if (existingChatId) {
-        // existing chat found, navigate to chat screen
+
         navigation.navigate('Chat', {
           chatId: existingChatId,
           receiverEmail: sellerEmail,
           productDetails: { name: product.name, imageUrl: product.photo }
         });
       } else {
-        // create new chat and navigate to chat screen
+
         const newChatRef = collection(db, 'chats');
         const newChat = {
           users: [buyerEmail, sellerEmail],
@@ -365,7 +364,6 @@ const ProductDetail = ({ navigation, route }) => {
         });
       }
   
-      // send interest notification
       const interestNotificationMessage = `${user.email} is interested in your product ${product.name}`;
   
       await addDoc(collection(db, 'notifications'), {
@@ -396,16 +394,13 @@ const ProductDetail = ({ navigation, route }) => {
       return;
     }
   
-    // Assuming we are using a fixed ordered quantity of 1 for Buy Now functionality
     const orderedQuantity = 1;
   
-    // Checking stock availability
     if (product.quantity < orderedQuantity) {
       Alert.alert("Out of Stock", "There is not enough stock available to complete your purchase.");
       return;
     }
   
-    // Preparing product details for checkout
     if (!product.id || !product.name || !product.photo || !product.price || !product.seller_email || !product.category || !product.location) {
       console.error('Missing product details');
       Alert.alert("Error", "Product details are incomplete.");
@@ -419,19 +414,18 @@ const ProductDetail = ({ navigation, route }) => {
       price: parseFloat(product.price),
       orderedQuantity: orderedQuantity,
       seller_email: product.seller_email,
-      sellerName: sellerDetails.sellerName || 'Unknown Seller', // Default to 'Unknown Seller' if not available
+      sellerName: sellerDetails.sellerName || 'Unknown Seller',
       category: product.category,
       location: product.location,
     }];
   
-    // Calculate total price and other details if necessary
     const totalPrice = productForCheckout.reduce((acc, item) => acc + (item.price * item.orderedQuantity), 0);
   
     navigation.navigate('CheckoutProducts', {
       selectedProducts: productForCheckout,
-      buyerAddress: user.address || 'Unknown Address', // Default to 'Unknown Address' if not available
+      buyerAddress: user.address || 'Unknown Address',
       totalPrice: totalPrice,
-      shippingFee: 0, // Placeholder for shipping fee calculation
+      shippingFee: 0, 
     });
   };
   
