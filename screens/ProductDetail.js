@@ -12,6 +12,10 @@ import moment from 'moment';
 
 const ProductDetail = ({ navigation, route }) => {
 
+  const [isBuyModalVisible, setIsBuyModalVisible] = useState(false);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [totalPrice, setTotalPrice] = useState(0);
+
   const [sellerDetails, setSellerDetails] = useState({
     sellerName: '',
     sellerEmail: '',
@@ -26,6 +30,10 @@ const ProductDetail = ({ navigation, route }) => {
   const [displayPhoto, setDisplayPhoto] = useState(product?.photo || 'default_image_url_here');
   const auth = getAuth();
   const user = auth.currentUser;
+
+  const calculateTotalPrice = (quantity) => {
+    setTotalPrice(quantity * parseFloat(product.price));
+  };
 
   useEffect(() => {
     if (product && product.id) {
@@ -387,46 +395,41 @@ const ProductDetail = ({ navigation, route }) => {
     }
   };
   
-
-  const handleBuyNow = async () => {
-    if (!user) {
-      Alert.alert("Error", "You must be logged in to make a purchase.");
-      return;
-    }
-  
-    const orderedQuantity = 1;
-  
-    if (product.quantity < orderedQuantity) {
-      Alert.alert("Out of Stock", "There is not enough stock available to complete your purchase.");
-      return;
-    }
-  
-    if (!product.id || !product.name || !product.photo || !product.price || !product.seller_email || !product.category || !product.location) {
-      console.error('Missing product details');
-      Alert.alert("Error", "Product details are incomplete.");
-      return;
-    }
-  
+  const proceedToCheckout = () => {
     const productForCheckout = [{
       productId: product.id,
       name: product.name,
       photo: product.photo,
       price: parseFloat(product.price),
-      orderedQuantity: orderedQuantity,
+      orderedQuantity: selectedQuantity,
       seller_email: product.seller_email,
       sellerName: sellerDetails.sellerName || 'Unknown Seller',
       category: product.category,
       location: product.location,
     }];
   
-    const totalPrice = productForCheckout.reduce((acc, item) => acc + (item.price * item.orderedQuantity), 0);
-  
     navigation.navigate('CheckoutProducts', {
       selectedProducts: productForCheckout,
       buyerAddress: user.address || 'Unknown Address',
       totalPrice: totalPrice,
-      shippingFee: 0, 
+      shippingFee: 0,
     });
+  };
+
+  const handleBuyNow = () => {
+    if (!user) {
+      Alert.alert("Error", "You must be logged in to make a purchase.");
+      return;
+    }
+  
+    if (product.quantity < 1) {
+      Alert.alert("Out of Stock", "This item is currently out of stock.");
+      return;
+    }
+  
+    setIsBuyModalVisible(true);
+    setSelectedQuantity(1);
+    calculateTotalPrice(1); // Initialize with quantity 1
   };
   
 
@@ -560,6 +563,56 @@ const ProductDetail = ({ navigation, route }) => {
           </View>
         </TouchableOpacity>
       </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isBuyModalVisible}
+        onRequestClose={() => setIsBuyModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBottomView}>
+            <View style={styles.priceSection}>
+              <Text style={styles.modalLabel}>Unit Price:</Text>
+              <Text style={styles.modalValue}> ₱{parseFloat(product.price).toFixed(2)}</Text>
+            </View>
+            <View style={styles.quantityControl}>
+              <TouchableOpacity
+                disabled={selectedQuantity <= 1}
+                onPress={() => {
+                  const newQuantity = selectedQuantity - 1;
+                  setSelectedQuantity(newQuantity);
+                  calculateTotalPrice(newQuantity);
+                }}
+                style={[styles.controlButton, selectedQuantity <= 1 && styles.disabledButton]}>
+                <Text style={styles.buttonText}>-</Text>
+              </TouchableOpacity>
+              <Text style={styles.quantityDisplay}>{selectedQuantity}</Text>
+              <TouchableOpacity
+                disabled={selectedQuantity >= product.quantity}
+                onPress={() => {
+                  const newQuantity = selectedQuantity + 1;
+                  setSelectedQuantity(newQuantity);
+                  calculateTotalPrice(newQuantity);
+                }}
+                style={[styles.controlButton, selectedQuantity >= product.quantity && styles.disabledButton]}>
+                <Text style={styles.buttonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.totalSection}>
+              <Text style={styles.modalLabel2}>Total:</Text>
+              <Text style={styles.modalValue2}>₱{totalPrice.toFixed(2)}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={() => {
+                setIsBuyModalVisible(false);
+                proceedToCheckout();
+              }}>
+              <Text style={styles.confirmButtonText}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -940,6 +993,96 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 10, 
     resizeMode: 'cover', 
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  modalBottomView: {
+    backgroundColor: 'white',
+    paddingVertical: 20,
+    paddingHorizontal: 25,
+    borderTopRightRadius: 20,
+    borderTopLeftRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  priceSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  totalSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  modalLabel: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '600',
+  },
+  modalValue: {
+    fontSize: 18,
+    color: '#05652D',
+    fontWeight: 'bold',
+  },
+  modalLabel2: {
+    fontSize: 20,
+    color: '#666',
+    fontWeight: '600',
+  },
+  modalValue2: {
+    fontSize: 22,
+    color: '#05652D',
+    fontWeight: 'bold',
+    backgroundColor: '#ECF8EC',
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    borderRadius: 4,
+    marginLeft: 15,
+  },
+  quantityControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  controlButton: {
+    padding: 10,
+    marginHorizontal: 20,
+    backgroundColor: '#05652D',
+    borderRadius: 5,
+    minWidth: 40,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
+  },
+  buttonText: {
+    fontSize: 20,
+    color: 'white',
+  },
+  quantityDisplay: {
+    fontSize: 18,
+    width: 40,
+    textAlign: 'center',
+  },
+  confirmButton: {
+    backgroundColor: '#05652D',
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
