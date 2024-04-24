@@ -126,8 +126,7 @@ const OrderToApproveDetails = ({ route, navigation }) => {
               const auth = getAuth();
               const currentUser = auth.currentUser;
               const userEmail = currentUser ? currentUser.email : '';
-  
-              // Send notification to buyer
+
               const buyerNotificationMessage = `Your order #${order.id.toUpperCase()} has been approved.`;
               const sellerNotificationMessage = `You approved the #${order.id.toUpperCase()}. Please set for delivery`;
               try {

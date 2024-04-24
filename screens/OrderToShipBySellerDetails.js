@@ -7,7 +7,9 @@ import { collection, getDocs, query, where, orderBy, getDoc, doc, updateDoc, onS
 import { Timestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
-
+import { registerIndieID, unregisterIndieDevice } from 'native-notify';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OrderToShipBySellerDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
@@ -18,6 +20,63 @@ const OrderToShipBySellerDetails = ({ route, navigation }) => {
   const [deliveryStart, setDeliveryStart] = useState(new Date());
   const [deliveryEnd, setDeliveryEnd] = useState(new Date());
   const [isDeliveryDateModalVisible, setDeliveryDateModalVisible] = useState(false);
+
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    setUser(auth.currentUser);
+
+    registerIndieID(auth.currentUser.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
+      .then(() => console.log("Device registered for notifications"))
+      .catch(err => console.error("Error registering device:", err));
+
+    return () => {
+      unregisterIndieDevice(auth.currentUser.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
+        .then(() => console.log("Device unregistered for notifications"))
+        .catch(err => console.error("Error unregistering device:", err));
+    };
+  }, []);
+
+  const shouldSendNotification = async (email) => {
+    try {
+      const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
+      return sellingNotifications === null || JSON.parse(sellingNotifications);
+    } catch (error) {
+      console.error('Error reading notification settings:', error);
+      return true;
+    }
+  };
+
+  const sendPushNotification = async (subID, title, message) => {
+    if (!(await shouldSendNotification(subID))) {
+      console.log('Notifications are muted for:', subID);
+      return;
+    }
+
+    const notificationData = {
+      subID: subID,
+      appId: 18345,
+      appToken: 'TdOuHYdDSqcy4ULJFVCN7l',
+      title: 'ECOMercado',
+      message: message
+    };
+  
+    for (let attempt = 1; attempt <= 3; attempt++) { 
+      try {
+        await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
+        console.log('Push notification sent to:', subID);
+        break; 
+      } catch (error) {
+        console.error(`Attempt ${attempt} - Error sending push notification:`, error);
+        if (attempt === 3) {
+          console.error('Unable to send push notification at this time.'); 
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  };
+
 
   const approveToShipOrder = (orderId) => {
     setCurrentOrder(orderId);
@@ -65,6 +124,39 @@ const handleConfirmEndDate = (date) => {
                                 status: 'Receiving',
                                 deliveredStatus: 'Processing',
                             });
+
+                            const auth = getAuth();
+                            const currentUser = auth.currentUser;
+                            const userEmail = currentUser ? currentUser.email : '';
+
+                            const buyerNotificationMessage = `Your order #${order.id.toUpperCase()} delivery has been processed.`;
+                            const sellerNotificationMessage = `You've set the delivery for order #${order.id.toUpperCase()}. Proceed to Shipped if the order is delivered.`;
+                            try {
+                              await sendPushNotification(order.buyerEmail, 'Order Shipped', buyerNotificationMessage);
+                              await sendPushNotification(userEmail, 'Order Shipped', sellerNotificationMessage);
+                            } catch (error) {
+                              console.error("Error sending notifications:", error);
+                              Alert.alert("Error", "Could not send notifications.");
+                            }
+                
+                            const notificationsRef = collection(db, 'notifications');
+                            const buyerNotificationData = {
+                              email: order.buyerEmail,
+                              text: buyerNotificationMessage,
+                              timestamp: new Date(),
+                              type: 'order_shipped',
+                              orderId: order.id
+                            };
+                            const sellerNotificationData = {
+                              email: userEmail,
+                              text: sellerNotificationMessage,
+                              timestamp: new Date(),
+                              type: 'shipped_order',
+                              orderId: order.id
+                            };
+                            await addDoc(notificationsRef, buyerNotificationData);
+                            await addDoc(notificationsRef, sellerNotificationData);
+
                             setDeliveryDateModalVisible(false);
                             Alert.alert("Success", "Delivery dates set successfully.", [
                               { text: "OK", onPress: () => navigation.navigate('SellerOrderManagement') }
