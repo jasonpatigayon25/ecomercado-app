@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, ScrollView } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { query, where, getDocs, collection, limit, orderBy } from 'firebase/firestore';
+import { query, where, getDocs, collection, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
@@ -38,18 +38,19 @@ const SearchProductResults = () => {
         const searchedItem = searchedItems[0]; 
         const q = query(
           collection(db, 'products'),
-          where('category', '==', searchedItem?.category),
-          limit(5), 
           orderBy('name'),
         );
         const querySnapshot = await getDocs(q);
-        const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const results = querySnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(product => product.category === searchedItem?.category && product.publicationStatus === 'approved')
+          .slice(0, 5);
         setRelatedItems(results);
       } catch (error) {
         console.error("Error fetching related items: ", error);
       }
     };
-
+  
     if (searchedItems.length > 0) {
       fetchRelatedItems();
     }
@@ -59,8 +60,8 @@ const SearchProductResults = () => {
     navigation.navigate('ProductDetail', { product });
   };
 
-  const renderSearchedItem = ({ item }) => (
-    <TouchableOpacity  onPress={() => navigateToProduct(item)} style={styles.productCard}>
+  const renderSearchedItem = (item) => (
+    <TouchableOpacity  onPress={() => navigateToProduct(item)} style={styles.productCard} key={item.id}>
       <Image source={{ uri: item.photo }} style={styles.productImage} />
       <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
       <Text style={styles.productCategory}>{item.category}</Text>
@@ -68,8 +69,8 @@ const SearchProductResults = () => {
     </TouchableOpacity>
   );
 
-  const renderRelatedItem = ({ item }) => (
-    <TouchableOpacity  onPress={() => navigateToProduct(item)} style={styles.productCard}>
+  const renderRelatedItem = (item) => (
+    <TouchableOpacity  onPress={() => navigateToProduct(item)} style={styles.productCard} key={item.id}>
       <Image source={{ uri: item.photo }} style={styles.productImage} />
       <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
       <Text style={styles.productCategory}>{item.category}</Text>
@@ -79,36 +80,29 @@ const SearchProductResults = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Icon name="arrow-left" size={24} color="#05652D" style={styles.backButtonIcon} />
-      </TouchableOpacity>
-      <Text style={styles.resultText}>Result for "{searchQuery}"</Text>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="arrow-left" size={24} color="#05652D" style={styles.backButtonIcon} />
+        </TouchableOpacity>
+        <Text style={styles.resultText}>Result for "{searchQuery}"</Text>
       </View>
-      <View>
+      <ScrollView>
         <View style={styles.searchedItemsContainer}>
-          <FlatList
-            data={searchedItems}
-            renderItem={renderSearchedItem}
-            keyExtractor={(item, index) => index.toString()}
-            numColumns={2}
-            columnWrapperStyle={styles.row}
-          />
+          {/* <Text style={styles.subHeaderText}>Searched Items</Text> */}
+          <View style={styles.itemContainer}>
+            {searchedItems.map(item => renderSearchedItem(item))}
+          </View>
         </View>
 
         {relatedItems.length > 0 && (
           <View style={styles.relatedItemsContainer}>
             <Text style={styles.subHeaderText}>Products related to '{searchQuery}'</Text>
-            <FlatList
-              data={relatedItems}
-              renderItem={renderRelatedItem}
-              keyExtractor={(item, index) => index.toString()}
-              numColumns={2}
-              columnWrapperStyle={styles.row}
-            />
+            <View style={styles.itemContainer}>
+              {relatedItems.map(item => renderRelatedItem(item))}
+            </View>
           </View>
         )}
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -154,6 +148,11 @@ const styles = StyleSheet.create({
   row: {
     justifyContent: 'space-between',
   },
+  itemContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
   productCard: {
     width: '50%',
     backgroundColor: '#f9f9f9',
@@ -196,6 +195,9 @@ const styles = StyleSheet.create({
   },
   searchedItemsContainer: {
     marginBottom: 20,
+    marginTop: 10,
+  },
+  relatedItemsContainer: {
   },
 });
 
