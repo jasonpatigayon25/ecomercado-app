@@ -12,13 +12,13 @@ const OrderTab = ({ selectedTab, setSelectedTab }) => {
     const [orderCounts, setOrderCounts] = useState({ Pending: 0, Approved: 0, Receiving: 0, Completed: 0, Cancelled: 0 });
     const indicatorAnim = useRef(new Animated.Value(0)).current;
     const scrollViewRef = useRef(null);
-    const tabNames = ['To Pay', 'To Ship', 'To Receive', 'Completed', 'Cancelled'];
+    const tabNames = ['To Pay', 'To Deliver', 'To Receive', 'Completed', 'Cancelled'];
     const auth = getAuth();
     const currentUser = auth.currentUser;
 
     const statusMap = {
         'To Pay': 'Pending',
-        'To Ship': 'Approved',
+        'To Deliver': 'Approved',
         'To Receive': 'Receiving',
         'Completed': 'Completed',
         'Cancelled': 'Cancelled'

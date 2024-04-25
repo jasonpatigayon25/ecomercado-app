@@ -26,7 +26,7 @@ const OrderHistory = ({ navigation }) => {
 
   const tabStatusMapping = {
     'To Pay': 'Pending',
-    'To Ship': 'Approved',
+    'To Deliver': 'Approved',
     'To Receive': 'Receiving',
     'Completed': 'Completed',
     'Cancelled': 'Cancelled'
@@ -304,7 +304,7 @@ const handleChatWithSeller = async (sellerEmail, user, navigation) => {
     const handlePress = () => {
       if (selectedTab === 'To Pay') {
         navigation.navigate('OrderToPayDetails', { order, products });
-      } else if (selectedTab === 'To Ship') {
+      } else if (selectedTab === 'To Deliver') {
         navigation.navigate('OrderToShipDetails', { order, products });
       } else if (selectedTab === 'To Receive') {
         navigation.navigate('OrderToReceiveDetails', { order, products });
@@ -412,9 +412,9 @@ const handleChatWithSeller = async (sellerEmail, user, navigation) => {
         </TouchableOpacity>
       </View>
        )}
-        {selectedTab === 'To Ship' && (
+        {selectedTab === 'To Deliver' && (
           <View style={styles.confirmationContainer}>
-            <Text style={styles.noteText}>Your order is being processed. Please wait for the seller to confirm shipment.</Text>
+            <Text style={styles.noteText}>Your order is being processed. Please wait for the seller to confirm delivery process.</Text>
             <TouchableOpacity style={styles.shipButton} onPress={() => handleChatWithSeller(order.sellerEmail, user, navigation)}>
               <Text style={styles.confirmButtonText}>Contact Seller</Text>
             </TouchableOpacity>

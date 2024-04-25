@@ -296,7 +296,7 @@ const handleConfirmEndDate = (date) => {
                     <Text style={styles.orderTotalValue}>₱{subtotal.toFixed(2)}</Text>
                 </View>
                 <View style={styles.orderTotalRow}>
-                    <Text style={styles.orderTotalText}>Shipping Fee:</Text>
+                    <Text style={styles.orderTotalText}>Delivery Fee:</Text>
                     <Text style={styles.orderTotalValue}>₱{order.shippingFee.toFixed(2)}</Text>
                 </View>
                 <View style={styles.orderTotalRow}>
