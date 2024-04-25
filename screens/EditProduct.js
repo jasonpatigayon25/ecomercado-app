@@ -408,7 +408,7 @@ const resetProductInfo = () => {
   const handleShippingInfoPress = () => {
     Alert.alert(
       "Note:",
-      "Volume and weight also determine the cost of the delivery fee."
+      "Volume and weight also determine the cost of the delivery fee.\n\nMaximum measures are:\nWidth: 60cm\nHeight: 60cm\nLength: 90cm \n\nMaximum weight is:\nWidth: 30kg"
     );
   };
 
