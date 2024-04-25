@@ -322,8 +322,30 @@ const SellerOrderManagement = ({ navigation }) => {
                             </View>
                         ))}
                         <View style={styles.totalPriceContainer}>
+                        {selectedTab === 'Completed' && (
+                            <View style={styles.orderTotalRow}>
+                            <Text style={styles.orderTotalLabel}>
+                                <Icon name="check-circle" size={16} color="#4CAF50" /> Paid Amount:
+                            </Text>
+                            <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+                            </View>
+                        )}
+                        {selectedTab === 'Cancelled' && (
+                            <View style={styles.orderTotalRow}>
+                            <Text style={[styles.orderTotalLabel, styles.cancelledText]}>
+                                Amount to Pay:
+                            </Text>
+                            <Text style={[styles.orderTotalPrice, styles.cancelledPrice]}>
+                                ₱{order.orderTotalPrice.toFixed(2)}
+                            </Text>
+                            </View>
+                        )}
+                        {selectedTab !== 'Completed' && selectedTab !== 'Cancelled' && (
+                            <View style={styles.orderTotalRow}>
                             <Text style={styles.orderTotalLabel}>Amount to Pay:</Text>
                             <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+                            </View>
+                        )}
                         </View>
                         <View style={styles.buttonContainer}>
                             {selectedTab === 'To Approve' && (
@@ -758,7 +780,21 @@ confirmButtonText: {
   color: '#FFFFFF', 
   fontSize: 16,
   fontWeight: 'bold',
-}
+},
+orderTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  cancelledText: {
+    color: '#ccc',
+    textDecorationLine: 'line-through', 
+  },
+  cancelledPrice: {
+    color: '#ccc', 
+    textDecorationLine: 'line-through', 
+  },
 });
 
   export default SellerOrderManagement;
