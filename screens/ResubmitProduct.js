@@ -572,7 +572,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
               </Text>
 
               <Text style={styles.productDetailText}>
-                <Text style={styles.productDetailLabel}>Shipping: </Text>
+                <Text style={styles.productDetailLabel}>Logistic Details: </Text>
                 {productInfo.width}cm x {productInfo.length}cm x {productInfo.height}cm | {productInfo.weight}kg
 
               </Text>
@@ -797,7 +797,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           </TouchableOpacity>
         </View>
         <Text style={styles.label}>
-          Shipping: 
+          Logistic Details: 
           {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>} 
           <Icon
             name="info-circle"

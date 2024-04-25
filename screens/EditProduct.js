@@ -568,7 +568,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
               </Text>
 
               <Text style={styles.productDetailText}>
-                <Text style={styles.productDetailLabel}>Shipping: </Text>
+                <Text style={styles.productDetailLabel}>Logistic Details: </Text>
                 {productInfo.width}cm x {productInfo.length}cm x {productInfo.height}cm | {productInfo.weight}kg
 
               </Text>
