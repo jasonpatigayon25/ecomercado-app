@@ -289,18 +289,18 @@ const Chatbox = ({ navigation }) => {
       <>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#05652D" />
+          <Icon name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Chat List</Text>
       </View>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={() => setSearchModalVisible(true)}
         style={styles.searchBar}
       >
         <Icon name="search" size={20} color="#666" />
         <Text style={styles.searchPlaceholderText}> Search for a user...</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <FlatList
         data={chatSummaries}
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E3FCE9',
+    backgroundColor: '#05652D',
     paddingVertical: 10,
     paddingHorizontal: 20,
     shadowColor: '#000',
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#05652D',
+    color: '#fff',
     flex: 1,
     textAlign: 'center',
   },
