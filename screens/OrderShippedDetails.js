@@ -250,7 +250,7 @@ const OrderShippedDetails = ({ route, navigation }) => {
                     <Text style={styles.orderTotalValue}>₱{subtotal.toFixed(2)}</Text>
                 </View>
                 <View style={styles.orderTotalRow}>
-                    <Text style={styles.orderTotalText}>Shipping Fee:</Text>
+                    <Text style={styles.orderTotalText}>Delivery Fee:</Text>
                     <Text style={styles.orderTotalValue}>₱{order.shippingFee.toFixed(2)}</Text>
                 </View>
                 <View style={styles.orderTotalRow}>
@@ -272,7 +272,7 @@ const OrderShippedDetails = ({ route, navigation }) => {
             </View>
             </View>
         <View style={styles.totalPriceContainer}>
-          <Text style={styles.orderTotalLabel}>Total:</Text>
+          <Text style={styles.orderTotalLabel}>Total Payment:</Text>
           <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
         </View>
         <View style={styles.actionButtons}>

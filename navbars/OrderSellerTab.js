@@ -12,12 +12,12 @@ const OrderSellerTab = ({ selectedTab, setSelectedTab }) => {
     const indicatorAnim = useRef(new Animated.Value(0)).current;
     const auth = getAuth();
     const currentUser = auth.currentUser;
-    const tabNames = ['To Approve', 'To Ship', 'Shipped', 'Completed', 'Cancelled'];
+    const tabNames = ['To Approve', 'To Deliver', 'Delivered', 'Completed', 'Cancelled'];
 
     const statusMap = {
         'To Approve': 'Pending',
-        'To Ship': 'Approved',
-        'Shipped': 'Receiving',
+        'To Deliver': 'Approved',
+        'Delivered': 'Receiving',
         'Completed': 'Completed',
         'Cancelled': 'Cancelled',
     };

@@ -318,7 +318,7 @@ const handleConfirmEndDate = (date) => {
             </View>
             </View>
         <View style={styles.totalPriceContainer}>
-          <Text style={styles.orderTotalLabel}>Total:</Text>
+          <Text style={styles.orderTotalLabel}>Total Payment:</Text>
           <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
         </View>
         <View style={styles.actionButtons}>

@@ -73,7 +73,7 @@ const OrderCompletedBySellerDetails = ({ route, navigation }) => {
                     <Text style={styles.orderTotalValue}>₱{subtotal.toFixed(2)}</Text>
                 </View>
                 <View style={styles.orderTotalRow}>
-                    <Text style={styles.orderTotalText}>Shipping Fee:</Text>
+                    <Text style={styles.orderTotalText}>Delivery Fee:</Text>
                     <Text style={styles.orderTotalValue}>₱{order.shippingFee.toFixed(2)}</Text>
                 </View>
                 <View style={styles.orderTotalRow}>
@@ -100,9 +100,15 @@ const OrderCompletedBySellerDetails = ({ route, navigation }) => {
                 </Text>
             </View>
             <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Ship Time:</Text>
+                <Text style={styles.detailLabel}>Delivery Time:</Text>
                 <Text style={styles.detailValue}>
                 {moment(order.deliveryStart.toDate()).format('DD-MM-YYYY HH:mm')}
+                </Text>
+            </View>
+            <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Delivered Time:</Text>
+                <Text style={styles.detailValue}>
+                {moment(order.dateDelivered.toDate()).format('DD-MM-YYYY HH:mm')}
                 </Text>
             </View>
             <View style={styles.detailRow}>
@@ -113,7 +119,7 @@ const OrderCompletedBySellerDetails = ({ route, navigation }) => {
             </View>
             </View>
         <View style={styles.totalPriceContainer}>
-          <Text style={styles.orderTotalLabel}>Total:</Text>
+          <Text style={styles.orderTotalLabel}>Total Payment:</Text>
           <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
         </View>
         {order.receivedPhoto && (

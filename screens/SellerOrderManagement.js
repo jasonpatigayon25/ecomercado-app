@@ -40,7 +40,7 @@ const SellerOrderManagement = ({ navigation }) => {
     const handleScroll = (event) => {
         const scrollX = event.nativeEvent.contentOffset.x;
         const tabIndex = Math.floor(scrollX / windowWidth);
-        const tabNames = ['To Approve', 'To Ship', 'Shipped', 'Completed', 'Cancelled'];
+        const tabNames = ['To Approve', 'To Deliver', 'Delivered', 'Completed', 'Cancelled'];
         const newSelectedTab = tabNames[tabIndex];
 
         if (newSelectedTab !== selectedTab) {
@@ -106,8 +106,8 @@ const SellerOrderManagement = ({ navigation }) => {
 
             const statusCriteria = {
                 'To Approve': ['Pending'],
-                'To Ship': ['Approved'],
-                'Shipped': ['Receiving'],
+                'To Deliver': ['Approved'],
+                'Delivered': ['Receiving'],
                 'Completed': ['Completed'],
                 'Cancelled': ['Cancelled']
             }[tab];
@@ -237,10 +237,10 @@ const SellerOrderManagement = ({ navigation }) => {
             case 'To Approve':
                 icon = 'clock-o';
                 break;
-            case 'To Ship':
+            case 'To Deliver':
                 icon = 'truck';
                 break;
-            case 'Shipped':
+            case 'Delivered':
                 icon = 'truck';
                 break;
             case 'Completed':
@@ -261,9 +261,9 @@ const SellerOrderManagement = ({ navigation }) => {
         const handlePress = () => {
             if (selectedTab === 'To Approve') {
               navigation.navigate('OrderToApproveDetails', { order, products });
-            } else if (selectedTab === 'To Ship') {
+            } else if (selectedTab === 'To Deliver') {
               navigation.navigate('OrderToShipBySellerDetails', { order, products });
-            } else if (selectedTab === 'Shipped') {
+            } else if (selectedTab === 'Delivered') {
               navigation.navigate('OrderShippedDetails', { order, products });
             } else if (selectedTab === 'Completed') {
               navigation.navigate('OrderCompletedBySellerDetails', { order, products });
@@ -273,8 +273,8 @@ const SellerOrderManagement = ({ navigation }) => {
           };
 
           if ((selectedTab === 'To Approve' && order.status !== 'Pending') ||
-          (selectedTab === 'To Ship' && order.status !== 'Approved') ||
-          (selectedTab === 'Shipped' && order.status !== 'Receiving') ||
+          (selectedTab === 'To Deliver' && order.status !== 'Approved') ||
+          (selectedTab === 'Delivered' && order.status !== 'Receiving') ||
           (selectedTab === 'Completed' && order.status !== 'Completed') ||
           (selectedTab === 'Cancelled' && order.status !== 'Cancelled')) {
           return null;
@@ -339,20 +339,20 @@ const SellerOrderManagement = ({ navigation }) => {
                                     </TouchableOpacity>
                                 </>
                             )}
-                            {selectedTab === 'To Ship' && (
+                            {selectedTab === 'To Deliver' && (
                                 <>
                                     <Text style={styles.hintText}>
-                                        Tap button if items are ready to ship.
+                                        Tap button if items are ready to deliver.
                                     </Text>
                                     <TouchableOpacity
                                         style={styles.shipButton}
                                         onPress={() => approveToShipOrder(order.id)}
                                     >
-                                        <Text style={styles.shipButtonText}>Ready to Ship</Text>
+                                        <Text style={styles.shipButtonText}>Ready to Deliver</Text>
                                     </TouchableOpacity>
                                 </>
                             )}
-                            {selectedTab === 'Shipped' && (
+                            {selectedTab === 'Delivered' && (
                                 <>
                                     {order.deliveredStatus === 'Waiting' && (
                                         <View style={styles.buttonContainer}>
@@ -419,7 +419,7 @@ const SellerOrderManagement = ({ navigation }) => {
                 ref={scrollRef}
                 style={styles.scrollView}
             >
-                {['To Approve', 'To Ship', 'Shipped', 'Completed', 'Cancelled'].map((tab, index) => (
+                {['To Approve', 'To Deliver', 'Delivered', 'Completed', 'Cancelled'].map((tab, index) => (
                     <View key={index} style={{ width: windowWidth }}>
                         {loading ? (
                             <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />
