@@ -362,7 +362,7 @@ useEffect(() => {
               ))}
               <View style={styles.divider} />
               <View style={styles.sellerInfo}>
-                <Text style={styles.labelText}>Shipping Fee:</Text>
+                <Text style={styles.labelText}>Delivery Fee:</Text>
                 <Text style={styles.productsubText}>₱{sellerShippingFee.toFixed(2)}</Text>
               </View>
               <View style={styles.divider} />
@@ -387,7 +387,7 @@ useEffect(() => {
         </View>
         {/* <View style={styles.divider} />
         <View style={styles.infoItem}>
-        <Text style={styles.labelText}>Shipping Fee:</Text>
+        <Text style={styles.labelText}>Delivery Fee:</Text>
         <Text style={styles.productsubText}>{`₱${shippingFee.toFixed(2)}`}</Text>
       </View>
         <View style={styles.divider} />
@@ -420,7 +420,7 @@ useEffect(() => {
             </View>
 
             <View style={styles.cardItem}>
-              <Text style={styles.productDetail}>Shipping Subtotal</Text>
+              <Text style={styles.productDetail}>Delivery Fee Subtotal</Text>
               <Text style={styles.priceTextGreen}>₱{shippingSubtotal.toFixed(2)}</Text>
             </View>
             <View style={styles.divider} />

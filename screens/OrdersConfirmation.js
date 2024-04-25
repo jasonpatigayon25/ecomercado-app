@@ -302,7 +302,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
               ))}
               <View style={styles.divider} />
               <View style={styles.sellerInfo}>
-                <Text style={styles.labelText}>Shipping Fee:</Text>
+                <Text style={styles.labelText}>Delivery Fee:</Text>
                 <Text style={styles.productsubText}>₱{sellerShippingFee.toFixed(2)}</Text>
               </View>
               <View style={styles.divider} />
@@ -336,7 +336,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
       <View style={styles.divider} />
 
         <View style={styles.orderDetails}>
-          <Text style={styles.labelText}>Total Shipping Fee:</Text>
+          <Text style={styles.labelText}>Total Delivery Fee:</Text>
           <Text style={styles.infoText}>₱{shippingSubtotal?.toFixed(2) ?? '0.00'}</Text>
         </View>
 
