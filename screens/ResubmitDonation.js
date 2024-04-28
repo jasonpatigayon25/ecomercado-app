@@ -59,6 +59,7 @@ const ResubmitDonation = ({ route, navigation }) => {
 
         if (route.params?.donationInfo) {
           setDonationInfo(route.params.donationInfo);
+          setSelectedCategory(route.params.donationInfo.category);
         }
       }, [route.params?.donationInfo]);
     
@@ -77,7 +78,7 @@ const ResubmitDonation = ({ route, navigation }) => {
   const addNewItemNameField = () => {
     setDonationInfo(prevState => ({
       ...prevState,
-      itemNames: [...prevState.itemNames, ''] 
+      itemNames: [...prevState.itemNames, ''],
     }));
   };
 
@@ -176,9 +177,9 @@ const ResubmitDonation = ({ route, navigation }) => {
     itemNames: [''],
     category: '',
     weight: '',
-    width: '',
-    length: '',
-    height: '',
+    // width: '',
+    // length: '',
+    // height: '',
     location: '',
     purpose: '',
     message: '',
@@ -191,9 +192,9 @@ const ResubmitDonation = ({ route, navigation }) => {
     photo: false,
     name: false,
     location: false,
-    width: false,
-    length: false,
-    height: false,
+    // width: false,
+    // length: false,
+    // height: false,
   });
 
   const handleBackPress = () => {

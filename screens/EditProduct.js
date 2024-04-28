@@ -483,12 +483,14 @@ const resetProductInfo = () => {
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category.title);
-    setDonationInfo(prevState => ({
+    setProductInfo(prevState => ({
       ...prevState,
       category: category.title 
     }));
     setIsCategoryModalVisible(false);
   };
+
+  
 
   const CategoryPickerModal = ({ isVisible, onCancel, onCategorySelect, categories }) => {
     return (
