@@ -1434,12 +1434,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   modalCategoryOverlay: {
+    flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)', 
   },
   modalCategoryContainer: {
     backgroundColor: '#FFF',
     // borderRadius: 20,
     shadowOffset: { width: 0, height: 2 },
+    justifyContent: 'center',
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
