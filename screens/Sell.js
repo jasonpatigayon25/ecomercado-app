@@ -546,7 +546,11 @@ const resetProductInfo = () => {
   const handleCategorySelect = (category) => {
     setSelectedCategory(category.title);
     setIsCategoryModalVisible(false); 
-  };
+    setProductInfo(prevState => ({
+        ...prevState,
+        category: category.title, 
+    }));
+};
 
   const CategoryPickerModal = ({ isVisible, onCancel, onCategorySelect, categories }) => {
     return (

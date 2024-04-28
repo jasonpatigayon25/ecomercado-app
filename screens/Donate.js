@@ -167,7 +167,7 @@ const Donate = ({ navigation }) => {
       setDonationInfo({ ...donationInfo, subPhotos: updatedSubPhotos });
     }
   };
-  
+
 
   const handleLocationSearch = async (query) => {
     setLocationSearchQuery(query);
@@ -579,7 +579,11 @@ const decrementWeight = () => {
   const handleCategorySelect = (category) => {
     setSelectedCategory(category.title);
     setIsCategoryModalVisible(false); 
-  };
+    setDonationInfo(prevState => ({
+        ...prevState,
+        category: category.title,
+    }));
+};
 
   const CategoryPickerModal = ({ isVisible, onCancel, onCategorySelect, categories }) => {
     return (

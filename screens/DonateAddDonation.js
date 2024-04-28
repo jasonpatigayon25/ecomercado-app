@@ -580,7 +580,11 @@ const decrementWeight = () => {
   const handleCategorySelect = (category) => {
     setSelectedCategory(category.title);
     setIsCategoryModalVisible(false); 
-  };
+    setDonationInfo(prevState => ({
+        ...prevState,
+        category: category.title, 
+    }));
+};
 
   const CategoryPickerModal = ({ isVisible, onCancel, onCategorySelect, categories }) => {
     return (
