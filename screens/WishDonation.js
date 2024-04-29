@@ -9,7 +9,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Animated } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 
-const WishDonation = ({ navigation }) => {
+const WishDonation = ({ navigation, route }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [matchedProducts, setMatchedProducts] = useState([]);
   const [error, setError] = useState('');
@@ -17,6 +17,12 @@ const WishDonation = ({ navigation }) => {
   const [matchedProductsDetails, setMatchedProductsDetails] = useState([]);
   const [photoChosen, setPhotoChosen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (route.params?.shouldOpenConfirmModal) {
+      handleChoosePhoto();
+    }
+  }, [route.params?.shouldOpenConfirmModal]);
 
   const scaleAnim = new Animated.Value(1);
 
@@ -50,7 +56,7 @@ const WishDonation = ({ navigation }) => {
     };
   
     Alert.alert(
-      "Upload Photo",
+      "Search Via Image",
       "Choose an option",
       [
         {
@@ -150,7 +156,7 @@ const WishDonation = ({ navigation }) => {
       const labels = visionResponse.data.responses[0]?.labelAnnotations || [];
       const detectedLabels = labels.map((label) => label.description.toLowerCase());
   
-      const productsSnapshot = await getDocs(collection(db, 'products'));
+      const productsSnapshot = await getDocs(collection(db, 'donation'));
       const matchedProductsData = [];
   
       productsSnapshot.forEach((doc) => {
@@ -160,12 +166,7 @@ const WishDonation = ({ navigation }) => {
             id: doc.id,
             name: product.name,
             photo: product.photo,
-            price: product.price,
             category: product.category,
-            description: product.description,
-            location: product.location,
-            seller_email: product.seller_email,
-            quantity: product.quantity
           });
         }
       });
@@ -200,7 +201,7 @@ const WishDonation = ({ navigation }) => {
       const nextProduct = matchedProductsDetails[index + 1];
       return (
         <View key={index} style={styles.matchedProductRow}>
-          <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product })}>
+          <TouchableOpacity onPress={() => navigation.navigate('DonationDetail', { product })}>
             <View style={styles.matchedProductCard}>
               {product.photo ? (
                 <Image source={{ uri: product.photo }} style={styles.matchedImageItem} />
@@ -211,13 +212,13 @@ const WishDonation = ({ navigation }) => {
               <Text style={styles.productCategory}>
                 <Text style={styles.matchedProductInfo}>{product.category}</Text>
               </Text>
-              <Text style={styles.productPrice}>
+              {/* <Text style={styles.productPrice}>
                 <Text style={styles.matchedProductInfo}>{product.price}</Text>
-              </Text>
+              </Text> */}
             </View>
           </TouchableOpacity>
           {nextProduct && (
-            <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: nextProduct })}>
+            <TouchableOpacity onPress={() => navigation.navigate('DonationDetail', { product: nextProduct })}>
               <View style={styles.matchedProductCard}>
                 {nextProduct.photo ? (
                   <Image source={{ uri: nextProduct.photo }} style={styles.matchedImageItem} />
@@ -228,9 +229,9 @@ const WishDonation = ({ navigation }) => {
                 <Text style={styles.productCategory}>
                   <Text style={styles.matchedProductInfo}>{nextProduct.category}</Text>
                 </Text>
-                <Text style={styles.productPrice}>
+                {/* <Text style={styles.productPrice}>
                   <Text style={styles.matchedProductInfo}>{nextProduct.price}</Text>
-                </Text>
+                </Text> */}
               </View>
             </TouchableOpacity>
           )}

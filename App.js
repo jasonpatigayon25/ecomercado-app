@@ -101,6 +101,7 @@ import CategoryResultsDonation from './screens/CategoryResultsDonation';
 import SearchProducts from './screens/SearchProducts';
 import SearchProductResults from './screens/SearchProductResults';
 import SearchDonations from './screens/SearchDonations';
+import WishDonation from './screens/WishDonation';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -374,6 +375,7 @@ const App = () => {
               <Stack.Screen name="Cart" component={Cart} />
               <Stack.Screen name="DonationWishlist" component={DonationWishlist} />
               <Stack.Screen name="Wish" component={Wish} />
+              <Stack.Screen name="WishDonation" component={WishDonation} />
               <Stack.Screen name="OrderConfirmation" component={OrderConfirmation} />
               <Stack.Screen name="OrdersConfirmation" component={OrdersConfirmation} />
               <Stack.Screen name="Login" component={Login} />

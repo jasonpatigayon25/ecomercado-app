@@ -172,7 +172,7 @@ const SearchDonations = () => {
   
 
   const navigateToWish = () => {
-    navigation.navigate('Wish');
+    navigation.navigate('WishDonation', { shouldOpenConfirmModal: true });
   };
 
   const navigateToSearchProducts = () => {
