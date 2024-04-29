@@ -18,6 +18,7 @@ const WishDonation = ({ navigation, route }) => {
   const [photoChosen, setPhotoChosen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [donationCategories, setDonationCategories] = useState([]);
+  const [hasMatchedDonations, setHasMatchedDonations] = useState(true);
 
   useEffect(() => {
     const fetchDonationCategories = async () => {
@@ -180,8 +181,6 @@ const WishDonation = ({ navigation, route }) => {
       const productsSnapshot = await getDocs(collection(db, 'donation'));
       const matchedProductsData = [];
 
-
-  
       productsSnapshot.forEach((doc) => {
         const product = doc.data();
         const productCategory = product.category;
@@ -203,6 +202,7 @@ const WishDonation = ({ navigation, route }) => {
       if (matchedProductNames.length === 0) {
         setMatchedProducts(['No product found']);
         setMatchedImages([]);
+        setHasMatchedDonations(false); 
       }
       setLoading(false);
     } catch (error) {
@@ -297,22 +297,26 @@ const WishDonation = ({ navigation, route }) => {
           <Image source={{ uri: selectedImage }} style={styles.image} />
         </View>
       )}
-{loading ? (
-  <View style={styles.loadingIndicator}>
-    <ActivityIndicator size="large" color="#05652D" />
-    <Text style={styles.loadingText}>Finding matches...</Text>
-  </View>
-) : (
-  <View style={styles.matchedImagesContainer}>
-    <Text style={styles.matchedImagesText}>Matched Donations:</Text>
-    {
-      matchedProductsDetails.filter(product => donationCategories.includes(product.category)).map(renderMatchedProduct)
-    }
-  </View>
-)}
-{error !== '' && (
-  <Text style={styles.errorText}>{error}</Text>
-)}
+        {loading ? (
+        <View style={styles.loadingIndicator}>
+            <ActivityIndicator size="large" color="#05652D" />
+            <Text style={styles.loadingText}>Finding matches...</Text>
+        </View>
+        ) : (
+        <View style={styles.matchedImagesContainer}>
+        <Text style={styles.matchedImagesText}>Matched Donations:</Text>
+        {
+            hasMatchedDonations ? (
+            matchedProductsDetails.filter(product => donationCategories.includes(product.category)).map(renderMatchedProduct)
+            ) : (
+            <Text style={styles.noProductMatchedText}>No Matched Donations</Text>
+            )
+        }
+        </View>
+        )}
+        {error !== '' && (
+        <Text style={styles.errorText}>{error}</Text>
+        )}
       </ScrollView>
       {/* {loading && (
       <View style={styles.loadingIndicator}>

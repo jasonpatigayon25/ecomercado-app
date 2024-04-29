@@ -17,6 +17,7 @@ const Wish = ({ navigation, route }) => {
   const [matchedProductsDetails, setMatchedProductsDetails] = useState([]);
   const [photoChosen, setPhotoChosen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [hasNoMatch, setHasNoMatch] = useState(false);
 
   useEffect(() => {
     if (route.params?.shouldOpenConfirmModal) {
@@ -94,6 +95,7 @@ const Wish = ({ navigation, route }) => {
 };
 
   const handleChooseAgain = () => {
+    setHasNoMatch(false);
     setSelectedImage(null);
     setMatchedProducts([]);
     setMatchedImages([]);
@@ -185,6 +187,14 @@ const Wish = ({ navigation, route }) => {
         setMatchedProducts(['No product found']);
         setMatchedImages([]);
       }
+
+      if (matchedProductsData.length === 0) {
+        setHasNoMatch(true);
+        setMatchedProductsDetails([]); 
+      } else {
+        setHasNoMatch(false); 
+        setMatchedProductsDetails(matchedProductsData); 
+      }
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -259,43 +269,42 @@ const Wish = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollView}>
-      <Text style={styles.hintText}>Please take or choose a photo that matches the product.</Text>
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <TouchableOpacity
-        style={styles.circleButton}
-        onPress={photoChosen ? handleChooseAgain : handleChoosePhoto}
-      >
-        <Icon name="camera" size={30} color="#FFF" />
-        <Text style={styles.circleButtonText}>
-          {photoChosen ? 'Choose Again' : 'Choose Photo'}
-        </Text>
-      </TouchableOpacity>
-      </Animated.View>
-      
-      {selectedImage && (
-        <View style={styles.imageContainer}>
-          <Text style={styles.matchedImagesSearch}>Searched Image:</Text>
-          <Image source={{ uri: selectedImage }} style={styles.image} />
-        </View>
-      )}
-     {matchedProducts.length > 0 && (
-      <View style={styles.matchedImagesContainer}>
-        <Text style={styles.matchedImagesText}>Matched Products:</Text>
-        {matchedProductsDetails.map(renderMatchedProduct)}
-        </View>
+        <Text style={styles.hintText}>Please take or choose a photo that matches the product.</Text>
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <TouchableOpacity
+            style={styles.circleButton}
+            onPress={photoChosen ? handleChooseAgain : handleChoosePhoto}
+          >
+            <Icon name="camera" size={30} color="#FFF" />
+            <Text style={styles.circleButtonText}>
+              {photoChosen ? 'Choose Again' : 'Choose Photo'}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
         
-      )}
-
-      {error !== '' && (
-        <Text style={styles.errorText}>{error}</Text>
-      )}
+        {selectedImage && (
+          <View style={styles.imageContainer}>
+            <Text style={styles.matchedImagesSearch}>Searched Image:</Text>
+            <Image source={{ uri: selectedImage }} style={styles.image} />
+          </View>
+        )}
+        <View style={styles.matchedImagesContainer}>
+          {hasNoMatch ? (
+            <Text style={styles.noProductMatchedText}>No Matched Products</Text>
+          ) : (
+            matchedProductsDetails.map(renderMatchedProduct)
+          )}
+        </View>
+        {error !== '' && (
+          <Text style={styles.errorText}>{error}</Text>
+        )}
       </ScrollView>
       {loading && (
-      <View style={styles.loadingIndicator}>
-        <ActivityIndicator size="large" color="#05652D" />
-        <Text style={styles.loadingText}>Finding matches...</Text>
-      </View>
-    )}
+        <View style={styles.loadingIndicator}>
+          <ActivityIndicator size="large" color="#05652D" />
+          <Text style={styles.loadingText}>Finding matches...</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -482,6 +491,13 @@ noProductMatchedText: {
   fontWeight: 'bold',
   color: '#666', 
   marginTop: 20,
+},
+noProductMatchedText: {
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: '#666', 
+  marginTop: 20,
+  textAlign: 'center', 
 },
 });
 
