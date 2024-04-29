@@ -41,9 +41,14 @@ const MapViewer = () => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1, 
+    backgroundColor: 'transparent',
+  },
   map: {
     flex: 1,
   },
 });
+
 
 export default MapViewer;
