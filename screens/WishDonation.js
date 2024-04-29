@@ -155,6 +155,7 @@ const WishDonation = ({ navigation, route }) => {
   
       const visionApiEndpoint = 'https://vision.googleapis.com/v1/images:annotate';
       const apiKey = 'AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g';
+  
       const requestBody = {
         requests: [
           {
@@ -178,32 +179,47 @@ const WishDonation = ({ navigation, route }) => {
       const labels = visionResponse.data.responses[0]?.labelAnnotations || [];
       const detectedLabels = labels.map((label) => label.description.toLowerCase());
   
-      const productsSnapshot = await getDocs(collection(db, 'donation'));
       const matchedProductsData = [];
-
-      productsSnapshot.forEach((doc) => {
-        const product = doc.data();
-        const productCategory = product.category;
-        if (donationCategories.includes(productCategory) && product.publicationStatus === 'approved') {
-          matchedProductsData.push({
-            id: doc.id,
-            name: product.name,
-            photo: product.photo,
-            category: productCategory,
-          });
-        }
-      });
+      const productsSnapshot = await getDocs(collection(db, 'donation'));
+      await Promise.all(
+        productsSnapshot.docs.map(async (doc) => {
+          const product = doc.data();
+          const productCategory = product.category;
   
-      const matchedProductNames = matchedProductsData.map(product => product.name);
-      setMatchedProducts(matchedProductNames);
-      setMatchedImages(matchedProductsData.map(product => product.imageUrl));
-      setMatchedProductsDetails(matchedProductsData);
-
-      if (matchedProductNames.length === 0) {
-        setMatchedProducts(['No product found']);
-        setMatchedImages([]);
-        setHasMatchedDonations(false); 
+          if (
+            detectedLabels.includes(productCategory.toLowerCase()) ||
+            product.subPhotos.some((subPhoto) => detectedLabels.includes(subPhoto.toLowerCase()))
+          ) {
+            matchedProductsData.push({
+              id: doc.id,
+              name: product.name,
+              itemNames: product.itemNames,
+              photo: product.photo,
+              category: productCategory,
+            });
+          }
+        })
+      );
+  
+      if (matchedProductsData.length === 0) {
+        const mixedCategoryProducts = matchedProductsData.filter(product => product.category.toLowerCase() === 'mixed');
+        if (mixedCategoryProducts.length === 0) {
+          setMatchedProducts(['No product found']);
+          setMatchedImages([]);
+          setHasMatchedDonations(false);
+        } else {
+          const matchedProductNames = mixedCategoryProducts.map((product) => product.name);
+          setMatchedProducts(matchedProductNames);
+          setMatchedImages(mixedCategoryProducts.map((product) => product.imageUrl));
+          setMatchedProductsDetails(mixedCategoryProducts);
+        }
+      } else {
+        const matchedProductNames = matchedProductsData.map((product) => product.name);
+        setMatchedProducts(matchedProductNames);
+        setMatchedImages(matchedProductsData.map((product) => product.imageUrl));
+        setMatchedProductsDetails(matchedProductsData);
       }
+  
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -250,6 +266,7 @@ const WishDonation = ({ navigation, route }) => {
                   <Text>No Image Available</Text>
                 )}
                 <Text style={styles.productName}>{nextProduct.name}</Text>
+                <Text style={styles.productPrice}>{item.itemNames.join(' · ')}</Text>
                 <Text style={styles.productCategory}>
                   <Text style={styles.matchedProductInfo}>{nextProduct.category}</Text>
                 </Text>
@@ -306,12 +323,12 @@ const WishDonation = ({ navigation, route }) => {
         <View style={styles.matchedImagesContainer}>
         <Text style={styles.matchedImagesText}>Matched Donations:</Text>
         {
-            hasMatchedDonations ? (
-            matchedProductsDetails.filter(product => donationCategories.includes(product.category)).map(renderMatchedProduct)
+            matchedProductsDetails.length > 0 ? (
+                matchedProductsDetails.map(renderMatchedProduct)
             ) : (
-            <Text style={styles.noProductMatchedText}>No Matched Donations</Text>
+                <Text style={styles.noProductMatchedText}>No Matched Donations</Text>
             )
-        }
+            }
         </View>
         )}
         {error !== '' && (
