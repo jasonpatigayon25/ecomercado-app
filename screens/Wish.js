@@ -242,9 +242,12 @@ const Wish = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-left" size={20} color="#FFF" />
+          <Icon name="arrow-left" size={20} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Search Via Image</Text>
+        <TouchableOpacity style={styles.searchImageButton} onPress={photoChosen ? handleChooseAgain : handleChoosePhoto}>
+          <Image source={require('../assets/zoom-in.png')} style={styles.searchImageIcon} />
+        </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollView}>
       <Text style={styles.hintText}>Please take or choose a photo that matches the product.</Text>
@@ -259,6 +262,7 @@ const Wish = ({ navigation }) => {
         </Text>
       </TouchableOpacity>
       </Animated.View>
+      
       {selectedImage && (
         <View style={styles.imageContainer}>
           <Text style={styles.matchedImagesSearch}>Searched Image:</Text>
@@ -288,7 +292,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#05652D', 
+    backgroundColor: '#FFF', 
     paddingVertical: 15,
     paddingHorizontal: 10,
   },
@@ -296,7 +300,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   headerTitle: {
-    color: '#FFF', 
+    color: '#000', 
     fontSize: 22,
     fontWeight: 'bold',
     marginLeft: 20,
@@ -307,7 +311,6 @@ const styles = StyleSheet.create({
   imageContainer: {
     flexDirection: 'row', 
     alignItems: 'center',
-    justifyContent: 'space-between', 
     marginVertical: 20,
     paddingHorizontal: 10, 
   },
@@ -428,6 +431,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  matchedProductsList: {
+  marginTop: 10,
+  paddingHorizontal: 20,
+},
+matchedProductName: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: '#333',
+  marginBottom: 5,
+},
+searchImageButton: {
+  marginLeft: 50,
+},
 });
 
 export default Wish;
