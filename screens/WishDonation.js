@@ -17,6 +17,27 @@ const WishDonation = ({ navigation, route }) => {
   const [matchedProductsDetails, setMatchedProductsDetails] = useState([]);
   const [photoChosen, setPhotoChosen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [donationCategories, setDonationCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchDonationCategories = async () => {
+      setLoading(true);
+      try {
+        const categoriesSnapshot = await getDocs(collection(db, 'donationCategories'));
+        const categories = [];
+        categoriesSnapshot.forEach((doc) => {
+          categories.push(doc.data().title); // Assuming 'title' is the field with the category name
+        });
+        setDonationCategories(categories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        Alert.alert('Error', 'Failed to fetch donation categories.');
+      }
+      setLoading(false);
+    };
+  
+    fetchDonationCategories();
+  }, []);
 
   useEffect(() => {
     if (route.params?.shouldOpenConfirmModal) {
@@ -87,7 +108,7 @@ const WishDonation = ({ navigation, route }) => {
     if (!result.canceled) {
         const imageUri = result.assets[0].uri;
         setSelectedImage(imageUri);
-        saveImageToFolder(imageUri, 'taken_images');
+        saveImageToFolder(imageUri, 'taken_images_donation');
         detectProductsInImage(imageUri);
         setPhotoChosen(true);
     }
@@ -123,7 +144,7 @@ const WishDonation = ({ navigation, route }) => {
     try {
       setLoading(true);
       const storage = getStorage();
-      const imageRef = ref(storage, 'images/' + Date.now());
+      const imageRef = ref(storage, 'donations/' + Date.now());
   
       const response = await fetch(imageUri);
       const blob = await response.blob();
@@ -158,15 +179,18 @@ const WishDonation = ({ navigation, route }) => {
   
       const productsSnapshot = await getDocs(collection(db, 'donation'));
       const matchedProductsData = [];
+
+
   
       productsSnapshot.forEach((doc) => {
         const product = doc.data();
-        if (product.publicationStatus === 'approved' && detectedLabels.some((label) => product.name.toLowerCase().includes(label))) {
+        const productCategory = product.category;
+        if (donationCategories.includes(productCategory) && product.publicationStatus === 'approved') {
           matchedProductsData.push({
             id: doc.id,
             name: product.name,
             photo: product.photo,
-            category: product.category,
+            category: productCategory,
           });
         }
       });
@@ -254,7 +278,7 @@ const WishDonation = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollView}>
-      <Text style={styles.hintText}>Please take or choose a photo that matches the product.</Text>
+      <Text style={styles.hintText}>Please take or choose a photo that matches the donation.</Text>
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
       <TouchableOpacity
         style={styles.circleButton}
@@ -273,24 +297,29 @@ const WishDonation = ({ navigation, route }) => {
           <Image source={{ uri: selectedImage }} style={styles.image} />
         </View>
       )}
-     {matchedProducts.length > 0 && (
-      <View style={styles.matchedImagesContainer}>
-        <Text style={styles.matchedImagesText}>Matched Products:</Text>
-        {matchedProductsDetails.map(renderMatchedProduct)}
-        </View>
-        
-      )}
-
-      {error !== '' && (
-        <Text style={styles.errorText}>{error}</Text>
-      )}
+{loading ? (
+  <View style={styles.loadingIndicator}>
+    <ActivityIndicator size="large" color="#05652D" />
+    <Text style={styles.loadingText}>Finding matches...</Text>
+  </View>
+) : (
+  <View style={styles.matchedImagesContainer}>
+    <Text style={styles.matchedImagesText}>Matched Donations:</Text>
+    {
+      matchedProductsDetails.filter(product => donationCategories.includes(product.category)).map(renderMatchedProduct)
+    }
+  </View>
+)}
+{error !== '' && (
+  <Text style={styles.errorText}>{error}</Text>
+)}
       </ScrollView>
-      {loading && (
+      {/* {loading && (
       <View style={styles.loadingIndicator}>
         <ActivityIndicator size="large" color="#05652D" />
         <Text style={styles.loadingText}>Finding matches...</Text>
       </View>
-    )}
+    )} */}
     </View>
   );
 };
