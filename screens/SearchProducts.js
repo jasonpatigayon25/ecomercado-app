@@ -269,7 +269,7 @@ const SearchProducts = () => {
         </TouchableOpacity>
       );
     }
-    return null;
+    return null; 
   };
 
   const renderSuggestionItem = ({ item }) => (
