@@ -7,7 +7,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getDocs, collection } from 'firebase/firestore';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Animated } from 'react-native';
-
+import { ActivityIndicator } from 'react-native-paper';
 
 const Wish = ({ navigation }) => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -16,6 +16,7 @@ const Wish = ({ navigation }) => {
   const [matchedImages, setMatchedImages] = useState([]);
   const [matchedProductsDetails, setMatchedProductsDetails] = useState([]);
   const [photoChosen, setPhotoChosen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const scaleAnim = new Animated.Value(1);
 
@@ -114,6 +115,7 @@ const Wish = ({ navigation }) => {
 
   const detectProductsInImage = async (imageUri) => {
     try {
+      setLoading(true);
       const storage = getStorage();
       const imageRef = ref(storage, 'images/' + Date.now());
   
@@ -177,8 +179,9 @@ const Wish = ({ navigation }) => {
         setMatchedProducts(['No product found']);
         setMatchedImages([]);
       }
-      
+      setLoading(false);
     } catch (error) {
+      setLoading(false);
       console.error('Error detecting products:', error);
       Alert.alert('Error', 'Failed to detect products in the image.');
       setError('Failed to detect products in the image.');
@@ -280,6 +283,12 @@ const Wish = ({ navigation }) => {
         <Text style={styles.errorText}>{error}</Text>
       )}
       </ScrollView>
+      {loading && (
+      <View style={styles.loadingIndicator}>
+        <ActivityIndicator size="large" color="#05652D" />
+        <Text style={styles.loadingText}>Finding matches...</Text>
+      </View>
+    )}
     </View>
   );
 };
@@ -444,6 +453,22 @@ matchedProductName: {
 },
 searchImageButton: {
   marginLeft: 50,
+},
+loadingIndicator: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+loadingText: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  marginTop: 10,
+  color: '#05652D',
 },
 });
 
