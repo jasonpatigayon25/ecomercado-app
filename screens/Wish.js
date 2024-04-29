@@ -277,6 +277,7 @@ const Wish = ({ navigation }) => {
         <Text style={styles.matchedImagesText}>Matched Products:</Text>
         {matchedProductsDetails.map(renderMatchedProduct)}
         </View>
+        
       )}
 
       {error !== '' && (
@@ -469,6 +470,12 @@ loadingText: {
   fontWeight: 'bold',
   marginTop: 10,
   color: '#05652D',
+},
+noProductMatchedText: {
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: '#666', 
+  marginTop: 20,
 },
 });
 
