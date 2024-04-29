@@ -231,9 +231,12 @@ const Wish = ({ navigation }) => {
           <Image source={{ uri: selectedImage }} style={styles.image} />
         </View>
       )}
-      {matchedImages.length > 0 && (
-        <View style={styles.matchedImagesContainer}>
-          <Text style={styles.matchedImagesText}>Matched Products:</Text>
+     {matchedProducts.length > 0 && (
+      <View style={styles.matchedImagesContainer}>
+        <Text style={styles.matchedImagesText}>Matched Products:</Text>
+        {matchedProducts.map((product, index) => (
+          <Text key={index} style={styles.searchedProductText}>{product}</Text>
+        ))}
           <FlatList
             data={matchedProductsDetails}
             horizontal={true}
@@ -355,6 +358,13 @@ const styles = StyleSheet.create({
   },
   matchedProductInfo: {
     fontWeight: 'bold',
+  },
+  searchedProductText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 5,
   },
 });
 
