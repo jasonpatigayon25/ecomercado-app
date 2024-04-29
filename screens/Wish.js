@@ -228,6 +228,7 @@ const Wish = ({ navigation }) => {
       </Animated.View>
       {selectedImage && (
         <View style={styles.imageContainer}>
+          <Text style={styles.matchedImagesSearch}>Searched Image:</Text>
           <Image source={{ uri: selectedImage }} style={styles.image} />
         </View>
       )}
@@ -279,12 +280,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   imageContainer: {
+    flexDirection: 'row', 
     alignItems: 'center',
+    justifyContent: 'space-between', 
     marginVertical: 20,
+    paddingHorizontal: 10, 
   },
   image: {
-    width: 250,
-    height: 250,
+    width: 80,
+    height: 80,
     borderRadius: 20,
     borderWidth: 2,
     borderColor: '#D3D3D3', 
@@ -292,6 +296,11 @@ const styles = StyleSheet.create({
   matchedImagesContainer: {
     alignItems: 'center',
     paddingBottom: 20,
+  },
+  matchedImagesSearch: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
   },
   matchedImagesText: {
     fontSize: 20,
