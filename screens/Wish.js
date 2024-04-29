@@ -153,7 +153,7 @@ const Wish = ({ navigation }) => {
   
       productsSnapshot.forEach((doc) => {
         const product = doc.data();
-        if (detectedLabels.some((label) => product.name.toLowerCase().includes(label))) {
+        if (product.publicationStatus === 'approved' && detectedLabels.some((label) => product.name.toLowerCase().includes(label))) {
           matchedProductsData.push({
             id: doc.id,
             name: product.name,

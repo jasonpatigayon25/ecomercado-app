@@ -269,7 +269,7 @@ const SearchProducts = () => {
         </TouchableOpacity>
       );
     }
-    return null; // Do not render anything if the product is not approved
+    return null;
   };
 
   const renderSuggestionItem = ({ item }) => (
