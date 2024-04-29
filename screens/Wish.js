@@ -185,25 +185,58 @@ const Wish = ({ navigation }) => {
     }
   };
 
-  const renderMatchedProduct = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('ProductDetail', { product: item })}
-    >
-      <View style={styles.matchedProductCard}>
-        {item.photo ? (
-          <View style={styles.matchedImageContainer}>
-            <Image source={{ uri: item.photo }} style={styles.matchedImageItem} />
-          </View>
-        ) : (
-          <Text>No Image Available</Text>
-        )}
-        <Text style={styles.matchedProductTitle}>{item.name}</Text>
-        <Text style={styles.matchedProductText}>Price: <Text style={styles.matchedProductInfo}>{item.price}</Text></Text>
-        <Text style={styles.matchedProductText}>Category: <Text style={styles.matchedProductInfo}>{item.category}</Text></Text>
-        <Text style={styles.matchedProductText}>Quantity: <Text style={styles.matchedProductInfo}>{item.quantity}</Text></Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderMatchedProduct = (product, index) => {
+    if (!product) {
+      console.error("Product is undefined");
+      return null;
+    }
+  
+    const isEvenIndex = index % 2 === 0;
+
+    if (isEvenIndex) {
+      const nextProduct = matchedProductsDetails[index + 1];
+      return (
+        <View key={index} style={styles.matchedProductRow}>
+          <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product })}>
+            <View style={styles.matchedProductCard}>
+              {product.photo ? (
+                <Image source={{ uri: product.photo }} style={styles.matchedImageItem} />
+              ) : (
+                <Text>No Image Available</Text>
+              )}
+              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productCategory}>
+                <Text style={styles.matchedProductInfo}>{product.category}</Text>
+              </Text>
+              <Text style={styles.productPrice}>
+                <Text style={styles.matchedProductInfo}>{product.price}</Text>
+              </Text>
+            </View>
+          </TouchableOpacity>
+          {nextProduct && (
+            <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: nextProduct })}>
+              <View style={styles.matchedProductCard}>
+                {nextProduct.photo ? (
+                  <Image source={{ uri: nextProduct.photo }} style={styles.matchedImageItem} />
+                ) : (
+                  <Text>No Image Available</Text>
+                )}
+                <Text style={styles.productName}>{nextProduct.name}</Text>
+                <Text style={styles.productCategory}>
+                  <Text style={styles.matchedProductInfo}>{nextProduct.category}</Text>
+                </Text>
+                <Text style={styles.productPrice}>
+                  <Text style={styles.matchedProductInfo}>{nextProduct.price}</Text>
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    } else {
+      return null;
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -235,15 +268,7 @@ const Wish = ({ navigation }) => {
      {matchedProducts.length > 0 && (
       <View style={styles.matchedImagesContainer}>
         <Text style={styles.matchedImagesText}>Matched Products:</Text>
-        {matchedProducts.map((product, index) => (
-          <Text key={index} style={styles.searchedProductText}>{product}</Text>
-        ))}
-          <FlatList
-            data={matchedProductsDetails}
-            horizontal={true}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={renderMatchedProduct}  
-          />
+        {matchedProductsDetails.map(renderMatchedProduct)}
         </View>
       )}
 
@@ -374,6 +399,34 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 5,
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#05652D',
+    marginBottom: 6,
+  },
+  productCategory: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#ECECEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
+    marginVertical: 4,
+    marginHorizontal: 2,
+    textAlign: 'center',
+  },
+  productPrice: {
+    color: '#05652D',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  matchedProductRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });
 
