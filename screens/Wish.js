@@ -311,6 +311,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     flexDirection: 'row', 
     alignItems: 'center',
+    justifyContent: 'space-between', 
     marginVertical: 20,
     paddingHorizontal: 10, 
   },
