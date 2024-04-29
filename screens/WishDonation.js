@@ -9,7 +9,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Animated } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 
-const Wish = ({ navigation, route }) => {
+const WishDonation = ({ navigation }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [matchedProducts, setMatchedProducts] = useState([]);
   const [error, setError] = useState('');
@@ -17,12 +17,6 @@ const Wish = ({ navigation, route }) => {
   const [matchedProductsDetails, setMatchedProductsDetails] = useState([]);
   const [photoChosen, setPhotoChosen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (route.params?.shouldOpenConfirmModal) {
-      handleChoosePhoto();
-    }
-  }, [route.params?.shouldOpenConfirmModal]);
 
   const scaleAnim = new Animated.Value(1);
 
@@ -56,7 +50,7 @@ const Wish = ({ navigation, route }) => {
     };
   
     Alert.alert(
-      "Search Via Image",
+      "Upload Photo",
       "Choose an option",
       [
         {
@@ -485,4 +479,4 @@ noProductMatchedText: {
 },
 });
 
-export default Wish;
+export default WishDonation;

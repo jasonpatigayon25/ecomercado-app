@@ -229,7 +229,7 @@ const SearchProducts = () => {
   };
 
   const navigateToWish = () => {
-    navigation.navigate('Wish');
+    navigation.navigate('Wish', { shouldOpenConfirmModal: true });
   };
 
   const navigateToSearchDonation = () => {
