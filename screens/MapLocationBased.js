@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WebView } from 'react-native-webview';
-import { View, Button, StyleSheet, Text } from 'react-native';
+import { View, Button, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Menu, Provider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 
@@ -214,7 +214,7 @@ const MapLocationBased = () => {
             <Button
               onPress={() => setMenuVisible(true)}
               title="Select a city or municipality"
-              color="#05652D"
+              color="#008000"
             />
           }
         >
@@ -235,7 +235,9 @@ const MapLocationBased = () => {
             />
           ))}
         </Menu>
+        <TouchableOpacity onPress={() => setMenuVisible(true)}>
         <Text style={styles.infoText}>Selected Area: {city}</Text>
+        </TouchableOpacity>
         <WebView
           ref={webViewRef}
           originWhitelist={['*']}
@@ -245,11 +247,13 @@ const MapLocationBased = () => {
           domStorageEnabled={true}
           onMessage={onMessage}
         />
+        <View style={styles.buttonContainer}>
         <Button
           title="Confirm"
           color="#05652D"
           onPress={confirmSelection}
         />
+        </View>
       </View>
     </Provider>
   );
@@ -268,6 +272,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#000000',
         backgroundColor: '#ffffff',
+      },
+      buttonContainer: {
+        margin: 10, 
+        marginHorizontal: 40,
       },
   })
 
