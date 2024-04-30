@@ -72,6 +72,10 @@ const MapLocationBased = () => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       setCity(data.city);
+      const selectedCity = cities.find(c => c.name === data.city);
+      if (selectedCity) {
+        setLocation({ lat: selectedCity.lat, lng: selectedCity.lng });
+      }
     } catch (e) {
       console.error("Failed to parse message from webview:", e);
     }
@@ -149,7 +153,8 @@ const MapLocationBased = () => {
         geocodeLatLng(latLng);
     }
   
-      function updateMap(latitude, longitude, name) {
+    function updateMap(latitude, longitude, name) {
+        console.log("Updating map to: ", latitude, longitude, name); // Add this line
         var newPosition = {lat: latitude, lng: longitude};
         map.setCenter(newPosition);
         marker.setPosition(newPosition);
@@ -157,7 +162,7 @@ const MapLocationBased = () => {
         marker.setTitle(name);
         infoWindow.setContent(name);
         infoWindow.open(map, marker);
-      }
+    }
       function geocodeLatLng(latlng) {
         var geocoder = new google.maps.Geocoder();
         geocoder.geocode({ 'location': latlng }, function(results, status) {
@@ -213,11 +218,13 @@ const MapLocationBased = () => {
               onPress={() => {
                 setCity(c.name);
                 setLocation({ lat: c.lat, lng: c.lng });
-                webViewRef.current?.injectJavaScript(`
-                  updateMap(${c.lat}, ${c.lng}, '${c.name}');
-                `);
+                setTimeout(() => {
+                    webViewRef.current?.injectJavaScript(`
+                        updateMap(${c.lat}, ${c.lng}, '${c.name}');
+                    `);
+                }, 100); 
                 setMenuVisible(false);
-              }}
+            }}
               title={c.name}
             />
           ))}
