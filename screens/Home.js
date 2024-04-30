@@ -239,13 +239,22 @@ const Home = ({ navigation, route }) => {
 
   const renderProductItem = ({ item }) => (
     <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: item })}>
+      <View style={styles.popularContainer}>
       <Image source={{ uri: item.photo }} style={styles.carouselImage} />
+      </View>
     </TouchableOpacity>
   );
 
   const renderRecommendedProductItem = ({ item }) => (
     <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: item })}>
+      <View style={styles.recommendationContainer}>
       <Image source={{ uri: item.photo }} style={styles.recommendedImage} />
+      <View style={styles.productDetailsContainer}>
+        <View style={styles.nameBackground}>
+          <Text style={styles.nameText}>{item.name}</Text>
+        </View>
+      </View>
+      </View>
     </TouchableOpacity>
   );
 
@@ -697,7 +706,7 @@ const styles = StyleSheet.create({
   recommendedImage: {
     width: 200,
     height: 150,
-    marginRight: 10,
+    resizeMode: 'cover',
     borderRadius: 10,
   },
 
@@ -858,8 +867,9 @@ searchSuggestions: {
     left: 20,
     backgroundColor: 'rgba(5, 101, 45, 0.7)', 
     padding: 8,
-    borderTopRightRadius: 20,
+
     borderTopLeftRadius: 20,
+    borderBottomRightRadius: 50,
   },
   carouselTitle: {
     color: 'white',
@@ -1008,6 +1018,58 @@ searchSuggestions: {
     width: 100,
     height: 100,
   },
+  productName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#05652D',
+    marginBottom: 6,
+  },
+  productCategory: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#ECECEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
+    marginVertical: 4,
+    marginHorizontal: 2,
+    textAlign: 'center',
+  },
+  productPrice: {
+    color: '#05652D',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  nameBackground: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+    padding: 5,
+    shadowColor: 'rgba(0, 0, 0, 0.2)',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 5,
+    borderRadius: 10,
+  },
+  nameText: {
+    color: 'white',
+  },
+  productDetailsContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  recommendationContainer: {
+    marginRight: 5,
+  }
 });
 
 
