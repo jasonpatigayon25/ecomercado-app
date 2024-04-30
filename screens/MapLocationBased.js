@@ -69,7 +69,12 @@ const MapLocationBased = () => {
   }, [location, city]);
 
   const onMessage = (event) => {
-    setCity(event.nativeEvent.data);
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      setCity(data.city);
+    } catch (e) {
+      console.error("Failed to parse message from webview:", e);
+    }
   };
 
   const webViewRef = React.useRef(null);
@@ -103,45 +108,46 @@ const MapLocationBased = () => {
     <script>
       var map, marker, circle, infoWindow;
       function initMap(latitude, longitude, name) {
-        var position = {lat: latitude, lng: longitude};
+        var position = { lat: latitude, lng: longitude };
         map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 12,
-          center: position
+            zoom: 12,
+            center: position
         });
         marker = new google.maps.Marker({
-          position: position,
-          map: map,
-          title: name
+            position: position,
+            map: map,
+            title: name
         });
-  
+    
         circle = new google.maps.Circle({
-          strokeColor: '#006400',
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: '#00FF00',
-          fillOpacity: 0.35,
-          map: map,
-          center: position,
-          radius: 5000  // 5 kilometers
+            strokeColor: '#006400',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#00FF00',
+            fillOpacity: 0.35,
+            map: map,
+            center: position,
+            radius: 5000 // 5 kilometers
         });
-  
+    
         infoWindow = new google.maps.InfoWindow({
-          content: name
+            content: name
         });
-  
+    
         infoWindow.open(map, marker);
-  
-        // Add a listener for the click event
-        map.addListener('click', function(e) {
-          placeMarkerAndPanTo(e.latLng, map);
+    
+        // Add a listener for the click event to move the marker and pan the map.
+        map.addListener('click', function (e) {
+            placeMarkerAndPanTo(e.latLng, map);
         });
-      }
+    }
   
       function placeMarkerAndPanTo(latLng, map) {
         marker.setPosition(latLng);
         map.panTo(latLng);
         circle.setCenter(latLng);
-      }
+        geocodeLatLng(latLng);
+    }
   
       function updateMap(latitude, longitude, name) {
         var newPosition = {lat: latitude, lng: longitude};
@@ -174,7 +180,8 @@ const MapLocationBased = () => {
       }
 
       function updateSelectedArea(area) {
-        window.ReactNativeWebView.postMessage(area);
+        const message = JSON.stringify({ city: area });
+        window.ReactNativeWebView.postMessage(message);
       }
     </script>
   </head>
