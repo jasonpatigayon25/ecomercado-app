@@ -77,12 +77,5 @@
   "devDependencies": {
     "@babel/core": "^7.20.0"
   },
-  "private": true,
-  "expo": {
-    "install": {
-      "exclude": [
-        "react-native-maps"
-      ]
-    }
-  }
+  "private": true
 }
