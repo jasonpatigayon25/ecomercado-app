@@ -904,6 +904,7 @@ searchSuggestions: {
     borderRadius: 20,
     paddingVertical: 5,
     paddingHorizontal: 10,
+    top: -10,
   },
   filterText: {
     color: '#05652D',
