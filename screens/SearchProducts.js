@@ -299,7 +299,7 @@ const SearchProducts = () => {
         <TouchableOpacity style={styles.switchContainer} onPress={navigateToSearchDonation}>
           <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Donation</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapViewer')}>
+        <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBased')}>
           <Text style={styles.filterText}>Cebu <Icon name="filter" size={20} color="#666" /></Text>
         </TouchableOpacity>
       </View>

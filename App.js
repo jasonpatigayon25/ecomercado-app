@@ -104,6 +104,7 @@ import SearchDonations from './screens/SearchDonations';
 import WishDonation from './screens/WishDonation';
 import MapSelector from './screens/MapSelector';
 import MapViewer from './screens/MapViewer';
+import MapLocationBased from './screens/MapLocationBased';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -382,6 +383,7 @@ const App = () => {
               <Stack.Screen name="OrdersConfirmation" component={OrdersConfirmation} />
               <Stack.Screen name="MapSelector" component={MapSelector} />
               <Stack.Screen name="MapViewer" component={MapViewer} />
+              <Stack.Screen name="MapLocationBased" component={MapLocationBased} />
               <Stack.Screen name="Login" component={Login} />
               <Stack.Screen name="Logout" component={MainTabs} options={{ headerRight: () => <Button title="Logout" onPress={handleLogout} /> }} />
             </>
