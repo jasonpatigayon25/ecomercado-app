@@ -243,7 +243,7 @@ const SearchDonations = () => {
         <TouchableOpacity style={styles.switchContainer} onPress={navigateToSearchProducts}>
           <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Products</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBased')}>
+        <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBasedDonation')}>
         <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
         </TouchableOpacity>
       </View>

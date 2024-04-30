@@ -105,6 +105,8 @@ import WishDonation from './screens/WishDonation';
 import MapSelector from './screens/MapSelector';
 import MapViewer from './screens/MapViewer';
 import MapLocationBased from './screens/MapLocationBased';
+import MapLocationBasedHome from './screens/MapLocationBasedHome';
+import MapLocationBasedDonation from './screens/MapLocationBasedDonation';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -384,6 +386,8 @@ const App = () => {
               <Stack.Screen name="MapSelector" component={MapSelector} />
               <Stack.Screen name="MapViewer" component={MapViewer} />
               <Stack.Screen name="MapLocationBased" component={MapLocationBased} />
+              <Stack.Screen name="MapLocationBasedDonation" component={MapLocationBasedDonation} />
+              <Stack.Screen name="MapLocationBasedHome" component={MapLocationBasedHome} />
               <Stack.Screen name="Login" component={Login} />
               <Stack.Screen name="Logout" component={MainTabs} options={{ headerRight: () => <Button title="Logout" onPress={handleLogout} /> }} />
             </>
