@@ -85,7 +85,6 @@ const SearchDonations = () => {
       try {
         const recommendedQ = query(
           collection(db, 'donation'),
-          limit(10) 
         );
         const recommendedSnapshot = await getDocs(recommendedQ);
         const recommendedResults = recommendedSnapshot.docs
@@ -275,7 +274,7 @@ const SearchDonations = () => {
         <>
           <Text style={styles.recommendedText}>Donations You Can Request</Text>
           <FlatList
-            data={recommendedDonations.slice(0, 10)}
+            data={recommendedDonations}
             renderItem={renderDonationItem}
             keyExtractor={(item, index) => index.toString()}
             numColumns={2}
