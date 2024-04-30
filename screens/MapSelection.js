@@ -3,9 +3,9 @@ import { WebView } from 'react-native-webview';
 import { View, Button, StyleSheet, Text } from 'react-native';
 import { Menu, Provider } from 'react-native-paper';
 
-const MapLocationBased = () => {
+const MapSelection = () => {
   const [location, setLocation] = useState({ lat: 10.3157, lng: 123.8854 });
-  const [city, setCity] = useState('Cebu');
+  const [city, setCity] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
 
   const cities = [
@@ -67,10 +67,6 @@ const MapLocationBased = () => {
       }
     `);
   }, [location, city]);
-
-  const onMessage = (event) => {
-    setCity(event.nativeEvent.data);
-  };
 
   const webViewRef = React.useRef(null);
 
@@ -152,30 +148,6 @@ const MapLocationBased = () => {
         infoWindow.setContent(name);
         infoWindow.open(map, marker);
       }
-      function geocodeLatLng(latlng) {
-        var geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ 'location': latlng }, function(results, status) {
-          if (status === 'OK') {
-            if (results[0]) {
-              var address = results[0].formatted_address;
-              // Find the city or municipality component in the address
-              var city = results[0].address_components.find(function(component) {
-                return component.types.includes('locality') || component.types.includes('administrative_area_level_2');
-              });
-              city = city ? city.long_name : 'Unknown area';
-              updateSelectedArea(city);
-            } else {
-              updateSelectedArea('No results found');
-            }
-          } else {
-            updateSelectedArea('Geocoder failed due to: ' + status);
-          }
-        });
-      }
-
-      function updateSelectedArea(area) {
-        window.ReactNativeWebView.postMessage(area);
-      }
     </script>
   </head>
   <body onload="initMap(${location.lat}, ${location.lng}, '${city}')">
@@ -192,30 +164,22 @@ const MapLocationBased = () => {
         <Menu
           visible={menuVisible}
           onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <Button
-              onPress={() => setMenuVisible(true)}
-              title="Select a city or municipality"
-              color="#05652D"
-            />
-          }
+          anchor={<Button onPress={() => setMenuVisible(true)} title="Select a city or municipality" />}
+          style={styles.menuStyle}
         >
           {cities.map((c, index) => (
-            <Menu.Item
-              key={index}
-              onPress={() => {
-                setCity(c.name);
-                setLocation({ lat: c.lat, lng: c.lng });
-                webViewRef.current?.injectJavaScript(`
-                  updateMap(${c.lat}, ${c.lng}, '${c.name}');
-                `);
-                setMenuVisible(false);
-              }}
-              title={c.name}
-            />
+            <Menu.Item key={index} onPress={() => {
+              setCity(c.name);
+              setLocation({ lat: c.lat, lng: c.lng });
+              setMenuVisible(false);
+            }} title={c.name} />
           ))}
         </Menu>
-        <Text style={styles.infoText}>Selected Area: {city}</Text>
+        {city && (
+          <View style={styles.infoContainer}>
+            <Text style={styles.infoText}>Selected Area: {city}</Text>
+          </View>
+        )}
         <WebView
           ref={webViewRef}
           originWhitelist={['*']}
@@ -223,7 +187,6 @@ const MapLocationBased = () => {
           style={{ flex: 1 }}
           javaScriptEnabled={true}
           domStorageEnabled={true}
-          onMessage={onMessage}
         />
       </View>
     </Provider>
@@ -239,11 +202,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#ffffff', 
       },
       infoText: {
-        padding: 10,
         fontSize: 16,
         color: '#000000',
-        backgroundColor: '#ffffff',
-      },
+      }
   })
 
-export default MapLocationBased;
+export default MapSelection;
