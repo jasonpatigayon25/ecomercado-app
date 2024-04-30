@@ -26,6 +26,11 @@ const Home = ({ navigation, route }) => {
   const carouselRef = useRef(null);
   const wishlistIcon = require('../assets/wishlist-donation.png');
 
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingMostPopular, setLoadingMostPopular] = useState(true);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
+  const [loadingDonations, setLoadingDonations] = useState(true);
+
   const [categoryType, setCategoryType] = useState('productCategories');
 
   const [selectedCity, setSelectedCity] = useState('Cebu'); 
@@ -83,6 +88,8 @@ const Home = ({ navigation, route }) => {
 
   useEffect(() => {
     const fetchCategories = async () => {
+      setLoadingCategories(true);
+    try {
       const collectionName = categoryType === 'productCategories' ? "categories" : "donationCategories";
       const querySnapshot = await getDocs(collection(db, collectionName));
       let categories = querySnapshot.docs.map(doc => ({
@@ -91,13 +98,20 @@ const Home = ({ navigation, route }) => {
       }));
       categories.sort((a, b) => a.title.localeCompare(b.title));
       setFirestoreCategories(categories);
-    };
+      setLoadingCategories(false); 
+    } catch (error) {
+      console.error("Error fetching categories: ", error);
+      setLoadingCategories(false); 
+    }
+  };
   
     fetchCategories();
   }, [categoryType]);
 
   useEffect(() => {
     const fetchMostPopularProducts = async () => {
+      setLoadingMostPopular(true); 
+      try {
       const searchHitsRef = collection(db, "searchHits");
       const hitsQuery = query(searchHitsRef, orderBy("hits", "desc"), limit(5));
       const querySnapshot = await getDocs(hitsQuery);
@@ -113,13 +127,21 @@ const Home = ({ navigation, route }) => {
         .filter(product => !product.isDisabled && product.quantity > 0);
     
       setMostPopularProducts(products);
-    };
+      setLoadingMostPopular(false);
+    } catch (error) {
+      console.error("Error fetching most popular products: ", error);
+      setLoadingMostPopular(false);
+    }
+  };
   
     fetchMostPopularProducts();
   }, []);
   
   useEffect(() => {
     const fetchRecommendedProducts = async () => {
+
+      setLoadingRecommended(true);
+      try {
       const auth = getAuth();
       const user = auth.currentUser;
   
@@ -181,8 +203,12 @@ const Home = ({ navigation, route }) => {
       );
   
       setRecommendedProducts(recommendedProducts.slice(0, Math.min(50, Math.max(20, recommendedProducts.length))));
-    };
-  
+      setLoadingRecommended(false);
+    } catch (error) {
+      console.error("Error fetching recommended products: ", error);
+      setLoadingRecommended(false);
+    }
+  };
     fetchRecommendedProducts();
   }, [selectedCity]);
   
@@ -194,12 +220,20 @@ const Home = ({ navigation, route }) => {
     const targetScreen = type === 'productCategories' ? 'CategoryResults' : 'CategoryResultsDonation';
   
     return (
-      <TouchableOpacity onPress={() => navigation.navigate(targetScreen, { categoryName: title })}>
-        <View style={styles.category}>
-          <Image source={{ uri: image }} style={styles.categoryImage} />
-          <Text style={styles.categoryTitle}>{title}</Text>
-        </View>
-      </TouchableOpacity>
+      <>
+        {loadingCategories ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator} />
+          </View>
+        ) : (
+          <TouchableOpacity onPress={() => navigation.navigate(targetScreen, { categoryName: title })}>
+            <View style={styles.category}>
+              <Image source={{ uri: image }} style={styles.categoryImage} />
+              <Text style={styles.categoryTitle}>{title}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </>
     );
   };
 
@@ -275,6 +309,8 @@ const Home = ({ navigation, route }) => {
 
   useEffect(() => {
     const fetchDonations = async () => {
+      setLoadingDonations(true); 
+      try {
       const auth = getAuth();
       const user = auth.currentUser;
   
@@ -297,7 +333,12 @@ const Home = ({ navigation, route }) => {
         .filter(donation => donation.location.toLowerCase().includes(currentLocation));
   
       setDonations(donationsList);
-    };
+      setLoadingDonations(false);
+    } catch (error) {
+      console.error("Error fetching donations: ", error);
+      setLoadingDonations(false); 
+    }
+  };
   
     fetchDonations();
   }, [selectedCity]);
@@ -429,6 +470,11 @@ const Home = ({ navigation, route }) => {
         </ScrollView>
       </View>
         <View style={[styles.carouselContainer, styles.sectionContainer]}>
+        {loadingMostPopular ? (
+            <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
+          </View>
+        ) : (
         <FlatList
           ref={carouselRef}
           data={mostPopularProducts}
@@ -444,6 +490,7 @@ const Home = ({ navigation, route }) => {
             });
           }}
         />
+      )}
           <View style={styles.carouselTitleContainer}>
             <Text style={styles.carouselTitle}>{selectedHeader}</Text>
           </View>
@@ -455,12 +502,16 @@ const Home = ({ navigation, route }) => {
               <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
             </TouchableOpacity>
           </View>
-          {recommendedProducts.length === 0 ? (
-          <View style={styles.emptyProductIcon}>
-          <Icon name="shopping-bag" size={50} color="#D3D3D3" />
-          <Text style={styles.notFoundText}>No products found in {selectedCity}</Text>
-        </View>
-          ) : (
+          {loadingRecommended ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
+                    </View>
+                ) : recommendedProducts.length === 0 ? (
+                    <View style={styles.emptyProductIcon}>
+                        <Icon name="shopping-bag" size={50} color="#D3D3D3" />
+                        <Text style={styles.notFoundText}>No products found in {selectedCity}</Text>
+                    </View>
+                ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {recommendedProducts.map((product) => (
                 <View key={product.id}>
@@ -471,18 +522,22 @@ const Home = ({ navigation, route }) => {
           )}
         </View>
         <View style={[styles.donationsContainer, styles.sectionContainer]}>
-        <View style={styles.donationsHeader}>
-          <Text style={styles.sectionTitle}>Recent Donations for Users</Text>
-          <TouchableOpacity onPress={shuffleDonations} style={styles.shuffleButton}>
-            <Icon name="random" size={20} color="#05652D" />
-          </TouchableOpacity>
-        </View>
-        {donations.length === 0 ? (
-          <View style={styles.emptyProductIcon}>
-             <Icon2 name="hand-heart" size={50} color="#D3D3D3" />
-            <Text style={styles.notFoundText}>No donations found in {selectedCity}</Text>
-          </View>
-        ) : (
+                <View style={styles.donationsHeader}>
+                    <Text style={styles.sectionTitle}>Recent Donations for Users</Text>
+                    <TouchableOpacity onPress={shuffleDonations} style={styles.shuffleButton}>
+                        <Icon name="random" size={20} color="#05652D" />
+                    </TouchableOpacity>
+                </View>
+                {loadingDonations ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
+                    </View>
+                ) : donations.length === 0 ? (
+                    <View style={styles.emptyProductIcon}>
+                        <Icon2 name="hand-heart" size={50} color="#D3D3D3" />
+                        <Text style={styles.notFoundText}>No donations found in {selectedCity}</Text>
+                    </View>
+                ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {donations.map((donation) => (
               <View key={donation.id}>
@@ -943,6 +998,15 @@ searchSuggestions: {
   emptyProductIcon: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingIndicator: {
+    width: 100,
+    height: 100,
   },
 });
 
