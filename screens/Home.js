@@ -8,12 +8,9 @@ import { collection, getDocs, query, orderBy, limit, getDoc, doc, where, documen
 import { getAuth } from 'firebase/auth';
 import { BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import Geolocation from 'react-native-geolocation-service';
-import { PermissionsAndroid, Platform} from 'react-native';
-import * as Location from 'expo-location';
 import axios from 'axios';
 
-const Home = ({ navigation }) => {
+const Home = ({ navigation, route }) => {
   const [firestoreCategories, setFirestoreCategories] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedHeader] = useState('Most Popular Products');
@@ -23,17 +20,22 @@ const Home = ({ navigation }) => {
   const [categorySearchText, setCategorySearchText] = useState('');
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
-  const [isLocationLoading, setIsLocationLoading] = useState(false);
-  const [locationLevel, setLocationLevel] = useState('city');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [donations, setDonations] = useState([]);
   const carouselRef = useRef(null);
-  const [isLocationFilterActive, setIsLocationFilterActive] = useState(false);
   const wishlistIcon = require('../assets/wishlist-donation.png');
-  const [userCity, setUserCity] = useState('');
-  const [locationEnabled, setLocationEnabled] = useState(false);
 
   const [categoryType, setCategoryType] = useState('productCategories');
+
+  const [selectedCity, setSelectedCity] = useState('Cebu'); 
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (route.params?.selectedCity) {
+        setSelectedCity(route.params.selectedCity);
+      }
+    }, [route.params?.selectedCity])
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -172,17 +174,11 @@ const Home = ({ navigation }) => {
         !product.isDisabled && product.quantity > 0 && product.seller_email !== userEmail
       );
   
-      if (locationEnabled && userCity) {
-        recommendedProducts = recommendedProducts.filter(product => 
-          product.location && product.location.includes(userCity)
-        );
-      }
-  
       setRecommendedProducts(recommendedProducts.slice(0, Math.min(20, Math.max(10, recommendedProducts.length))));
     };
   
     fetchRecommendedProducts();
-  }, [locationEnabled, userCity]);
+  }, []);
   
   const handleSearchFocus = () => {
     navigation.navigate('SearchProducts', { searchText });
@@ -311,63 +307,6 @@ const Home = ({ navigation }) => {
       <Image source={{ uri: item.photo }} style={styles.donationImage} />
     </TouchableOpacity>
   );  
-
-  const handleLocation = async () => {
-    setIsLocationLoading(true);
-    
-    try {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      console.log('Location permission not granted');
-      setIsLocationLoading(false);
-      return;
-    }
-
-      let location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-  
-      const googleApiKey = 'AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g';
-  
-      const response = await axios.get(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleApiKey}`
-      );
-  
-      if (response.data.results.length > 0) {
-        const addressComponents = response.data.results[0].address_components;
-        const cityComponent = addressComponents.find(component => component.types.includes("locality"));
-        const provinceComponent = addressComponents.find(component => component.types.includes("administrative_area_level_2"));
-        const countryComponent = addressComponents.find(component => component.types.includes("country"));
-  
-        let locationText = '';
-        switch (locationLevel) {
-          case 'city':
-            locationText = cityComponent ? cityComponent.long_name : 'Unknown City';
-            setLocationLevel('province');
-            break;
-          case 'province':
-            locationText = provinceComponent ? provinceComponent.long_name : 'Unknown Province';
-            setLocationLevel('country');
-            break;
-          case 'country':
-            locationText = countryComponent ? countryComponent.long_name : 'Philippines'; 
-            setLocationLevel('city');
-            break;
-          default:
-            locationText = 'Unknown Location';
-            setLocationLevel('city');
-            break;
-        }
-  
-        setUserCity(locationText);
-        setLocationEnabled(true);
-      }
-      setIsLocationLoading(false);
-    } catch (error) {
-      console.error('Error fetching location: ', error);
-      setIsLocationLoading(false);
-    }
-  };
-  
 
   return (
     <View style={styles.container}>
@@ -503,39 +442,9 @@ const Home = ({ navigation }) => {
         <View style={[styles.recommendedContainer, styles.sectionContainer]}>
           <View style={styles.locationHeader}>
             <Text style={styles.sectionTitle}>Recommended for You</Text>
-            <View style={styles.locationFilterContainer}>
-              {isLocationLoading ? (
-                <ActivityIndicator size="small" color="#05652D" />
-              ) : locationEnabled ? (
-                <TouchableOpacity onPress={handleLocation}>
-                  <View style={styles.locationContainer}>
-                    <Text style={styles.locationText}>{userCity}</Text>
-                    <Icon name="map-marker" size={15} color="#05652D" style={styles.locationIcon} />
-                  </View>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity onPress={handleLocation} style={styles.enableLocationButton}>
-                  {locationLevel === 'city' && (
-                    <>
-                      <Text style={styles.locationText}>Enable Nearby</Text>
-                      <Icon name="map-marker" size={15} color="#05652D" style={styles.locationIcon} />
-                    </>
-                  )}
-                  {locationLevel === 'province' && (
-                    <>
-                      <Text style={styles.locationText}>Go to Province</Text>
-                      <Icon name="map-marker" size={15} color="#05652D" style={styles.locationIcon} />
-                    </>
-                  )}
-                  {locationLevel === 'country' && (
-                    <>
-                      <Text style={styles.locationText}>Go to Philippines</Text>
-                      <Icon name="map-marker" size={15} color="#05652D" style={styles.locationIcon} />
-                    </>
-                  )}
-                </TouchableOpacity>
-              )}
-            </View>
+            <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBasedHome')}>
+        <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
+        </TouchableOpacity>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {recommendedProducts.map((product) => (
@@ -987,6 +896,19 @@ searchSuggestions: {
   activeSwitchButton: {
     fontWeight: 'bold',
     color: 'green',
+  },
+  filterContainer: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  filterText: {
+    color: '#05652D',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 
