@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Image, ScrollView, TouchableOpacity, Modal, Alert, Button } from 'react-native';
 import { ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
 import { FlatList } from 'react-native-gesture-handler';
 import { db } from '../config/firebase';
 import { collection, getDocs, query, orderBy, limit, getDoc, doc, where, documentId, onSnapshot } from 'firebase/firestore';
@@ -129,6 +130,8 @@ const Home = ({ navigation, route }) => {
   
       const userEmail = user.email;
       const productsRef = collection(db, 'products');
+
+      const currentLocation = selectedCity.toLowerCase();
       
       const userRecommendRef = doc(db, 'userRecommend', user.uid);
       const userRecommendSnapshot = await getDoc(userRecommendRef);
@@ -158,6 +161,9 @@ const Home = ({ navigation, route }) => {
           const categoryProducts = categoryProductsSnapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(product => product.publicationStatus === 'approved');
+            
+            const categoryProductsInLocation = categoryProducts.filter(product => product.location.toLowerCase().includes(currentLocation));
+
           additionalProducts.push(...categoryProducts);
         }
   
@@ -169,16 +175,16 @@ const Home = ({ navigation, route }) => {
           .map(doc => ({ id: doc.id, ...doc.data() }))
           .filter(product => product.publicationStatus === 'approved');
       }
-  
+
       recommendedProducts = recommendedProducts.filter(product => 
-        !product.isDisabled && product.quantity > 0 && product.seller_email !== userEmail
+        !product.isDisabled && product.quantity > 0 && product.seller_email !== userEmail && product.location.toLowerCase().includes(currentLocation)
       );
   
-      setRecommendedProducts(recommendedProducts.slice(0, Math.min(20, Math.max(10, recommendedProducts.length))));
+      setRecommendedProducts(recommendedProducts.slice(0, Math.min(50, Math.max(20, recommendedProducts.length))));
     };
   
     fetchRecommendedProducts();
-  }, []);
+  }, [selectedCity]);
   
   const handleSearchFocus = () => {
     navigation.navigate('SearchProducts', { searchText });
@@ -276,6 +282,8 @@ const Home = ({ navigation, route }) => {
         console.error("No user logged in");
         return;
       }
+
+      const currentLocation = selectedCity.toLowerCase();
   
       const donationsRef = collection(db, 'donation');
       const querySnapshot = await getDocs(query(donationsRef, orderBy("createdAt", "asc"), limit(20)));
@@ -285,13 +293,14 @@ const Home = ({ navigation, route }) => {
         .filter(donation => donation.publicationStatus === 'approved') 
         .filter(donation => donation.isDonated !== true)
         .filter(donation => donation.isDisabled !== true)
-        .filter(donation => donation.donor_email !== user.email);
+        .filter(donation => donation.donor_email !== user.email)
+        .filter(donation => donation.location.toLowerCase().includes(currentLocation));
   
       setDonations(donationsList);
     };
   
     fetchDonations();
-  }, []);
+  }, [selectedCity]);
 
   const shuffleDonations = () => {
     let shuffled = [...donations];
@@ -443,24 +452,37 @@ const Home = ({ navigation, route }) => {
           <View style={styles.locationHeader}>
             <Text style={styles.sectionTitle}>Recommended for You</Text>
             <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBasedHome')}>
-        <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
-        </TouchableOpacity>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {recommendedProducts.map((product) => (
-              <View key={product.id}>
-                {renderRecommendedProductItem({ item: product })}
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-        <View style={[styles.donationsContainer, styles.sectionContainer]}>
-          <View style={styles.donationsHeader}>
-            <Text style={styles.sectionTitle}>Recent Donations for Users</Text>
-            <TouchableOpacity onPress={shuffleDonations} style={styles.shuffleButton}>
-              <Icon name="random" size={20} color="#05652D" />
+              <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
             </TouchableOpacity>
           </View>
+          {recommendedProducts.length === 0 ? (
+          <View style={styles.emptyProductIcon}>
+          <Icon name="shopping-bag" size={50} color="#D3D3D3" />
+          <Text style={styles.notFoundText}>No products found in {selectedCity}</Text>
+        </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {recommendedProducts.map((product) => (
+                <View key={product.id}>
+                  {renderRecommendedProductItem({ item: product })}
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+        <View style={[styles.donationsContainer, styles.sectionContainer]}>
+        <View style={styles.donationsHeader}>
+          <Text style={styles.sectionTitle}>Recent Donations for Users</Text>
+          <TouchableOpacity onPress={shuffleDonations} style={styles.shuffleButton}>
+            <Icon name="random" size={20} color="#05652D" />
+          </TouchableOpacity>
+        </View>
+        {donations.length === 0 ? (
+          <View style={styles.emptyProductIcon}>
+             <Icon2 name="hand-heart" size={50} color="#D3D3D3" />
+            <Text style={styles.notFoundText}>No donations found in {selectedCity}</Text>
+          </View>
+        ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {donations.map((donation) => (
               <View key={donation.id}>
@@ -468,7 +490,8 @@ const Home = ({ navigation, route }) => {
               </View>
             ))}
           </ScrollView>
-        </View>
+        )}
+      </View>
       </ScrollView>
     </View>
   );
@@ -860,6 +883,7 @@ searchSuggestions: {
   notFoundText: {
     marginTop: 10,
     fontSize: 16,
+    color: '#CCC',
   }, 
   cartCountContainer: {
     position: 'absolute',
@@ -910,6 +934,15 @@ searchSuggestions: {
     color: '#05652D',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  emptyProductIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  emptyProductIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
