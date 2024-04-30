@@ -14,8 +14,13 @@ const SearchProducts = () => {
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
 
+  const [selectedCity, setSelectedCity] = useState('Cebu');
+
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
+      if (navigation.getState().routes.slice(-1)[0].params?.selectedCity) {
+        setSelectedCity(navigation.getState().routes.slice(-1)[0].params.selectedCity);
+      }
       if (searchInputRef.current) {
         searchInputRef.current.focus();
       }
@@ -300,7 +305,7 @@ const SearchProducts = () => {
           <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Donation</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBased')}>
-          <Text style={styles.filterText}>Cebu <Icon name="filter" size={20} color="#666" /></Text>
+        <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
         </TouchableOpacity>
       </View>
 
@@ -502,6 +507,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 5,
     paddingHorizontal: 10,
+  },
+  filterText: {
+    color: '#05652D',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 

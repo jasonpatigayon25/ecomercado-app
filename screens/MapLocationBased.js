@@ -2,11 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { WebView } from 'react-native-webview';
 import { View, Button, StyleSheet, Text } from 'react-native';
 import { Menu, Provider } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 
 const MapLocationBased = () => {
   const [location, setLocation] = useState({ lat: 10.3157, lng: 123.8854 });
   const [city, setCity] = useState('Cebu');
   const [menuVisible, setMenuVisible] = useState(false);
+  const navigation = useNavigation();
+
+  const confirmSelection = () => {
+    navigation.navigate('SearchProducts', { selectedCity: city });
+  };
 
   const cities = [
     { name: 'Cebu City', lat: 10.3157, lng: 123.8854 },
@@ -219,12 +225,12 @@ const MapLocationBased = () => {
                 setCity(c.name);
                 setLocation({ lat: c.lat, lng: c.lng });
                 setTimeout(() => {
-                    webViewRef.current?.injectJavaScript(`
-                        updateMap(${c.lat}, ${c.lng}, '${c.name}');
-                    `);
+                  webViewRef.current?.injectJavaScript(`
+                    updateMap(${c.lat}, ${c.lng}, '${c.name}');
+                  `);
                 }, 100); 
                 setMenuVisible(false);
-            }}
+              }}
               title={c.name}
             />
           ))}
@@ -238,6 +244,11 @@ const MapLocationBased = () => {
           javaScriptEnabled={true}
           domStorageEnabled={true}
           onMessage={onMessage}
+        />
+        <Button
+          title="Confirm"
+          color="#05652D"
+          onPress={confirmSelection}
         />
       </View>
     </Provider>
