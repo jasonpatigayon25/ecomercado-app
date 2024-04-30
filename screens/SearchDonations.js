@@ -13,9 +13,13 @@ const SearchDonations = () => {
   const [suggestions, setSuggestions] = useState([]);
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
+  const [selectedCity, setSelectedCity] = useState('Cebu');
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
+      if (navigation.getState().routes.slice(-1)[0].params?.selectedCity) {
+        setSelectedCity(navigation.getState().routes.slice(-1)[0].params.selectedCity);
+      }
       if (searchInputRef.current) {
         searchInputRef.current.focus();
       }
@@ -239,8 +243,8 @@ const SearchDonations = () => {
         <TouchableOpacity style={styles.switchContainer} onPress={navigateToSearchProducts}>
           <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Products</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.filterContainer} onPress={() => {  }}>
-          <Text style={styles.filterText}>Cebu <Icon name="filter" size={20} color="#666" /></Text>
+        <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBased')}>
+        <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
         </TouchableOpacity>
       </View>
 

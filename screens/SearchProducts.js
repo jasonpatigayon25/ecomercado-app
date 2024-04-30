@@ -14,7 +14,7 @@ const SearchProducts = () => {
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
 
-  const [selectedCity, setSelectedCity] = useState('Cebu');
+  const [selectedCity, setSelectedCity] = useState('Cebu'); 
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
