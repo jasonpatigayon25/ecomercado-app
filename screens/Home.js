@@ -286,7 +286,7 @@ const Home = ({ navigation, route }) => {
       const currentLocation = selectedCity.toLowerCase();
   
       const donationsRef = collection(db, 'donation');
-      const querySnapshot = await getDocs(query(donationsRef, orderBy("createdAt", "asc"), limit(20)));
+      const querySnapshot = await getDocs(query(donationsRef, orderBy("createdAt", "asc")));
   
       let donationsList = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
