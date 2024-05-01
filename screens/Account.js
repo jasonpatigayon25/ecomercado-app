@@ -18,8 +18,18 @@ const Account = ({ navigation }) => {
   const [approvedSCount, setApprovedSCount] = useState(0);
   const [receivingSCount, setReceivingSCount] = useState(0);
 
+  const [pendingRCount, setPendingRCount] = useState(0);
+  const [approvedRCount, setApprovedRCount] = useState(0);
+  const [receivingRCount, setReceivingRCount] = useState(0);
+
+  const [pendingDCount, setPendingDCount] = useState(0);
+  const [approvedDCount, setApprovedDCount] = useState(0);
+  const [receivingDCount, setReceivingDCount] = useState(0);
+
   const [carouselIndexOrders, setCarouselIndexOrders] = useState(0);
   const [carouselIndexSeller, setCarouselIndexSeller] = useState(0);
+  const [carouselIndexRequests, setCarouselIndexRequests] = useState(0);
+  const [carouselIndexDonor, setCarouselIndexDonor] = useState(0);
 
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -43,6 +53,8 @@ const Account = ({ navigation }) => {
     if (user) {
       fetchOrdersData();
       fetchOrdersSellerData();
+      fetchRequestsData();
+      fetchRequestsDonorData();
       const intervalOrders = setInterval(() => {
         cycleCarouselOrders();
       }, 3000);
@@ -51,9 +63,19 @@ const Account = ({ navigation }) => {
         cycleCarouselSeller();
       }, 3000);
 
+      const intervalRequests = setInterval(() => {
+        cycleCarouselRequests();
+      }, 3000);
+
+      const intervalDonor = setInterval(() => {
+        cycleCarouselDonor();
+      }, 3000);
+
       return () => {
         clearInterval(intervalOrders);
         clearInterval(intervalSeller);
+        clearInterval(intervalRequests);
+        clearInterval(intervalDonor);
       };
     }
   }, [user]);
@@ -64,6 +86,14 @@ const Account = ({ navigation }) => {
 
   const cycleCarouselSeller = () => {
     setCarouselIndexSeller((prevIndex) => (prevIndex + 1) % 3);
+  };
+
+  const cycleCarouselRequests = () => {
+    setCarouselIndexRequests((prevIndex) => (prevIndex + 1) % 3);
+  };
+
+  const cycleCarouselDonor = () => {
+    setCarouselIndexDonor((prevIndex) => (prevIndex + 1) % 3);
   };
 
   const fetchOrdersData = async () => {
@@ -120,6 +150,64 @@ const Account = ({ navigation }) => {
         setReceivingSCount(receiving);
       } catch (error) {
         console.error('Error fetching orders data:', error);
+      }
+    }
+  };
+
+  const fetchRequestsData = async () => {
+    if (user) {
+      const requestsQuery = query(
+        collection(db, 'requests'),
+        where('requesterEmail', '==', user.email)
+      );
+
+      try {
+        const querySnapshot = await getDocs(requestsQuery);
+        let pending = 0;
+        let approved = 0;
+        let receiving = 0;
+
+        querySnapshot.forEach(doc => {
+          const request = doc.data();
+          if (request.status === 'Pending') pending++;
+          else if (request.status === 'Approved') approved++;
+          else if (request.status === 'Receiving') receiving++;
+        });
+
+        setPendingRCount(pending);
+        setApprovedRCount(approved);
+        setReceivingRCount(receiving);
+      } catch (error) {
+        console.error('Error fetching orders data:', error);
+      }
+    }
+  };
+
+  const fetchRequestsDonorData = async () => {
+    if (user) {
+      const requestsQuery = query(
+        collection(db, 'requests'),
+        where('donorEmail', '==', user.email)
+      );
+  
+      try {
+        const querySnapshot = await getDocs(requestsQuery);
+        let pending = 0;
+        let approved = 0;
+        let receiving = 0;
+  
+        querySnapshot.forEach(doc => {
+          const request = doc.data();
+          if (request.status === 'Pending') pending++;
+          if (request.status === 'Approved') approved++;
+          if (request.status === 'Receiving') receiving++;
+        });
+  
+        setPendingDCount(pending);
+        setApprovedDCount(approved);
+        setReceivingDCount(receiving);
+      } catch (error) {
+        console.error('Error fetching donor data:', error);
       }
     }
   };
@@ -279,8 +367,8 @@ const fetchFollowingCount = async () => {
             <Text style={styles.followText}>Followers: <Text style={styles.countText}>{followersCount}</Text></Text>
             <Text style={styles.followText}>Following: <Text style={styles.countText}>{followingCount}</Text></Text>
         </View>
-    </View>
-</View>
+          </View>
+      </View>
         <View style={styles.divider} />
         <Text style={styles.settingTitle}>My Transactions</Text>
         <View style={styles.optionsContainer}>
@@ -292,9 +380,9 @@ const fetchFollowingCount = async () => {
             <Text style={styles.optionLabel}>Seller Management</Text>
             <TouchableOpacity style={styles.carouselContainer} onPress={cycleCarousel}>
             <Text style={styles.carouselText}>
-              {carouselIndexSeller  === 0 && `${pendingSCount} To Approve`}
-              {carouselIndexSeller  === 1 && `${approvedSCount} To Deliver`}
-              {carouselIndexSeller  === 2 && `${receivingSCount} Delivered`}
+              {carouselIndexSeller  === 0 && pendingSCount > 0 && `${pendingSCount} To Approve`}
+              {carouselIndexSeller  === 1 && approvedSCount > 0 && `${approvedSCount} To Deliver`}
+              {carouselIndexSeller  === 2 && receivingSCount> 0 && `${receivingSCount} Delivered`}
             </Text>
           </TouchableOpacity>
           </TouchableOpacity>
@@ -304,6 +392,14 @@ const fetchFollowingCount = async () => {
               <Image source={donationManagementIcon} style={styles.transactionsIcon} />
             </View>
             <Text style={styles.optionLabel}>Donation Management</Text>
+            <TouchableOpacity style={styles.carouselContainer} onPress={cycleCarousel}>
+            <Text style={styles.carouselText}>
+              {carouselIndexDonor === 0 && pendingDCount > 0 && `${pendingDCount} To Approve`}
+              {carouselIndexDonor === 1 && approvedDCount > 0 && `${approvedDCount} To Deliver`}
+              {carouselIndexDonor === 2 && receivingDCount > 0 && `${receivingDCount} Delivered`}
+            </Text>
+
+            </TouchableOpacity>
           </TouchableOpacity>
         </View>
 
@@ -315,9 +411,9 @@ const fetchFollowingCount = async () => {
             <Text style={styles.optionLabel}>My Order Transactions</Text>
             <TouchableOpacity style={styles.carouselContainer} onPress={cycleCarousel}>
             <Text style={styles.carouselText}>
-              {carouselIndexOrders  === 0 && `${pendingCount} To Pay`}
-              {carouselIndexOrders  === 1 && `${approvedCount} To Deliver`}
-              {carouselIndexOrders  === 2 && `${receivingCount} To Receive`}
+              {carouselIndexOrders  === 0 && pendingCount > 0 && `${pendingCount} To Pay`}
+              {carouselIndexOrders  === 1 && approvedCount > 0 && `${approvedCount} To Deliver`}
+              {carouselIndexOrders  === 2 && receivingCount > 0 && `${receivingCount} To Receive`}
             </Text>
           </TouchableOpacity>
           </TouchableOpacity>
@@ -327,6 +423,13 @@ const fetchFollowingCount = async () => {
               <Image source={requestIcon} style={styles.transactionsIcon} />
             </View>
             <Text style={styles.optionLabel}>Donation Request Transactions</Text>
+            <TouchableOpacity style={styles.carouselContainer} onPress={cycleCarousel}>
+            <Text style={styles.carouselText}>
+              {carouselIndexRequests  === 0 && pendingRCount > 0 && `${pendingRCount} To Approve`}
+              {carouselIndexRequests  === 1 && approvedRCount > 0 && `${approvedRCount} To Deliver`}
+              {carouselIndexRequests  === 2 && receivingRCount > 0 && `${receivingRCount} To Receive`}
+            </Text>
+            </TouchableOpacity>
           </TouchableOpacity>
         </View>
         </View>
