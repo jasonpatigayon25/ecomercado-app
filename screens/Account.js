@@ -10,11 +10,18 @@ import { Rating } from 'react-native-ratings';
 
 const Account = ({ navigation }) => {
 
+  const [pendingCount, setPendingCount] = useState(0);
+  const [approvedCount, setApprovedCount] = useState(0);
+  const [receivingCount, setReceivingCount] = useState(0);
+
+  const [pendingSCount, setPendingSCount] = useState(0);
+  const [approvedSCount, setApprovedSCount] = useState(0);
+  const [receivingSCount, setReceivingSCount] = useState(0);
+
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-
-  const marketIcon = require('../assets/market.png');
-  const donationIcon = require('../assets/donation.png');
 
   const sellerManagementIcon = require('../assets/seller-management.png');
   const donationManagementIcon = require('../assets/donation-management.png');
@@ -30,6 +37,88 @@ const Account = ({ navigation }) => {
 
   const auth = getAuth();
   const user = auth.currentUser;
+
+  useEffect(() => {
+    if (user) {
+      fetchOrdersData();
+      fetchOrdersSellerData();
+
+      const intervalId = setInterval(() => {
+        cycleCarousel();
+      }, 3000); 
+  
+      return () => {
+        clearInterval(intervalId); 
+      };
+    }
+  }, [user]);
+
+  const fetchOrdersData = async () => {
+    if (user) {
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        where('buyerEmail', '==', user.email)
+      );
+
+      try {
+        const querySnapshot = await getDocs(ordersQuery);
+        let pending = 0;
+        let approved = 0;
+        let receiving = 0;
+
+        querySnapshot.forEach(doc => {
+          const order = doc.data();
+          if (order.status === 'Pending') pending++;
+          else if (order.status === 'Approved') approved++;
+          else if (order.status === 'Receiving') receiving++;
+        });
+
+        setPendingCount(pending);
+        setApprovedCount(approved);
+        setReceivingCount(receiving);
+      } catch (error) {
+        console.error('Error fetching orders data:', error);
+      }
+    }
+  };
+
+  const fetchOrdersSellerData = async () => {
+    if (user) {
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        where('sellerEmail', '==', user.email)
+      );
+
+      try {
+        const querySnapshot = await getDocs(ordersQuery);
+        let pending = 0;
+        let approved = 0;
+        let receiving = 0;
+
+        querySnapshot.forEach(doc => {
+          const order = doc.data();
+          if (order.status === 'Pending') pending++;
+          else if (order.status === 'Approved') approved++;
+          else if (order.status === 'Receiving') receiving++;
+        });
+
+        setPendingSCount(pending);
+        setApprovedSCount(approved);
+        setReceivingSCount(receiving);
+      } catch (error) {
+        console.error('Error fetching orders data:', error);
+      }
+    }
+  };
+
+  const cycleCarousel = () => {
+    setCarouselIndex((carouselIndex + 1) % 3);
+    if (carouselIndex === 2) {
+      setTimeout(() => {
+        setCarouselIndex(0);
+      }, 3000);
+    }
+  };
 
   const [averageRating, setAverageRating] = useState(0)
 
@@ -193,6 +282,13 @@ const fetchFollowingCount = async () => {
               <Image source={sellerManagementIcon} style={styles.transactionsIcon} />
             </View>
             <Text style={styles.optionLabel}>Seller Management</Text>
+            <TouchableOpacity style={styles.carouselContainer} onPress={cycleCarousel}>
+            <Text style={styles.carouselText}>
+              {carouselIndex === 0 && `${pendingSCount} To Approve`}
+              {carouselIndex === 1 && `${approvedSCount} To Deliver`}
+              {carouselIndex === 2 && `${receivingSCount} Delivered`}
+            </Text>
+          </TouchableOpacity>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleDonationManagement}>
@@ -209,6 +305,13 @@ const fetchFollowingCount = async () => {
               <Image source={orderIcon} style={styles.transactionsIcon} />
             </View>
             <Text style={styles.optionLabel}>My Order Transactions</Text>
+            <TouchableOpacity style={styles.carouselContainer} onPress={cycleCarousel}>
+            <Text style={styles.carouselText}>
+              {carouselIndex === 0 && `${pendingCount} To Pay`}
+              {carouselIndex === 1 && `${approvedCount} To Deliver`}
+              {carouselIndex === 2 && `${receivingCount} To Receive`}
+            </Text>
+          </TouchableOpacity>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.optionItemCube, styles.halfWidth]} onPress={handleRequestApproval}>
@@ -421,7 +524,7 @@ const styles = StyleSheet.create({
   transactionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   
   optionItemCube: {
@@ -468,7 +571,22 @@ followerFollowingContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10
-}
+},
+carouselContainer: {
+  position: 'absolute',
+  top: -8,
+  right: 0,
+  backgroundColor: '#05652D',
+  paddingVertical: 5,
+  paddingHorizontal: 5,
+  borderTopEndRadius: 20,
+  borderBottomStartRadius: 20,
+},
+
+carouselText: {
+  color: '#FFFFFF',
+  fontSize: 10,
+},
 });
 
 export default Account;
