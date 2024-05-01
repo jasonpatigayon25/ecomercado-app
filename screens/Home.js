@@ -405,10 +405,8 @@ const Home = ({ navigation, route }) => {
     return (
       <TouchableOpacity onPress={() => navigation.navigate('DonationDetail', { donation: item })}>
         <View style={styles.donationItemContainer}>
+          <Text style={styles.donationName}>{item.name}</Text>
           <Image source={{ uri: item.photo }} style={styles.donationImage} />
-          <Text style={styles.donationName} numberOfLines={1} ellipsizeMode='tail'>
-          {item.name}
-        </Text>
           {item.subPhotos && item.subPhotos.length > 0 && displayExtraPhotos()}
         </View>
       </TouchableOpacity>
@@ -1133,34 +1131,33 @@ searchSuggestions: {
     shadowRadius: 2,
   },
   donationItemContainer: {
-    marginBottom: 15,
-    width: 200,
-    height: 200,
+    marginBottom: 10,
     marginRight: 5,
-    position: 'relative',
+    width: 200,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   donationImage: {
     width: '100%',
-    height: '100%',
-    borderRadius: 10,
+    height: 150, 
+    resizeMode: 'cover',
   },
   donationName: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    borderRadius: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     color: 'white',
     fontSize: 16,
-    // fontWeight: 'bold',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    fontWeight: 'bold',
     paddingHorizontal: 5,
     paddingVertical: 3,
-    overflow: 'hidden',
-    shadowColor: 'rgba(0, 0, 0, 0.2)',
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10
   },
   subPhotosOverlay: {
     position: 'absolute',
@@ -1193,7 +1190,6 @@ searchSuggestions: {
     marginLeft: 5,
     fontWeight: 'bold',
   },
-  
 });
 
 
