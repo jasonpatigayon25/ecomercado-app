@@ -102,7 +102,9 @@ const SearchDonations = () => {
         const allDonationsSnapshot = await getDocs(allDonationsQuery);
         let allDonations = allDonationsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     
-        allDonations.sort((a, b) => (donationHits[b.id] || 0) - (donationHits[a.id] || 0));
+        allDonations = allDonations
+        .filter(donation => donation.donor_email !== user.email)
+        .sort((a, b) => (donationHits[b.id] || 0) - (donationHits[a.id] || 0));
   
         const topDonations = allDonations.slice(0, 3);
         const topDonorEmail = topDonations[0]?.donor_email;

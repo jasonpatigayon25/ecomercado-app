@@ -73,15 +73,18 @@ const SearchProducts = () => {
 
       const allProductsQuery = query(
         collection(db, 'products'),
-        where('publicationStatus', '==', 'approved')
+        where('publicationStatus', '==', 'approved'),
+        // where('seller_email', '!=', user.email)
       );
       const allProductsSnapshot = await getDocs(allProductsQuery);
       let allProducts = allProductsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   
 
-      allProducts.sort((a, b) => (productHits[b.id] || 0) - (productHits[a.id] || 0));
-  
+      allProducts = allProducts
+      .filter(product => product.seller_email !== user.email)
+      .sort((a, b) => (productHits[b.id] || 0) - (productHits[a.id] || 0));
       setRecommendedProducts(allProducts);
+
     } catch (error) {
       console.error("Error fetching recommended products: ", error);
     }
