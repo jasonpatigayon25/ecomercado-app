@@ -83,31 +83,28 @@ const SearchDonations = () => {
   useEffect(() => {
     const fetchRecommendedDonations = async () => {
       try {
-        const recommendedQ = query(
-          collection(db, 'donation'),
-        );
-        const recommendedSnapshot = await getDocs(recommendedQ);
-        const recommendedResults = recommendedSnapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(donation => donation.publicationStatus === 'approved');
-
-        recommendedResults.sort((a, b) => {
-          const hitsA = (a.donationHits && a.donationHits.hits) || 0;
-          const hitsB = (b.donationHits && b.donationHits.hits) || 0;
-          return hitsB - hitsA;
-        });
-
-        const recommendedWithHits = recommendedResults.filter(donation => donation.donationHits);
-        const recommendedRandom = recommendedResults.filter(donation => !donation.donationHits);
-
-        for (let i = recommendedRandom.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [recommendedRandom[i], recommendedRandom[j]] = [recommendedRandom[j], recommendedRandom[i]];
+        const auth = getAuth();
+        const user = auth.currentUser;
+    
+        if (!user) {
+          console.error("No user logged in");
+          return;
         }
-  
-        const prioritizedRecommended = [...recommendedWithHits, ...recommendedRandom];
-  
-        setRecommendedDonations(prioritizedRecommended);
+    
+        const userRecommendRef = doc(db, 'userRecommendDonation', user.uid);
+        const userRecommendSnapshot = await getDoc(userRecommendRef);
+        const donationHits = userRecommendSnapshot.exists() ? userRecommendSnapshot.data().donationHits || {} : {};
+    
+        const allDonationsQuery = query(
+          collection(db, 'donation'),
+          where('publicationStatus', '==', 'approved')
+        );
+        const allDonationsSnapshot = await getDocs(allDonationsQuery);
+        let allDonations = allDonationsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    
+        allDonations.sort((a, b) => (donationHits[b.id] || 0) - (donationHits[a.id] || 0));
+    
+        setRecommendedDonations(allDonations);
       } catch (error) {
         console.error("Error fetching recommended donations: ", error);
       }
