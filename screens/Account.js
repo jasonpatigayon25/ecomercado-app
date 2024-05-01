@@ -18,7 +18,8 @@ const Account = ({ navigation }) => {
   const [approvedSCount, setApprovedSCount] = useState(0);
   const [receivingSCount, setReceivingSCount] = useState(0);
 
-  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [carouselIndexOrders, setCarouselIndexOrders] = useState(0);
+  const [carouselIndexSeller, setCarouselIndexSeller] = useState(0);
 
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -42,16 +43,28 @@ const Account = ({ navigation }) => {
     if (user) {
       fetchOrdersData();
       fetchOrdersSellerData();
+      const intervalOrders = setInterval(() => {
+        cycleCarouselOrders();
+      }, 3000);
 
-      const intervalId = setInterval(() => {
-        cycleCarousel();
-      }, 3000); 
-  
+      const intervalSeller = setInterval(() => {
+        cycleCarouselSeller();
+      }, 3000);
+
       return () => {
-        clearInterval(intervalId); 
+        clearInterval(intervalOrders);
+        clearInterval(intervalSeller);
       };
     }
   }, [user]);
+
+  const cycleCarouselOrders = () => {
+    setCarouselIndexOrders((prevIndex) => (prevIndex + 1) % 3);
+  };
+
+  const cycleCarouselSeller = () => {
+    setCarouselIndexSeller((prevIndex) => (prevIndex + 1) % 3);
+  };
 
   const fetchOrdersData = async () => {
     if (user) {
@@ -111,9 +124,9 @@ const Account = ({ navigation }) => {
     }
   };
 
-  const cycleCarousel = () => {
-    setCarouselIndex((carouselIndex + 1) % 3);
-  };
+const cycleCarousel = () => {
+  setCarouselIndex((carouselIndex + 1) % 3);
+};
 
   const [averageRating, setAverageRating] = useState(0)
 
@@ -279,9 +292,9 @@ const fetchFollowingCount = async () => {
             <Text style={styles.optionLabel}>Seller Management</Text>
             <TouchableOpacity style={styles.carouselContainer} onPress={cycleCarousel}>
             <Text style={styles.carouselText}>
-              {carouselIndex === 0 && `${pendingSCount} To Approve`}
-              {carouselIndex === 1 && `${approvedSCount} To Deliver`}
-              {carouselIndex === 2 && `${receivingSCount} Delivered`}
+              {carouselIndexSeller  === 0 && `${pendingSCount} To Approve`}
+              {carouselIndexSeller  === 1 && `${approvedSCount} To Deliver`}
+              {carouselIndexSeller  === 2 && `${receivingSCount} Delivered`}
             </Text>
           </TouchableOpacity>
           </TouchableOpacity>
@@ -302,9 +315,9 @@ const fetchFollowingCount = async () => {
             <Text style={styles.optionLabel}>My Order Transactions</Text>
             <TouchableOpacity style={styles.carouselContainer} onPress={cycleCarousel}>
             <Text style={styles.carouselText}>
-              {carouselIndex === 0 && `${pendingCount} To Pay`}
-              {carouselIndex === 1 && `${approvedCount} To Deliver`}
-              {carouselIndex === 2 && `${receivingCount} To Receive`}
+              {carouselIndexOrders  === 0 && `${pendingCount} To Pay`}
+              {carouselIndexOrders  === 1 && `${approvedCount} To Deliver`}
+              {carouselIndexOrders  === 2 && `${receivingCount} To Receive`}
             </Text>
           </TouchableOpacity>
           </TouchableOpacity>
