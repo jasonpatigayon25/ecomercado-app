@@ -109,7 +109,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
 
       if (!userRecommendData) {
         updatedProductHits = { [productId]: 1 };
-        await setDoc(userRecommendRef, { productHits: updatedProductHits });
+        await setDoc(userRecommendRef, { productHits: updatedProductHits, userEmail: user.email });
       } else {
         const productHits = userRecommendData.productHits || {};
         updatedProductHits = {

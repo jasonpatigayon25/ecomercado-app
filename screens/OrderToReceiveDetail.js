@@ -259,7 +259,7 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
           ...productHits,
           [productId]: (productHits[productId] || 0) + 1,
         };
-        await setDoc(userRecommendRef, { productHits: updatedProductHits }, { merge: true });
+        await setDoc(userRecommendRef, { productHits: updatedProductHits, userEmail: user.email }, { merge: true });
       }
     } catch (error) {
       console.error("Error updating product count in userRecommend: ", error);
