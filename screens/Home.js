@@ -320,35 +320,56 @@ const Home = ({ navigation, route }) => {
     const fetchDonations = async () => {
       setLoadingDonations(true); 
       try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-  
-      if (!user) {
-        console.error("No user logged in");
-        return;
+        const auth = getAuth();
+        const user = auth.currentUser;
+    
+        if (!user) {
+          console.error("No user logged in");
+          setLoadingDonations(false);
+          return;
+        }
+    
+        const currentLocation = selectedCity.toLowerCase();
+        const userRecommendRef = doc(db, 'userRecommendDonation', user.uid);
+        const userRecommendSnapshot = await getDoc(userRecommendRef);
+        const donationHits = userRecommendSnapshot.exists() ? userRecommendSnapshot.data().donationHits || {} : {};
+    
+        const allDonationsQuery = query(
+          collection(db, 'donation'),
+          where('publicationStatus', '==', 'approved')
+        );
+        const allDonationsSnapshot = await getDocs(allDonationsQuery);
+        let allDonations = allDonationsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    
+        allDonations.sort((a, b) => (donationHits[b.id] || 0) - (donationHits[a.id] || 0));
+    
+        const topDonations = allDonations.slice(0, 3);
+        const topDonorEmail = topDonations[0]?.donor_email;
+        let donorDonations = allDonations.filter(donation => donation.donor_email === topDonorEmail && !topDonations.some(topDonation => topDonation.id === donation.id));
+    
+        let remainingDonations = allDonations.filter(donation => 
+          donation.donor_email !== topDonorEmail && !topDonations.some(topDonation => topDonation.id === donation.id)
+        );
+    
+        remainingDonations.sort(() => Math.random() - 0.5);
+    
+        const recommendedDonations = [...topDonations, ...donorDonations, ...remainingDonations];
+    
+        let filteredRecommendedDonations = recommendedDonations.filter(donation =>
+          donation.location.toLowerCase().includes(currentLocation) &&
+          donation.isDonated !== true &&
+          donation.isDisabled !== true &&
+          donation.donor_email !== user.email
+        );
+    
+        setDonations(filteredRecommendedDonations);
+        setLoadingDonations(false);
+      } catch (error) {
+        console.error("Error fetching donations: ", error);
+        setLoadingDonations(false); 
       }
-
-      const currentLocation = selectedCity.toLowerCase();
-  
-      const donationsRef = collection(db, 'donation');
-      const querySnapshot = await getDocs(query(donationsRef, orderBy("createdAt", "asc")));
-  
-      let donationsList = querySnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(donation => donation.publicationStatus === 'approved') 
-        .filter(donation => donation.isDonated !== true)
-        .filter(donation => donation.isDisabled !== true)
-        .filter(donation => donation.donor_email !== user.email)
-        .filter(donation => donation.location.toLowerCase().includes(currentLocation));
-  
-      setDonations(donationsList);
-      setLoadingDonations(false);
-    } catch (error) {
-      console.error("Error fetching donations: ", error);
-      setLoadingDonations(false); 
-    }
-  };
-  
+    };
+    
     fetchDonations();
   }, [selectedCity]);
 
