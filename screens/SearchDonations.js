@@ -90,11 +90,11 @@ const SearchDonations = () => {
           console.error("No user logged in");
           return;
         }
-    
+  
         const userRecommendRef = doc(db, 'userRecommendDonation', user.uid);
         const userRecommendSnapshot = await getDoc(userRecommendRef);
         const donationHits = userRecommendSnapshot.exists() ? userRecommendSnapshot.data().donationHits || {} : {};
-    
+  
         const allDonationsQuery = query(
           collection(db, 'donation'),
           where('publicationStatus', '==', 'approved')
@@ -103,8 +103,21 @@ const SearchDonations = () => {
         let allDonations = allDonationsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     
         allDonations.sort((a, b) => (donationHits[b.id] || 0) - (donationHits[a.id] || 0));
+  
+        const topDonations = allDonations.slice(0, 3);
+        const topDonorEmail = topDonations[0]?.donor_email;
+  
+        let donorDonations = allDonations.filter(donation => donation.donor_email === topDonorEmail);
+  
+        donorDonations = donorDonations.filter(donation => !topDonations.some(topDonation => topDonation.id === donation.id));
+  
+        let otherDonations = allDonations.filter(donation => 
+          donation.donor_email !== topDonorEmail && !topDonations.some(topDonation => topDonation.id === donation.id)
+        );
+  
+        const prioritizedRecommended = [...topDonations, ...donorDonations, ...otherDonations];
     
-        setRecommendedDonations(allDonations);
+        setRecommendedDonations(prioritizedRecommended);
       } catch (error) {
         console.error("Error fetching recommended donations: ", error);
       }
