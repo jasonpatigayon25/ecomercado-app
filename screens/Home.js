@@ -385,11 +385,32 @@ const Home = ({ navigation, route }) => {
     setDonations(shuffled);
   };
   
-  const DonationItem = ({ item }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('DonationDetail', { donation: item })}>
-      <Image source={{ uri: item.photo }} style={styles.donationImage} />
-    </TouchableOpacity>
-  );  
+  const DonationItem = ({ item }) => {
+    const displayExtraPhotos = () => {
+      const subPhotosToShow = item.subPhotos.slice(0, 3);
+      const moreCount = item.subPhotos.length - 3;
+  
+      return (
+        <View style={styles.subPhotosOverlay}>
+          {subPhotosToShow.map((photo, index) => (
+            <Image key={index} source={{ uri: photo }} style={styles.subPhoto} />
+          ))}
+          {item.subPhotos.length > 3 && (
+            <Text style={styles.morePhotosText}>+{moreCount} more</Text>
+          )}
+        </View>
+      );
+    };
+  
+    return (
+      <TouchableOpacity onPress={() => navigation.navigate('DonationDetail', { donation: item })}>
+        <View style={styles.donationItemContainer}>
+          <Image source={{ uri: item.photo }} style={styles.donationImage} />
+          {item.subPhotos && item.subPhotos.length > 0 && displayExtraPhotos()}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -1093,7 +1114,51 @@ searchSuggestions: {
   },
   recommendationContainer: {
     marginRight: 5,
-  }
+  },
+  donationItemContainer: {
+    marginBottom: 15,
+    width: 200,
+    height: 200,
+    marginRight: 5,
+    position: 'relative',
+  },
+  donationImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+  },
+  subPhotosOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingVertical: 5,
+    borderBottomEndRadius: 10,
+    borderBottomStartRadius: 10,
+  },
+  subPhoto: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginHorizontal: 3,
+    borderWidth: 1,
+    borderColor: '#fff', 
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 5,
+  },
+  morePhotosText: {
+    color: '#FFF', 
+    marginLeft: 5,
+    fontWeight: 'bold',
+  },
+  
 });
 
 

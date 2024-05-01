@@ -81,7 +81,7 @@ const SearchProductResults = () => {
     
       if (!userRecommendData) {
         updatedProductHits = { [product.id]: 1 };
-        await setDoc(userRecommendRef, { productHits: updatedProductHits });
+        await setDoc(userRecommendRef, { productHits: updatedProductHits, userEmail: user.email });
       } else {
         const productHits = userRecommendData.productHits || {};
         updatedProductHits = {
