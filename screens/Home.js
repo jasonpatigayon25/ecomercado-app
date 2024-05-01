@@ -108,32 +108,48 @@ const Home = ({ navigation, route }) => {
     fetchCategories();
   }, [categoryType]);
 
-  useEffect(() => {
-    const fetchMostPopularProducts = async () => {
-      setLoadingMostPopular(true); 
-      try {
-      const searchHitsRef = collection(db, "searchHits");
-      const hitsQuery = query(searchHitsRef, orderBy("hits", "desc"), limit(5));
-      const querySnapshot = await getDocs(hitsQuery);
-    
-      const productPromises = querySnapshot.docs.map(async (hit) => {
-        const productRef = doc(db, "products", hit.data().productId);
-        const productSnap = await getDoc(productRef);
-        return productSnap.exists() && productSnap.data().publicationStatus === 'approved' ? { id: productSnap.id, ...productSnap.data() } : null;
+  const fetchMostPopularProducts = async () => {
+    setLoadingMostPopular(true);
+    try {
+      const userRecommendsRef = collection(db, "userRecommend");
+      const snapshot = await getDocs(userRecommendsRef);
+      const productHits = {};
+  
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        Object.entries(data.productHits || {}).forEach(([productId, hits]) => {
+          if (productHits[productId]) {
+            productHits[productId] += hits;
+          } else {
+            productHits[productId] = hits;
+          }
+        });
       });
-    
-      const products = (await Promise.all(productPromises))
-        .filter(Boolean)
-        .filter(product => !product.isDisabled && product.quantity > 0);
-    
-      setMostPopularProducts(products);
-      setLoadingMostPopular(false);
+  
+      const topProductIds = Object.entries(productHits)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(entry => entry[0]);
+  
+      const productDetails = await Promise.all(
+        topProductIds.map(async productId => {
+          const productRef = doc(db, "products", productId);
+          const productSnap = await getDoc(productRef);
+          return productSnap.exists() ? { id: productSnap.id, ...productSnap.data() } : null;
+        })
+      );
+  
+      const filteredProducts = productDetails.filter(Boolean).filter(product => product.publicationStatus === 'approved' && !product.isDisabled && product.quantity > 0);
+      
+      setMostPopularProducts(filteredProducts);
     } catch (error) {
       console.error("Error fetching most popular products: ", error);
+    } finally {
       setLoadingMostPopular(false);
     }
   };
   
+  useEffect(() => {
     fetchMostPopularProducts();
   }, []);
   
