@@ -113,11 +113,6 @@ const Account = ({ navigation }) => {
 
   const cycleCarousel = () => {
     setCarouselIndex((carouselIndex + 1) % 3);
-    if (carouselIndex === 2) {
-      setTimeout(() => {
-        setCarouselIndex(0);
-      }, 3000);
-    }
   };
 
   const [averageRating, setAverageRating] = useState(0)
