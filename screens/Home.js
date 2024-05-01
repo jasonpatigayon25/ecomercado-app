@@ -243,7 +243,12 @@ const Home = ({ navigation, route }) => {
   const renderProductItem = ({ item }) => (
     <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: item })}>
       <View style={styles.popularContainer}>
-      <Image source={{ uri: item.photo }} style={styles.carouselImage} />
+        <Image source={{ uri: item.photo }} style={styles.carouselImage} />
+        <View style={styles.carouselOverlay}>
+          <Text style={styles.carouselName} numberOfLines={1} ellipsizeMode='tail'>{item.name}</Text>
+          {/* <Text style={styles.carouselCategory}>{item.category}</Text>
+          <Text style={styles.carouselPrice}>₱{item.price}</Text> */}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -726,6 +731,29 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  carouselOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    // left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    padding: 10,
+    borderTopStartRadius: 20,
+  },
+  carouselName: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  carouselCategory: {
+    color: '#FFFFFF',
+    fontSize: 12,
+  },
+  carouselPrice: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
   carouselHeaderText: {
     position: 'absolute',
     top: 10,
@@ -900,11 +928,17 @@ searchSuggestions: {
     fontWeight: 'bold',
     color: '#FFF',
   },
-  carouselImage: {
+  popularContainer: {
     width: 320, 
     height: 200, 
     marginRight: 10,
     borderRadius: 20,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  carouselImage: {
+    width: '100%',
+    height: '100%',
   },
   carouselTitleContainer: {
     position: 'absolute',
