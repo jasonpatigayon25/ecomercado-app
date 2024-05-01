@@ -406,6 +406,9 @@ const Home = ({ navigation, route }) => {
       <TouchableOpacity onPress={() => navigation.navigate('DonationDetail', { donation: item })}>
         <View style={styles.donationItemContainer}>
           <Image source={{ uri: item.photo }} style={styles.donationImage} />
+          <Text style={styles.donationName} numberOfLines={1} ellipsizeMode='tail'>
+          {item.name}
+        </Text>
           {item.subPhotos && item.subPhotos.length > 0 && displayExtraPhotos()}
         </View>
       </TouchableOpacity>
@@ -1091,7 +1094,7 @@ searchSuggestions: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
     padding: 5,
     shadowColor: 'rgba(0, 0, 0, 0.2)',
     shadowOffset: {
@@ -1110,7 +1113,7 @@ searchSuggestions: {
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   recommendationContainer: {
     marginRight: 5,
@@ -1127,6 +1130,19 @@ searchSuggestions: {
     height: '100%',
     borderRadius: 10,
   },
+  donationName: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    borderRadius: 5,
+    color: 'white',
+    fontSize: 16,
+    // fontWeight: 'bold',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+    overflow: 'hidden',
+  },
   subPhotosOverlay: {
     position: 'absolute',
     bottom: 0,
@@ -1135,7 +1151,7 @@ searchSuggestions: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
     paddingVertical: 5,
     borderBottomEndRadius: 10,
     borderBottomStartRadius: 10,
