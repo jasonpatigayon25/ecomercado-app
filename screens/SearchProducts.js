@@ -70,21 +70,30 @@ const SearchProducts = () => {
       const userRecommendSnapshot = await getDoc(userRecommendRef);
       const productHits = userRecommendSnapshot.exists() ? userRecommendSnapshot.data().productHits || {} : {};
   
-
       const allProductsQuery = query(
         collection(db, 'products'),
-        where('publicationStatus', '==', 'approved'),
-        // where('seller_email', '!=', user.email)
+        where('publicationStatus', '==', 'approved')
       );
       const allProductsSnapshot = await getDocs(allProductsQuery);
       let allProducts = allProductsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   
-
       allProducts = allProducts
-      .filter(product => product.seller_email !== user.email)
-      .sort((a, b) => (productHits[b.id] || 0) - (productHits[a.id] || 0));
-      setRecommendedProducts(allProducts);
+        .filter(product => product.seller_email !== user.email)
+        .sort((a, b) => (productHits[b.id] || 0) - (productHits[a.id] || 0));
 
+      const topProducts = allProducts.slice(0, 3);
+  
+      const topCategory = topProducts[0]?.category;
+  
+      const relatedCategoryProducts = allProducts.filter(product => product.category === topCategory && !topProducts.includes(product)).slice(0, 5);
+  
+      const remainingProducts = allProducts.filter(product => 
+        !topProducts.includes(product) && !relatedCategoryProducts.includes(product)
+      );
+  
+      const combinedRecommendedProducts = [...topProducts, ...relatedCategoryProducts, ...remainingProducts];
+  
+      setRecommendedProducts(combinedRecommendedProducts);
     } catch (error) {
       console.error("Error fetching recommended products: ", error);
     }
