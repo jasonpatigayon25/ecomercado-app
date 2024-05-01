@@ -251,12 +251,12 @@ const Home = ({ navigation, route }) => {
   const renderRecommendedProductItem = ({ item }) => (
     <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: item })}>
       <View style={styles.recommendationContainer}>
-      <Image source={{ uri: item.photo }} style={styles.recommendedImage} />
-      <View style={styles.productDetailsContainer}>
-        <View style={styles.nameBackground}>
-          <Text style={styles.nameText}>{item.name}</Text>
+        <Text style={styles.productName} numberOfLines={1} ellipsizeMode='tail'>{item.name}</Text>
+        <Image source={{ uri: item.photo }} style={styles.recommendedImage} />
+        <View style={styles.productDetailsContainer}>
+          <Text style={styles.productCategory}>{item.category}</Text>
+          <Text style={styles.productPrice}>₱{item.price}</Text>
         </View>
-      </View>
       </View>
     </TouchableOpacity>
   );
@@ -752,10 +752,9 @@ const styles = StyleSheet.create({
     color: '#05652D',
   },
   recommendedImage: {
-    width: 200,
+    width: '100%',
     height: 150,
     resizeMode: 'cover',
-    borderRadius: 10,
   },
 
   viewAllIconContainer: {
@@ -1067,10 +1066,15 @@ searchSuggestions: {
     height: 100,
   },
   productName: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#05652D',
-    marginBottom: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10
   },
   productCategory: {
     fontSize: 12,
@@ -1086,7 +1090,7 @@ searchSuggestions: {
     textAlign: 'center',
   },
   productPrice: {
-    color: '#05652D',
+    color: '#05620D',
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -1110,13 +1114,23 @@ searchSuggestions: {
     color: 'white',
   },
   productDetailsContainer: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
   },
   recommendationContainer: {
+    marginBottom: 10,
     marginRight: 5,
+    width: 200,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   donationItemContainer: {
     marginBottom: 15,
@@ -1142,6 +1156,11 @@ searchSuggestions: {
     paddingHorizontal: 5,
     paddingVertical: 3,
     overflow: 'hidden',
+    shadowColor: 'rgba(0, 0, 0, 0.2)',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
   },
   subPhotosOverlay: {
     position: 'absolute',
