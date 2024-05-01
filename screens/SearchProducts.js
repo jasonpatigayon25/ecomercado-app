@@ -58,15 +58,30 @@ const SearchProducts = () => {
 
   const fetchRecommendedProducts = async () => {
     try {
-      const allProductsQuery = query(collection(db, 'products')); 
-      const allProductsSnapshot = await getDocs(allProductsQuery);
-      const allProducts = allProductsSnapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((product) => product.publicationStatus === 'approved');
+      const auth = getAuth();
+      const user = auth.currentUser;
   
-      const shuffledProducts = allProducts.sort(() => 0.5 - Math.random());
-      
-      setRecommendedProducts(shuffledProducts);
+      if (!user) {
+        console.error("No user logged in");
+        return;
+      }
+  
+      const userRecommendRef = doc(db, 'userRecommend', user.uid);
+      const userRecommendSnapshot = await getDoc(userRecommendRef);
+      const productHits = userRecommendSnapshot.exists() ? userRecommendSnapshot.data().productHits || {} : {};
+  
+
+      const allProductsQuery = query(
+        collection(db, 'products'),
+        where('publicationStatus', '==', 'approved')
+      );
+      const allProductsSnapshot = await getDocs(allProductsQuery);
+      let allProducts = allProductsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  
+
+      allProducts.sort((a, b) => (productHits[b.id] || 0) - (productHits[a.id] || 0));
+  
+      setRecommendedProducts(allProducts);
     } catch (error) {
       console.error("Error fetching recommended products: ", error);
     }
@@ -220,8 +235,6 @@ const SearchProducts = () => {
           <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
         )}
       </View>
-
-
 
       {searchQuery.length > 0 && suggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
