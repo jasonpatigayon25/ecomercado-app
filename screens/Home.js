@@ -137,78 +137,65 @@ const Home = ({ navigation, route }) => {
     fetchMostPopularProducts();
   }, []);
   
-  useEffect(() => {
-    const fetchRecommendedProducts = async () => {
-
-      setLoadingRecommended(true);
-      try {
+  const fetchRecommendedProducts = async () => {
+    setLoadingRecommended(true);
+    try {
       const auth = getAuth();
       const user = auth.currentUser;
   
       if (!user) {
         console.error("No user logged in");
+        setLoadingRecommended(false);
         return;
       }
   
-      const userEmail = user.email;
-      const productsRef = collection(db, 'products');
-
-      const currentLocation = selectedCity.toLowerCase();
-      
       const userRecommendRef = doc(db, 'userRecommend', user.uid);
       const userRecommendSnapshot = await getDoc(userRecommendRef);
-      const userRecommendData = userRecommendSnapshot.data();
+      const productHits = userRecommendSnapshot.exists() ? userRecommendSnapshot.data().productHits || {} : {};
   
-      let recommendedProducts = [];
+      const allProductsQuery = query(
+        collection(db, 'products'),
+        where('publicationStatus', '==', 'approved')
+      );
+      const allProductsSnapshot = await getDocs(allProductsQuery);
+      let allProducts = allProductsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   
-      if (userRecommendData && Object.keys(userRecommendData.productHits).length > 0) {
-        const topProductHits = Object.entries(userRecommendData.productHits)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 10);
+      const currentLocation = selectedCity.toLowerCase();
   
-        const topProductIds = topProductHits.map(([productId]) => productId);
-        const topProductsQuery = query(productsRef, where(documentId(), 'in', topProductIds));
-        const topProductsSnapshot = await getDocs(topProductsQuery);
+      allProducts = allProducts
+        .filter(product => 
+          product.seller_email !== user.email && 
+          product.location.toLowerCase().includes(currentLocation)
+        )
+        .sort((a, b) => (productHits[b.id] || 0) - (productHits[a.id] || 0));
   
-        let topProducts = topProductsSnapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(product => product.publicationStatus === 'approved');
-
-        let categories = topProducts.map(product => product.category);
-        categories = [...new Set(categories)];
+      const topProducts = allProducts.slice(0, 3);
   
-        const additionalProducts = [];
-        for (const category of categories) {
-          const categoryProductsSnapshot = await getDocs(query(productsRef, where("category", "==", category), limit(5)));
-          const categoryProducts = categoryProductsSnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(product => product.publicationStatus === 'approved');
-            
-            const categoryProductsInLocation = categoryProducts.filter(product => product.location.toLowerCase().includes(currentLocation));
-
-          additionalProducts.push(...categoryProducts);
-        }
+      const topCategory = topProducts[0]?.category;
   
-        recommendedProducts = [...new Map(topProducts.concat(additionalProducts).map(product => [product.id, product])).values()];
-      } else {
-        const allProductsQuery = query(collection(db, 'products'), orderBy("name"), limit(10));
-        const allProductsSnapshot = await getDocs(allProductsQuery);
-        recommendedProducts = allProductsSnapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(product => product.publicationStatus === 'approved');
-      }
-
-      recommendedProducts = recommendedProducts.filter(product => 
-        !product.isDisabled && product.quantity > 0 && product.seller_email !== userEmail && product.location.toLowerCase().includes(currentLocation)
+      const relatedCategoryProducts = allProducts.filter(product =>
+        product.category === topCategory &&
+        !topProducts.includes(product) &&
+        product.location.toLowerCase().includes(currentLocation)
+      ).slice(0, 5);
+  
+      const remainingProducts = allProducts.filter(product => 
+        !topProducts.includes(product) &&
+        !relatedCategoryProducts.includes(product) &&
+        product.location.toLowerCase().includes(currentLocation)
       );
   
-      setRecommendedProducts(recommendedProducts.slice(0, Math.min(50, Math.max(20, recommendedProducts.length))));
-      setLoadingRecommended(false);
+      const combinedRecommendedProducts = [...topProducts, ...relatedCategoryProducts, ...remainingProducts];
+  
+      setRecommendedProducts(combinedRecommendedProducts);
     } catch (error) {
       console.error("Error fetching recommended products: ", error);
+    } finally {
       setLoadingRecommended(false);
     }
   };
+  
+  useEffect(() => {
     fetchRecommendedProducts();
   }, [selectedCity]);
   
