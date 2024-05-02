@@ -118,8 +118,12 @@ const renderItem = ({ item }) => (
           <Text style={styles.cartName}>{item.name}</Text>
           <Text style={styles.cartitemnames}>{item.itemNames && item.itemNames.length > 0 ? `${item.itemNames.join(' · ')}` : ''}</Text>
           <Text style={styles.cartCategory}>{item.category}</Text>
-          <Text style={styles.cartDescription}>{item.purpose}</Text>
-          <Text style={styles.cartDescription}>{item.message}</Text>
+          <Text style={styles.cartDescription} numberOfLines={1} ellipsizeMode="tail">
+            {item.purpose}
+          </Text>
+          <Text style={styles.cartDescription} numberOfLines={1} ellipsizeMode="tail">
+            {item.message}
+          </Text>
       </View>
   </TouchableOpacity>
 );

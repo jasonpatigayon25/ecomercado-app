@@ -203,7 +203,7 @@ const Cart = ({ navigation }) => {
         <Text style={styles.cartName}>{item.name}</Text>
         <Text style={styles.cartPrice}>₱{parseFloat(item.price).toFixed(2)}</Text>
         <Text style={styles.cartCategory}>{item.category}</Text>
-        <Text style={styles.cartDescription}>{item.description}</Text>
+        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.cartDescription}>{item.description}</Text>
         <View style={styles.quantityControl}>
           <TouchableOpacity onPress={() => decrementQuantity(item.productId)}>
             <Icon name="minus" size={20} color="#05652D" />
