@@ -238,27 +238,28 @@ const SearchDonations = () => {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-               <TouchableOpacity style={styles.searchImageButton} onPress={navigateToWish}>
+        <TouchableOpacity style={styles.searchImageButton} onPress={navigateToWish}>
           <Image source={require('../assets/zoom-in.png')} style={styles.searchImageIcon} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.searchButton} onPress={searchQuery.length > 0 ? navigateToSearchResults : null}>
           <Icon name="search" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
-      <View style={styles.textContainer}>
-        {searchQuery.length > 0 && (
-          <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
-        )}
-      </View>
       <View style={styles.optionsContainer}>
         <TouchableOpacity style={styles.switchContainer} onPress={navigateToSearchProducts}>
           <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Products</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBasedDonation')}>
-        <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
+          <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
         </TouchableOpacity>
       </View>
-
+  
+      <View style={styles.textContainer}>
+        {searchQuery.length > 0 && (
+          <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
+        )}
+      </View>
+  
       {searchQuery.length > 0 && suggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -270,7 +271,14 @@ const SearchDonations = () => {
           </ScrollView>
         </View>
       )}
-
+  
+      {searchQuery.length > 0 && searchResults.length === 0 && (
+        <View style={styles.noResultsContainer}>
+          <Icon name="search" size={20} color="#ccc" />
+          <Text style={styles.noResultsText}>No donations found for '{searchQuery}'</Text>
+        </View>
+      )}
+  
       {searchResults.length > 0 && (
         <FlatList
           data={searchResults}
@@ -278,10 +286,9 @@ const SearchDonations = () => {
           keyExtractor={(item, index) => index.toString()}
           numColumns={2}
           columnWrapperStyle={styles.row}
-          key={"searched-donations"}
         />
       )}
-
+  
       {searchQuery.length === 0 && recommendedDonations.length > 0 && (
         <>
           <Text style={styles.recommendedText}>Donations You Can Request</Text>
@@ -291,7 +298,7 @@ const SearchDonations = () => {
             keyExtractor={(item, index) => index.toString()}
             numColumns={2}
             columnWrapperStyle={styles.row}
-            key={"searched-donations"}
+            contentContainerStyle={styles.recommendedContainer}
           />
         </>
       )}
@@ -493,6 +500,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     paddingHorizontal: 5,
   },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+  }
 });
 
 export default SearchDonations;
