@@ -19,6 +19,8 @@ const Chat = ({ navigation, route }) => {
   const [receiverPhotoUrl, setReceiverPhotoUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showMessageSelector, setShowMessageSelector] = useState(true);
+  const [selectedImageUrl, setSelectedImageUrl] = useState('');
+
   const [message, setMessage] = useState('');
   
   const [chatData, setChatData] = useState([]);
@@ -60,28 +62,29 @@ const Chat = ({ navigation, route }) => {
   
     const options = productDetails
       ? [
-          `Interested in the product ${productDetails.name}`,
-          `Tell me more about ${productDetails.name}`,
-          `Lower the price of ${productDetails.name}`
+          { text: `Interested in the product ${productDetails.name}`, photo: productDetails.photo },
+          { text: `Tell me more about ${productDetails.name}`, photo: productDetails.photo },
+          { text: `Lower the price of ${productDetails.name}`, photo: productDetails.photo }
         ]
       : donationDetails
       ? [
-          `Interested in the donation ${donationDetails.name}`,
-          `Tell me more about ${donationDetails.name}`,
-          `I need this donation, ${donationDetails.name}`
+          { text: `Interested in the donation ${donationDetails.name}`, photo: donationDetails.photo },
+          { text: `Tell me more about ${donationDetails.name}`, photo: donationDetails.photo },
+          { text: `I need this donation, ${donationDetails.name}`, photo: donationDetails.photo }
         ]
       : [];
   
-    const sendSelectedMessage = (msg) => {
-      if (msg.trim() !== '') {
+    const sendSelectedMessage = (option) => {
+      if (option.text.trim() !== '') {
         addDoc(messagesRef, {
           chatId,
           senderId: currentUser.uid,
           senderEmail: currentUser.email,
           receiverEmail,
-          text: msg,
+          text: option.text,
           timestamp: serverTimestamp(),
         });
+        setSelectedImageUrl(option.photo);
       }
       setShowMessageSelector(false);
     };
@@ -91,14 +94,14 @@ const Chat = ({ navigation, route }) => {
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {options.map((option, index) => (
             <TouchableOpacity key={index} style={styles.optionButton} onPress={() => sendSelectedMessage(option)}>
-              <Text style={styles.optionText}>{option}</Text>
+              <Text style={styles.optionText}>{option.text}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
     );
   };
-
+  
   const fetchReceiverName = async (email) => {
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('email', '==', email));
@@ -350,6 +353,9 @@ const Chat = ({ navigation, route }) => {
       </TouchableOpacity>
       <View style={styles.chatContainer}>
       {showMessageSelector && <MessageSelector />}
+        {selectedImageUrl ? (
+          <Image source={{ uri: selectedImageUrl }} style={styles.selectedImage} />
+        ) : null}
         <FlatList
           data={chatData}
           renderItem={renderItem}
@@ -558,7 +564,12 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#05652D',
     borderRadius: 20,
-  }
+  },
+  selectedImage: {
+    width: '100%',
+    height: 200, 
+    resizeMode: 'contain'
+  },
 });
 
 export default Chat;
