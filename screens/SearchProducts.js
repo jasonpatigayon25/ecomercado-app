@@ -40,7 +40,7 @@ const SearchProducts = () => {
           collection(db, 'products'),
           where('name', '>=', searchQuery),
           where('name', '<=', searchQuery + '\uf8ff'),
-          limit(5),
+          limit(50),
           orderBy('name')
         );
         const querySnapshot = await getDocs(q);
