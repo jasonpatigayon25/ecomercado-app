@@ -238,16 +238,16 @@ const SearchProducts = () => {
           <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Donation</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBased')}>
-        <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
+          <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
         </TouchableOpacity>
       </View>
-
+  
       <View style={styles.textContainer}>
         {searchQuery.length > 0 && (
           <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
         )}
       </View>
-
+  
       {searchQuery.length > 0 && suggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -259,7 +259,14 @@ const SearchProducts = () => {
           </ScrollView>
         </View>
       )}
-
+  
+      {searchQuery.length > 0 && searchResults.length === 0 && (
+        <View style={styles.noResultsContainer}>
+          <Icon name="search" size={20} color="#ccc" />
+          <Text style={styles.noResultsText}>No products found for '{searchQuery}'</Text>
+        </View>
+      )}
+  
       {searchResults.length > 0 && (
         <FlatList
           data={searchResults}
@@ -270,7 +277,7 @@ const SearchProducts = () => {
           key={"searched-products"}
         />
       )}
-
+  
       {searchQuery.length === 0 && recommendedProducts.length > 0 && (
         <>
           <Text style={styles.recommendedText}>Products You May Like</Text>
@@ -444,6 +451,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+  }
+  
 });
 
 export default SearchProducts;
