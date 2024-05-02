@@ -35,14 +35,14 @@ const SearchDonations = () => {
           collection(db, 'donation'),
           where('name', '>=', searchQuery),
           where('name', '<=', searchQuery + '\uf8ff'),
-          limit(5),
+          limit(50),
           orderBy('name'),
         );
   
         const itemNameQuery = query(
           collection(db, 'donation'),
           where('itemNames', 'array-contains-any', [searchQuery]),
-          limit(5),
+          limit(50),
         );
   
         const [nameResults, itemNameResults] = await Promise.all([
@@ -100,25 +100,27 @@ const SearchDonations = () => {
           where('publicationStatus', '==', 'approved')
         );
         const allDonationsSnapshot = await getDocs(allDonationsQuery);
-        let allDonations = allDonationsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        let allDonations = allDonationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
+        const currentLocation = selectedCity.toLowerCase();
         allDonations = allDonations
-        .filter(donation => donation.donor_email !== user.email)
-        .sort((a, b) => (donationHits[b.id] || 0) - (donationHits[a.id] || 0));
+          .filter(donation => 
+            donation.donor_email !== user.email &&
+            donation.location && donation.location.toLowerCase().includes(currentLocation)
+          )
+          .sort((a, b) => (donationHits[b.id] || 0) - (donationHits[a.id] || 0));
   
         const topDonations = allDonations.slice(0, 3);
         const topDonorEmail = topDonations[0]?.donor_email;
-  
-        let donorDonations = allDonations.filter(donation => donation.donor_email === topDonorEmail);
-  
-        donorDonations = donorDonations.filter(donation => !topDonations.some(topDonation => topDonation.id === donation.id));
-  
-        let otherDonations = allDonations.filter(donation => 
-          donation.donor_email !== topDonorEmail && !topDonations.some(topDonation => topDonation.id === donation.id)
-        );
-  
-        const prioritizedRecommended = [...topDonations, ...donorDonations, ...otherDonations];
     
+        let donorDonations = allDonations.filter(donation => donation.donor_email === topDonorEmail);
+        donorDonations = donorDonations.filter(donation => !topDonations.includes(donation));
+    
+        let otherDonations = allDonations.filter(donation => 
+          donation.donor_email !== topDonorEmail && !topDonations.includes(donation)
+        );
+    
+        const prioritizedRecommended = [...topDonations, ...donorDonations, ...otherDonations];
         setRecommendedDonations(prioritizedRecommended);
       } catch (error) {
         console.error("Error fetching recommended donations: ", error);
@@ -126,7 +128,7 @@ const SearchDonations = () => {
     };
   
     fetchRecommendedDonations();
-  }, []);
+  }, [selectedCity]);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -135,7 +137,7 @@ const SearchDonations = () => {
           collection(db, 'donation'),
           where('name', '>=', searchQuery),
           where('name', '<=', searchQuery + '\uf8ff'),
-          limit(5),
+          limit(50),
           orderBy('name'),
         );
         const querySnapshot = await getDocs(q);
