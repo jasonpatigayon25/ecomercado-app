@@ -69,15 +69,9 @@ const Chatbox = ({ navigation }) => {
       const chatData = chatDocSnap.data();
   
       const currentUser = auth.currentUser;
-  
-      const newMessageStatus = {
-        [currentUser.email]: 'read',
-      };
-  
-      const updatedMessageStatus = {
-        ...chatData.messageStatus,
-        ...newMessageStatus,
-      };
+
+      const updatedMessageStatus = { ...chatData.messageStatus };
+      delete updatedMessageStatus[currentUser.email];
   
       await updateDoc(chatDocRef, {
         messageStatus: updatedMessageStatus,
@@ -636,7 +630,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     alignSelf: 'center',
     lineHeight: 60, 
-  },
+  },  
 });
 
 export default Chatbox;
