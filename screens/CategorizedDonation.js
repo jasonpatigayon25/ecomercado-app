@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const CategorizedDonation = ({ route, navigation }) => {
-  const { categoryTitle, sellerName, email } = route.params; 
+  const { categoryTitle, email } = route.params; 
   const [donations, setDonations] = useState([]);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
 
   useEffect(() => {
     const fetchDonationsByCategory = async () => {
@@ -24,7 +26,23 @@ const CategorizedDonation = ({ route, navigation }) => {
       setDonations(donationsList);
     };
 
+    const fetchUserData = async () => {
+      const usersCollectionRef = collection(db, 'users');
+      const userQuery = query(usersCollectionRef, where('email', '==', email));
+      const userDocsSnapshot = await getDocs(userQuery);
+    
+      if (!userDocsSnapshot.empty) {
+        const userData = userDocsSnapshot.docs[0].data();
+        setFirstName(userData.firstName);
+        setLastName(userData.lastName);
+      } else {
+        setFirstName('');
+        setLastName('');
+      }
+    };
+
     fetchDonationsByCategory();
+    fetchUserData();
   }, [categoryTitle, email]);  
 
   const handleDonationSelect = (donation) => {
@@ -37,7 +55,8 @@ const CategorizedDonation = ({ route, navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-left" size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerText}>From: {sellerName}</Text>
+        {/* Display firstName and lastName here */}
+        <Text style={styles.headerText}>From: {firstName} {lastName}</Text>
       </View>
       <Text style={styles.title}>{categoryTitle}</Text>
       <ScrollView>
