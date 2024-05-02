@@ -50,12 +50,19 @@ const SearchDonations = () => {
           getDocs(itemNameQuery),
         ]);
   
+        const currentLocation = selectedCity.toLowerCase();
         const nameData = nameResults.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(donation => donation.publicationStatus === 'approved');
+          .filter(donation => 
+            donation.publicationStatus === 'approved' &&
+            donation.location && donation.location.toLowerCase().includes(currentLocation)
+          );
         const itemNameData = itemNameResults.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(donation => donation.publicationStatus === 'approved');
+          .filter(donation => 
+            donation.publicationStatus === 'approved' &&
+            donation.location && donation.location.toLowerCase().includes(currentLocation)
+          );
   
         const combinedResults = [...nameData, ...itemNameData];
         const uniqueResults = combinedResults.reduce((acc, current) => {
@@ -78,7 +85,7 @@ const SearchDonations = () => {
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, selectedCity]);
 
   useEffect(() => {
     const fetchRecommendedDonations = async () => {
