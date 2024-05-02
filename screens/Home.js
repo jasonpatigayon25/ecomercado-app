@@ -426,26 +426,29 @@ const Home = ({ navigation, route }) => {
       const currentUser = auth.currentUser;
       const currentUserEmail = currentUser ? currentUser.email : '';
       if (!currentUserEmail) return;
-
+  
       const chatsRef = collection(db, 'chats');
       const q = query(chatsRef, where('users', 'array-contains', currentUserEmail));
-
+  
       try {
-        const querySnapshot = await getDocs(q);
-        let count = 0;
-        querySnapshot.forEach((doc) => {
-          const chatData = doc.data();
-          const messageStatus = chatData.messageStatus || {};
-          if (messageStatus[currentUserEmail] === 'unread') {
-            count++;
-          }
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+          let count = 0;
+          querySnapshot.forEach((doc) => {
+            const chatData = doc.data();
+            const messageStatus = chatData.messageStatus || {};
+            if (messageStatus[currentUserEmail] === 'unread') {
+              count++;
+            }
+          });
+          setUnreadCount(count);
         });
-        setUnreadCount(count);
+        
+        return () => unsubscribe();
       } catch (error) {
         console.error('Error fetching unread message count:', error);
       }
     };
-
+  
     fetchUnreadCount();
   }, []);
 
