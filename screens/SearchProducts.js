@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView, Animated  } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView, Animated, ActivityIndicator  } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { query, where, getDocs, collection, limit, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
@@ -13,6 +13,8 @@ const SearchProducts = () => {
   const [suggestions, setSuggestions] = useState([]);
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
+
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
 
   const [selectedCity, setSelectedCity] = useState('Cebu'); 
 
@@ -37,12 +39,16 @@ const SearchProducts = () => {
           where('name', '>=', searchQuery),
           where('name', '<=', searchQuery + '\uf8ff'),
           limit(5),
-          orderBy('name'),
+          orderBy('name')
         );
         const querySnapshot = await getDocs(q);
+        const currentLocation = selectedCity.toLowerCase();
         const results = querySnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(product => product.publicationStatus === 'approved');
+          .filter(product => 
+            product.publicationStatus === 'approved' &&
+            product.location && product.location.toLowerCase().includes(currentLocation)
+          );
         setSearchResults(results);
       } catch (error) {
         console.error("Error searching products: ", error);
@@ -54,15 +60,15 @@ const SearchProducts = () => {
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, selectedCity]);
 
   const fetchRecommendedProducts = async () => {
+    setLoadingRecommended(true);
     try {
       const auth = getAuth();
       const user = auth.currentUser;
-  
       if (!user) {
-        console.error("No user logged in");
+        setLoadingRecommended(false);
         return;
       }
   
@@ -75,20 +81,30 @@ const SearchProducts = () => {
         where('publicationStatus', '==', 'approved')
       );
       const allProductsSnapshot = await getDocs(allProductsQuery);
-      let allProducts = allProductsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      let allProducts = allProductsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  
+      const currentLocation = selectedCity.toLowerCase();
   
       allProducts = allProducts
-        .filter(product => product.seller_email !== user.email)
+        .filter(product =>
+          product.seller_email !== user.email && 
+          product.location && product.location.toLowerCase().includes(currentLocation)
+        )
         .sort((a, b) => (productHits[b.id] || 0) - (productHits[a.id] || 0));
-
-      const topProducts = allProducts.slice(0, 3);
   
+      const topProducts = allProducts.slice(0, 3);
       const topCategory = topProducts[0]?.category;
   
-      const relatedCategoryProducts = allProducts.filter(product => product.category === topCategory && !topProducts.includes(product)).slice(0, 5);
+      const relatedCategoryProducts = allProducts.filter(product =>
+        product.category === topCategory &&
+        !topProducts.includes(product) &&
+        product.location.toLowerCase().includes(currentLocation)
+      ).slice(0, 5);
   
       const remainingProducts = allProducts.filter(product => 
-        !topProducts.includes(product) && !relatedCategoryProducts.includes(product)
+        !topProducts.includes(product) &&
+        !relatedCategoryProducts.includes(product) &&
+        product.location.toLowerCase().includes(currentLocation)
       );
   
       const combinedRecommendedProducts = [...topProducts, ...relatedCategoryProducts, ...remainingProducts];
@@ -96,12 +112,14 @@ const SearchProducts = () => {
       setRecommendedProducts(combinedRecommendedProducts);
     } catch (error) {
       console.error("Error fetching recommended products: ", error);
+    } finally {
+      setLoadingRecommended(false);
     }
   };
-
-    useEffect(() => {
-      fetchRecommendedProducts();
-    }, []);
+  
+  useEffect(() => {
+    fetchRecommendedProducts();
+  }, [selectedCity]);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -110,7 +128,7 @@ const SearchProducts = () => {
           collection(db, 'products'),
           where('name', '>=', searchQuery),
           where('name', '<=', searchQuery + '\uf8ff'),
-          limit(5),
+          limit(50),
           orderBy('name'),
         );
         const querySnapshot = await getDocs(q);
@@ -261,11 +279,14 @@ const SearchProducts = () => {
       )}
   
       {searchQuery.length > 0 && searchResults.length === 0 && (
-        <View style={styles.noResultsContainer}>
-          <Icon name="search" size={20} color="#ccc" />
-          <Text style={styles.noResultsText}>No products found for '{searchQuery}'</Text>
-        </View>
-      )}
+      <View style={styles.noResultsContainer}>
+        <Icon name="search" size={20} color="#ccc" />
+        <Text style={styles.noResultsText}>
+          No products found for '{searchQuery}'
+          {selectedCity && selectedCity !== 'Cebu' && ` in ${selectedCity}`}
+        </Text>
+      </View>
+    )}
   
       {searchResults.length > 0 && (
         <FlatList
@@ -278,19 +299,30 @@ const SearchProducts = () => {
         />
       )}
   
-      {searchQuery.length === 0 && recommendedProducts.length > 0 && (
-        <>
-          <Text style={styles.recommendedText}>Products You May Like</Text>
-          <FlatList
-            data={recommendedProducts}
-            renderItem={renderLikeProductItem}
-            keyExtractor={(item, index) => index.toString()}
-            numColumns={2}
-            columnWrapperStyle={styles.row}
-            contentContainerStyle={styles.recommendedContainer}
-          />
-        </>
-      )}
+  {searchQuery.length === 0 && (
+  <>
+    {loadingRecommended ? (
+      <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator} />
+    ) : recommendedProducts.length > 0 ? (
+      <>
+        <Text style={styles.recommendedText}>Products You May Like</Text>
+        <FlatList
+          data={recommendedProducts}
+          renderItem={renderLikeProductItem}
+          keyExtractor={(item, index) => index.toString()}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.recommendedContainer}
+        />
+      </>
+    ) : (
+      <View style={styles.noResultsContainer}>
+        <Icon name="search" size={50} color="#ccc" />
+        <Text style={styles.noResultsText}>No products found in {selectedCity}.</Text>
+      </View>
+    )}
+  </>
+)}
     </View>
   );
 };
