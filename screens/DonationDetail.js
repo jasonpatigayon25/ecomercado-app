@@ -403,8 +403,9 @@ const styles = StyleSheet.create({
   },
   requestNowButton: {
     backgroundColor: '#05652D',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     borderRadius: 20,
+    marginHorizontal: 5,
   },
   requestNowLabel: {
     color: '#FFF',

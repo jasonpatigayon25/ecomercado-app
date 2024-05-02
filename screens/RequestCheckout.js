@@ -237,9 +237,10 @@ const RequestCheckout = ({ navigation, route }) => {
     }
   };
 
-  const renderSectionHeader = ({ section: { title, donorEmail } }) => ( 
+  const renderSectionHeader = ({ section: { title } }) => ( 
   <View style={styles.sectionHeader}>
-    <Text style={styles.sectionHeaderText}>From: {title} ({donorEmail})</Text> 
+    <Text style={styles.sectionHeaderText}>From: {title} </Text> 
+    {/* <Text style={styles.sectionHeaderText}>From: {title} ({donorEmail})</Text>  */}
   </View>
 );
 
