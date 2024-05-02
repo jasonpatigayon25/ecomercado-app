@@ -36,16 +36,25 @@ const SearchDonationResults = () => {
   useEffect(() => {
     const fetchRelatedItems = async () => {
       try {
-        const searchedItem = searchedItems[0]; 
+        const searchedItem = searchedItems[0];
+        if (!searchedItem) return; 
+  
         const q = query(
           collection(db, 'donation'),
-          orderBy('name'),
+          orderBy('name')
         );
         const querySnapshot = await getDocs(q);
+        const searchedItemIds = new Set(searchedItems.map(item => item.id));
+  
         const results = querySnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(product => product.category === searchedItem?.category && product.publicationStatus === 'approved')
+          .filter(product => 
+            product.category === searchedItem.category &&
+            product.publicationStatus === 'approved' &&
+            !searchedItemIds.has(product.id) 
+          )
           .slice(0, 5);
+  
         setRelatedItems(results);
       } catch (error) {
         console.error("Error fetching related items: ", error);
