@@ -417,6 +417,37 @@ const Home = ({ navigation, route }) => {
       </TouchableOpacity>
     );
   };
+  
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      const currentUserEmail = currentUser ? currentUser.email : '';
+      if (!currentUserEmail) return;
+
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('users', 'array-contains', currentUserEmail));
+
+      try {
+        const querySnapshot = await getDocs(q);
+        let count = 0;
+        querySnapshot.forEach((doc) => {
+          const chatData = doc.data();
+          const messageStatus = chatData.messageStatus || {};
+          if (messageStatus[currentUserEmail] === 'unread') {
+            count++;
+          }
+        });
+        setUnreadCount(count);
+      } catch (error) {
+        console.error('Error fetching unread message count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -434,7 +465,14 @@ const Home = ({ navigation, route }) => {
         </View>
           <View style={styles.iconsContainer}>
             <TouchableOpacity onPress={() => navigation.navigate('CCC')}>
+            <View style={{ position: 'relative' }}>
               <Icon name="comments" size={24} color="#05652D" style={styles.icon} />
+              {unreadCount > 0 && (
+                <View style={styles.cartCountContainer}>
+                  <Text style={styles.cartCountText}>{unreadCount}</Text>
+                </View>
+              )}
+              </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
               <View style={{ position: 'relative' }}>
