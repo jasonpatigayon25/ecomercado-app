@@ -74,20 +74,41 @@ const Chat = ({ navigation, route }) => {
         ]
       : [];
   
-    const sendSelectedMessage = (option) => {
-      if (option.text.trim() !== '') {
-        addDoc(messagesRef, {
-          chatId,
-          senderId: currentUser.uid,
-          senderEmail: currentUser.email,
-          receiverEmail,
-          text: option.text,
-          timestamp: serverTimestamp(),
-        });
-        setSelectedImageUrl(option.photo);
-      }
-      setShowMessageSelector(false);
-    };
+      const sendSelectedMessage = async (option) => {
+        if (option.text.trim() !== '') {
+          const messageData = {
+            chatId,
+            senderId: currentUser.uid,
+            senderEmail: currentUser.email,
+            receiverEmail,
+            text: option.text,
+            timestamp: serverTimestamp(),
+          };
+      
+          await addDoc(messagesRef, messageData);
+      
+          const chatDocRef = doc(db, 'chats', chatId);
+          const chatDocSnap = await getDoc(chatDocRef);
+          const chatData = chatDocSnap.data();
+      
+          const newMessageStatus = {
+            [receiverEmail]: 'unread',
+          };
+      
+          const updatedMessageStatus = {
+            ...chatData.messageStatus,
+            ...newMessageStatus,
+          };
+      
+          await updateDoc(chatDocRef, {
+            messageStatus: updatedMessageStatus,
+            status: 'unread',
+          });
+      
+          setSelectedImageUrl(option.photo);
+        }
+        setShowMessageSelector(false);
+      };
   
     return (
       <View style={styles.messageSelector}>
@@ -149,14 +170,35 @@ const Chat = ({ navigation, route }) => {
 
   const handleSend = async () => {
     if (message.trim() !== '') {
-      await addDoc(messagesRef, {
+      const messageData = {
         chatId,
         senderId: currentUser.uid,
         senderEmail: currentUser.email,
         receiverEmail,
         text: message,
         timestamp: serverTimestamp(),
+      };
+  
+      await addDoc(messagesRef, messageData);
+  
+      const chatDocRef = doc(db, 'chats', chatId);
+      const chatDocSnap = await getDoc(chatDocRef);
+      const chatData = chatDocSnap.data();
+  
+      const newMessageStatus = {
+        [receiverEmail]: 'unread',
+      };
+  
+      const updatedMessageStatus = {
+        ...chatData.messageStatus,
+        ...newMessageStatus,
+      };
+  
+      await updateDoc(chatDocRef, {
+        messageStatus: updatedMessageStatus,
+        status: 'unread',
       });
+  
       setMessage('');
     }
   };
