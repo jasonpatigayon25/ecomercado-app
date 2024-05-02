@@ -14,6 +14,7 @@ const SearchProducts = () => {
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
 
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const [loadingRecommended, setLoadingRecommended] = useState(true);
 
   const [selectedCity, setSelectedCity] = useState('Cebu'); 
@@ -33,6 +34,7 @@ const SearchProducts = () => {
 
   useEffect(() => {
     const handleSearch = async () => {
+      setLoadingSearch(true);
       try {
         const q = query(
           collection(db, 'products'),
@@ -52,6 +54,8 @@ const SearchProducts = () => {
         setSearchResults(results);
       } catch (error) {
         console.error("Error searching products: ", error);
+      } finally {
+        setLoadingSearch(false);
       }
     };
   
@@ -265,6 +269,13 @@ const SearchProducts = () => {
           <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
         )}
       </View>
+
+      
+      {loadingSearch && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#05652D" />
+        </View>
+      )}
   
       {searchQuery.length > 0 && suggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
@@ -278,15 +289,15 @@ const SearchProducts = () => {
         </View>
       )}
   
-      {searchQuery.length > 0 && searchResults.length === 0 && (
-      <View style={styles.noResultsContainer}>
-        <Icon name="search" size={20} color="#ccc" />
-        <Text style={styles.noResultsText}>
-          No products found for '{searchQuery}'
-          {selectedCity && selectedCity !== 'Cebu' && ` in ${selectedCity}`}
-        </Text>
-      </View>
-    )}
+       {searchQuery.length > 0 && !loadingSearch && searchResults.length === 0 && (
+        <View style={styles.noResultsContainer}>
+          <Icon name="search" size={20} color="#ccc" />
+          <Text style={styles.noResultsText}>
+            No products found for '{searchQuery}'
+            {selectedCity && selectedCity !== 'Cebu' && ` in ${selectedCity}`}
+          </Text>
+        </View>
+      )}
   
       {searchResults.length > 0 && (
         <FlatList
@@ -493,6 +504,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
   
 });
