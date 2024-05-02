@@ -183,41 +183,37 @@ const Chat = ({ navigation, route }) => {
   };
 
   useEffect(() => {
-    if (productDetails || donationDetails) {
-      sendAutoMessage(productDetails, donationDetails);
-    }
-
     const q = query(
-      messagesRef,
-      where('chatId', '==', chatId),
-      orderBy('timestamp', 'desc')
+        messagesRef,
+        where('chatId', '==', chatId),
+        orderBy('timestamp', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const messages = [];
-      querySnapshot.forEach((doc) => {
-        messages.push({ ...doc.data(), id: doc.id });
-      });
-      setChatData(messages);
+        const messages = [];
+        querySnapshot.forEach((doc) => {
+            messages.push({ ...doc.data(), id: doc.id });
+        });
+        setChatData(messages);
     });
 
     if (!receiverEmail) {
-      const chatDetailsRef = doc(db, 'chats', chatId);
-      getDoc(chatDetailsRef).then((docSnap) => {
-        if (docSnap.exists()) {
-          const chatDetails = docSnap.data();
-          const otherParticipantEmail = chatDetails.users.find(email => email !== currentUser.email);
-          setReceiverEmail(otherParticipantEmail);
-        }
-      }).catch(error => {
-        console.error("Error fetching chat details: ", error);
-      });
+        const chatDetailsRef = doc(db, 'chats', chatId);
+        getDoc(chatDetailsRef).then((docSnap) => {
+            if (docSnap.exists()) {
+                const chatDetails = docSnap.data();
+                const otherParticipantEmail = chatDetails.users.find(email => email !== currentUser.email);
+                setReceiverEmail(otherParticipantEmail);
+            }
+        }).catch(error => {
+            console.error("Error fetching chat details: ", error);
+        });
     }
 
     return () => {
-      unsubscribe();
+        unsubscribe();
     };
-  }, [chatId, receiverEmail, productDetails, donationDetails]);
+}, [chatId, receiverEmail]);
 
   const sendAutoMessage = async (product, donation) => {
     let messageText;
