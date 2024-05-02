@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, ScrollView, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -12,6 +12,7 @@ const CategoryResultsDonation = () => {
   const { categoryName } = route.params;
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchDonations = async () => {
@@ -57,22 +58,29 @@ const CategoryResultsDonation = () => {
   );
 
   const renderDonations = () => {
+    let filteredDonations = donations;
+    if (searchQuery) {
+      filteredDonations = donations.filter(donation =>
+        donation.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
     if (loading) {
       return <ActivityIndicator size="large" color="#0000ff" />;
     }
 
-    if (donations.length === 0) {
+    if (filteredDonations.length === 0) {
       return (
         <View style={styles.emptyContainer}>
           <Icon5 name="heart" size={50} color="#ccc" />
-          <Text style={styles.emptyText}>No donations yet in this category</Text>
+          <Text style={styles.emptyText}>No donations found</Text>
         </View>
       );
     }
 
     return (
       <ScrollView contentContainerStyle={styles.productsContainer}>
-        {donations.map((donation) => (
+        {filteredDonations.map((donation) => (
           <DonationItem key={donation.id} donation={donation} />
         ))}
       </ScrollView>
@@ -87,6 +95,12 @@ const CategoryResultsDonation = () => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Category: {categoryName} Bundle</Text>
       </View>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search by donation name"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
       {renderDonations()}
     </View>
   );
@@ -183,6 +197,14 @@ const styles = StyleSheet.create({
     color: '#05652D',
     fontSize: 12,
     marginLeft: 5,
+  },
+  searchInput: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    fontSize: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    marginBottom: 10,
   },
 });
 

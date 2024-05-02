@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, ScrollView, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -11,6 +11,7 @@ const CategoryResults = () => {
   const { categoryName } = route.params;
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -52,22 +53,29 @@ const CategoryResults = () => {
   );
 
   const renderProducts = () => {
+    let filteredProducts = products;
+    if (searchQuery) {
+      filteredProducts = products.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
     if (loading) {
       return <ActivityIndicator size="large" color="#0000ff" />;
     }
 
-    if (products.length === 0) {
+    if (filteredProducts.length === 0) {
       return (
         <View style={styles.emptyContainer}>
           <Icon name="shopping-basket" size={50} color="#ccc" />
-          <Text style={styles.emptyText}>No Products Yet</Text>
+          <Text style={styles.emptyText}>No Products Found</Text>
         </View>
       );
     }
 
     return (
       <ScrollView contentContainerStyle={styles.productsContainer}>
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <ProductItem key={product.id} product={product} />
         ))}
       </ScrollView>
@@ -82,6 +90,12 @@ const CategoryResults = () => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Category: {categoryName}</Text>
       </View>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search by product name"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
       {renderProducts()}
     </View>
   );
@@ -162,6 +176,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#808080',
     marginTop: 10,
+  },
+  searchInput: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    fontSize: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    marginBottom: 10,
   },
 });
 
