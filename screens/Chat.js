@@ -185,14 +185,11 @@ const Chat = ({ navigation, route }) => {
 
   const sendAutoMessage = async (product, donation) => {
     let messageText;
-    let imageUrl;
     
     if (product) {
       messageText = `Here's the product you were interested in: ${product.name}`;
-      imageUrl = product.imageUrl;
     } else if (donation) {
       messageText = `Interested in the donation: ${donation.name}`;
-      imageUrl = donation.imageUrl;
     }
   
     if (messageText) {
@@ -202,7 +199,6 @@ const Chat = ({ navigation, route }) => {
         senderEmail: currentUser.email,
         receiverEmail,
         text: messageText,
-        imageUrl,  
         timestamp: serverTimestamp(),
       });
     }

@@ -354,7 +354,7 @@ const ProductDetail = ({ navigation, route }) => {
         navigation.navigate('Chat', {
           chatId: existingChatId,
           receiverEmail: sellerEmail,
-          productDetails: { name: product.name, imageUrl: product.photo }
+          productDetails: { name: product.name } 
         });
       } else {
 
@@ -368,7 +368,7 @@ const ProductDetail = ({ navigation, route }) => {
         navigation.navigate('Chat', {
           chatId: docRef.id,
           receiverEmail: sellerEmail,
-          productDetails: { name: product.name, imageUrl: product.photo }
+          productDetails: { name: product.name }
         });
       }
   

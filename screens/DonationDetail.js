@@ -178,7 +178,7 @@ const DonationDetail = ({ navigation, route }) => {
         navigation.navigate('Chat', {
           chatId: existingChatId,
           receiverEmail: donorEmail,
-          donationDetails: { name: donation.name, imageUrl: donation.photo, initialMessage: chatMessage }
+          donationDetails: { name: donation.name, initialMessage: chatMessage }
         });
       } else {
         const newChatRef = collection(db, 'chats');
@@ -190,7 +190,7 @@ const DonationDetail = ({ navigation, route }) => {
         navigation.navigate('Chat', {
           chatId: docRef.id,
           receiverEmail: donorEmail,
-          donationDetails: { name: donation.name, imageUrl: donation.photo, initialMessage: chatMessage }
+          donationDetails: { name: donation.name, initialMessage: chatMessage }
         });
       }
     } catch (error) {
