@@ -170,15 +170,13 @@ const DonationDetail = ({ navigation, route }) => {
         }
       });
   
-      const chatMessage = requesterEmail === user.email 
-                           ? `Interested in donation: ${donation.name}` 
-                           : `${user.displayName || 'A user'} is interested in your donation: ${donation.name}`;
+      const chatMessage = `${requesterEmail} is interested in the donation: ${donation.name}`;
   
       if (existingChatId) {
         navigation.navigate('Chat', {
           chatId: existingChatId,
           receiverEmail: donorEmail,
-          donationDetails: { name: donation.name, initialMessage: chatMessage }
+          donationDetails: { name: donation.name, donationId: donation.id, initialMessage: chatMessage }
         });
       } else {
         const newChatRef = collection(db, 'chats');
@@ -190,7 +188,7 @@ const DonationDetail = ({ navigation, route }) => {
         navigation.navigate('Chat', {
           chatId: docRef.id,
           receiverEmail: donorEmail,
-          donationDetails: { name: donation.name, initialMessage: chatMessage }
+          donationDetails: { name: donation.name, donationId: donation.id, initialMessage: chatMessage }
         });
       }
     } catch (error) {

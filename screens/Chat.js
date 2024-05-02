@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Platform, Image, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, getDoc, doc, getDocs, deleteDoc, updateDoc, 
           setDoc} from 'firebase/firestore';
@@ -18,7 +18,9 @@ const Chat = ({ navigation, route }) => {
   const [receiverName, setReceiverName] = useState('');
   const [receiverPhotoUrl, setReceiverPhotoUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showMessageSelector, setShowMessageSelector] = useState(true);
   const [message, setMessage] = useState('');
+  
   const [chatData, setChatData] = useState([]);
   const [receiverEmail, setReceiverEmail] = useState(route.params.receiverEmail || '');
 
@@ -53,7 +55,41 @@ const Chat = ({ navigation, route }) => {
     }
   }, [receiverEmail]);
 
+  const MessageSelector = () => {
+    if (!showMessageSelector) return null;
 
+    const options = [
+      `Interested in the product ${productDetails?.name || donationDetails?.name}`,
+      `Tell me more about ${productDetails?.name || donationDetails?.name}`,
+      `Lower the price of ${productDetails?.name || donationDetails?.name}`
+    ];
+
+    const sendSelectedMessage = (msg) => {
+      if (msg.trim() !== '') {
+        addDoc(messagesRef, {
+          chatId,
+          senderId: currentUser.uid,
+          senderEmail: currentUser.email,
+          receiverEmail,
+          text: msg,
+          timestamp: serverTimestamp(),
+        });
+      }
+      setShowMessageSelector(false);
+    };
+  
+    return (
+      <View style={styles.messageSelector}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {options.map((option, index) => (
+            <TouchableOpacity key={index} style={styles.optionButton} onPress={() => sendSelectedMessage(option)}>
+              <Text style={styles.optionText}>{option}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
 
   const fetchReceiverName = async (email) => {
     const usersRef = collection(db, 'users');
@@ -309,6 +345,7 @@ const Chat = ({ navigation, route }) => {
         </View>
       </TouchableOpacity>
       <View style={styles.chatContainer}>
+      {showMessageSelector && <MessageSelector />}
         <FlatList
           data={chatData}
           renderItem={renderItem}
@@ -346,7 +383,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 10,
-    marginBottom: 5,
+
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#E3FCE9',
@@ -371,11 +408,14 @@ const styles = StyleSheet.create({
   },
   chatContainer: {
     flex: 1,
-    paddingTop: 20,
   },
   chatContent: {
     paddingHorizontal: 20,
     paddingBottom: 20,
+  },
+  chatList: {
+    flex: 1,
+    padding: 20,
   },
   messageContainer: {
     backgroundColor: '#FFF',
@@ -399,10 +439,8 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    padding: 10,
+    backgroundColor: '#fff',
   },
   input: {
     flex: 1,
@@ -477,6 +515,46 @@ const styles = StyleSheet.create({
     color: '#2E8B57',
     fontStyle: 'italic',
   },
+  messageSelector: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    paddingHorizontal: 10,
+  },
+  optionButton: {
+    marginRight: 10,
+    backgroundColor: '#05620D', 
+    padding: 10,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 2,
+    elevation: 5, 
+  },
+  optionText: {
+    color: '#FFF', 
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#FFF',
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    marginRight: 10,
+    borderRadius: 20,
+  },
+  sendButton: {
+    padding: 10,
+    backgroundColor: '#05652D',
+    borderRadius: 20,
+  }
 });
 
 export default Chat;

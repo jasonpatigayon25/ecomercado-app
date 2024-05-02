@@ -328,7 +328,7 @@ const ProductDetail = ({ navigation, route }) => {
     }
   
     if (product.seller_email === user.email) {
-      Alert.alert("You are trying to chat about your product.");
+      Alert.alert("Error", "You are trying to chat about your product.");
       return;
     }
   
@@ -339,7 +339,7 @@ const ProductDetail = ({ navigation, route }) => {
       const chatsRef = collection(db, 'chats');
       const q = query(chatsRef, where('users', 'array-contains', buyerEmail));
       const querySnapshot = await getDocs(q);
-      
+  
       let existingChatId = null;
   
       querySnapshot.forEach((doc) => {
@@ -349,47 +349,27 @@ const ProductDetail = ({ navigation, route }) => {
         }
       });
   
+      const chatMessage = `${user.email} is interested in your product ${product.name}`;
+  
       if (existingChatId) {
-
         navigation.navigate('Chat', {
           chatId: existingChatId,
           receiverEmail: sellerEmail,
-          productDetails: { name: product.name } 
+          productDetails: { name: product.name, productId: product.id, initialMessage: chatMessage }
         });
       } else {
-
         const newChatRef = collection(db, 'chats');
         const newChat = {
           users: [buyerEmail, sellerEmail],
           messages: [],
         };
-  
         const docRef = await addDoc(newChatRef, newChat);
         navigation.navigate('Chat', {
           chatId: docRef.id,
           receiverEmail: sellerEmail,
-          productDetails: { name: product.name }
+          productDetails: { name: product.name, productId: product.id, initialMessage: chatMessage }
         });
       }
-  
-      const interestNotificationMessage = `${user.email} is interested in your product ${product.name}`;
-  
-      await addDoc(collection(db, 'notifications'), {
-        interestedUser: user.email,
-        email: sellerEmail,
-        text: interestNotificationMessage,
-        timestamp: new Date(),
-        type: 'product_interest',
-        productId: product.id,
-        productName: product.name,
-        productCategory: product.category,
-        productPrice: product.price,
-      });
-  
-      if (await shouldSendNotification(sellerEmail)) {
-        sendPushNotification(sellerEmail, 'Product Interest', interestNotificationMessage);
-      }
-  
     } catch (error) {
       console.error('Error handling chat with seller:', error);
     }
