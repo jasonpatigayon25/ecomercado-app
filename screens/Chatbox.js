@@ -62,30 +62,37 @@ const Chatbox = ({ navigation }) => {
     setOptionModalVisible(true);
   };
 
-  const handleUserSelect = async (selectedEmail) => {
-    setSearchModalVisible(false);
-    const existingChat = chatSummaries.find(chat => 
-      chat.otherParticipantEmail === selectedEmail
-    );
-
-    if (existingChat) {
-      navigation.navigate('Chat', { chatId: existingChat.chatId, receiverEmail: selectedEmail });
-    } else {
-      const newChatRef = collection(db, 'chats');
-      const newChat = {
-        users: [currentUser.email, selectedEmail],
-        messages: [],
+  const handleUserSelect = async (selectedEmail, chatId) => {
+    try {
+      const chatDocRef = doc(db, 'chats', chatId);
+      const chatDocSnap = await getDoc(chatDocRef);
+      const chatData = chatDocSnap.data();
+  
+      const currentUser = auth.currentUser;
+  
+      const newMessageStatus = {
+        [currentUser.email]: 'read',
       };
-
-      try {
-        const docRef = await addDoc(newChatRef, newChat);
-        navigation.navigate('Chat', { chatId: docRef.id, receiverEmail: selectedEmail });
-      } catch (error) {
-        console.error('Error creating a new chat:', error);
-      }
+  
+      const updatedMessageStatus = {
+        ...chatData.messageStatus,
+        ...newMessageStatus,
+      };
+  
+      await updateDoc(chatDocRef, {
+        messageStatus: updatedMessageStatus,
+        status: 'read',
+      });
+    } catch (error) {
+      console.error('Error updating messageStatus:', error);
     }
+  
+    navigation.navigate('Chat', {
+      chatId: chatId,
+      receiverEmail: selectedEmail,
+    });
   };
-
+  
   const fetchUserDetailsByEmail = async (email) => {
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('email', '==', email));
@@ -158,7 +165,7 @@ const Chatbox = ({ navigation }) => {
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.itemContainer, styles.itemShadow]}
-      onPress={() => navigation.navigate('Chat', { chatId: item.chatId, receiverEmail: item.otherParticipantEmail })}
+      onPress={() => handleUserSelect(item.otherParticipantEmail, item.chatId)}
       onLongPress={() => handleLongPress(item)} 
     >
     <View style={[styles.avatarContainer, styles.itemShadow]}>
@@ -259,7 +266,6 @@ const Chatbox = ({ navigation }) => {
         ListEmptyComponent={renderEmptyComponent}
       />
 
-      
       
       <Modal
         animationType="slide"
