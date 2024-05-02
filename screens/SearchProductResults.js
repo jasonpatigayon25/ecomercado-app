@@ -23,7 +23,9 @@ const SearchProductResults = () => {
           orderBy('name'),
         );
         const querySnapshot = await getDocs(q);
-        const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const results = querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(product => product.publicationStatus === 'approved');
         setSearchedItems(results);
       } catch (error) {
         console.error("Error fetching searched items: ", error);
@@ -37,15 +39,22 @@ const SearchProductResults = () => {
     const fetchRelatedItems = async () => {
       try {
         const searchedItem = searchedItems[0]; 
+        if (!searchedItem) return;
+  
         const q = query(
           collection(db, 'products'),
           orderBy('name'),
         );
         const querySnapshot = await getDocs(q);
+        const searchedItemIds = new Set(searchedItems.map(item => item.id)); 
         const results = querySnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(product => product.category === searchedItem?.category && product.publicationStatus === 'approved')
-          .slice(0, 5);
+          .filter(product => 
+            product.category === searchedItem.category &&
+            product.publicationStatus === 'approved' &&
+            !searchedItemIds.has(product.id)  
+          )
+          .slice(0, 50);
         setRelatedItems(results);
       } catch (error) {
         console.error("Error fetching related items: ", error);
@@ -179,6 +188,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 10,
+    marginLeft: 10,
   },
   row: {
     justifyContent: 'space-between',
@@ -192,7 +202,7 @@ const styles = StyleSheet.create({
     width: '50%',
     backgroundColor: '#f9f9f9',
     padding: 10,
-    marginBottom: 10,
+
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ccc',
