@@ -57,13 +57,21 @@ const Chat = ({ navigation, route }) => {
 
   const MessageSelector = () => {
     if (!showMessageSelector) return null;
-
-    const options = [
-      `Interested in the product ${productDetails?.name || donationDetails?.name}`,
-      `Tell me more about ${productDetails?.name || donationDetails?.name}`,
-      `Lower the price of ${productDetails?.name || donationDetails?.name}`
-    ];
-
+  
+    const options = productDetails
+      ? [
+          `Interested in the product ${productDetails.name}`,
+          `Tell me more about ${productDetails.name}`,
+          `Lower the price of ${productDetails.name}`
+        ]
+      : donationDetails
+      ? [
+          `Interested in the donation ${donationDetails.name}`,
+          `Tell me more about ${donationDetails.name}`,
+          `I need this donation, ${donationDetails.name}`
+        ]
+      : [];
+  
     const sendSelectedMessage = (msg) => {
       if (msg.trim() !== '') {
         addDoc(messagesRef, {
