@@ -96,40 +96,53 @@ const handleRequest = () => {
 }, [wishItems]);
 
 const renderItem = ({ item }) => (
-  
   <TouchableOpacity
-      style={styles.cartItem}
-      onPress={() => navigation.navigate('DonationDetail', { donation: item })}
+    style={styles.cartItem}
+    onPress={() => navigation.navigate('DonationDetail', { donation: item })}
   >
-      <View style={styles.itemLeftSection}>
-          <TouchableOpacity
-              onPress={() => handleSelectItem(item.donationId)}
-              style={{ marginRight: 10 }}
-          >
-              <Icon
-                  name={selectedItems.has(item.donationId) ? "check-square" : "square"}
-                  size={24}
-                  color="#05652D"
-              />
-          </TouchableOpacity>
-          <Image source={{ uri: item.photo }} style={styles.cartImage} />
-      </View>
-      <View style={styles.cartDetails}>
-          <Text style={styles.cartName}>{item.name}</Text>
-          <Text style={styles.cartitemnames}>{item.itemNames && item.itemNames.length > 0 ? `${item.itemNames.join(' · ')}` : ''}</Text>
-          <Text style={styles.cartCategory}>{item.category}</Text>
-          <Text style={styles.cartDescription} numberOfLines={1} ellipsizeMode="tail">
-            {item.purpose}
+    <View style={styles.itemLeftSection}>
+      <TouchableOpacity
+        onPress={() => handleSelectItem(item.donationId)}
+        style={{ marginRight: 10 }}
+      >
+        <Icon
+          name={selectedItems.has(item.donationId) ? "check-square" : "square"}
+          size={24}
+          color="#05652D"
+        />
+      </TouchableOpacity>
+      <Image source={{ uri: item.photo }} style={styles.cartImage} />
+    </View>
+    <View style={styles.cartDetails}>
+      <Text style={styles.cartName}>{item.name}</Text>
+      <Text style={styles.cartitemnames}>
+        {item.itemNames && item.itemNames.length > 0 ? item.itemNames.join(' · ') : ''}
+      </Text>
+      <Text style={styles.cartCategory}>{item.category}</Text>
+      <Text style={styles.cartDescription} numberOfLines={1} ellipsizeMode="tail">
+        {item.purpose}
+      </Text>
+      <Text style={styles.cartDescription} numberOfLines={1} ellipsizeMode="tail">
+        {item.message}
+      </Text>
+      <View style={styles.subPhotosContainer}>
+        {item.subPhotos && item.subPhotos.length > 0 && (
+          item.subPhotos.slice(0, 4).map((subPhoto, index) => (
+            <Image key={index} source={{ uri: subPhoto }} style={styles.subPhoto} />
+          ))
+        )}
+        {item.subPhotos && item.subPhotos.length > 3 && (
+          <Text style={styles.morePhotosIndicator}>
+            {item.subPhotos.length - 3} more
           </Text>
-          <Text style={styles.cartDescription} numberOfLines={1} ellipsizeMode="tail">
-            {item.message}
-          </Text>
+        )}
       </View>
+    </View>
   </TouchableOpacity>
 );
 
 const handleSelectItem = (donationId) => {
-  console.log("Toggling selection for:", donationId); // Debugging line to check which ID is toggled
+  console.log("Toggling selection for:", donationId); 
   setSelectedItems(prevSelectedItems => {
       const newSelection = new Set(prevSelectedItems);
       if (newSelection.has(donationId)) {
@@ -563,6 +576,30 @@ const styles = StyleSheet.create({
   },
   shopIcon: {
     marginLeft: 10,
+},
+subPhotosContainer: {
+  flexDirection: 'row',
+  marginTop: 4,
+  alignItems: 'center',
+},
+subPhoto: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  marginRight: 2,
+},
+morePhotosContainer: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginLeft: 2,
+},
+morePhotosText: {
+  color: '#FFF',
+  fontSize: 12,
 },
 });
 
