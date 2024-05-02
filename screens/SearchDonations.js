@@ -36,53 +36,37 @@ const SearchDonations = () => {
     const handleSearch = async () => {
       setLoadingSearch(true);
       try {
-        const nameQuery = query(
+        const donationsQuery = query(
           collection(db, 'donation'),
-          where('name', '>=', searchQuery),
-          where('name', '<=', searchQuery + '\uf8ff'),
-          limit(50),
-          orderBy('name'),
+          where('publicationStatus', '==', 'approved'),
+          limit(50)
         );
   
-        const itemNameQuery = query(
-          collection(db, 'donation'),
-          where('itemNames', 'array-contains-any', [searchQuery]),
-          limit(50),
-        );
-  
-        const [nameResults, itemNameResults] = await Promise.all([
-          getDocs(nameQuery),
-          getDocs(itemNameQuery),
-        ]);
-  
+        const donationsResults = await getDocs(donationsQuery);
         const currentLocation = selectedCity.toLowerCase();
-        const nameData = nameResults.docs
+        const searchLower = searchQuery.toLowerCase();
+  
+        const filteredData = donationsResults.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
           .filter(donation => 
-            donation.publicationStatus === 'approved' &&
-            donation.location && donation.location.toLowerCase().includes(currentLocation)
-          );
-        const itemNameData = itemNameResults.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(donation => 
-            donation.publicationStatus === 'approved' &&
-            donation.location && donation.location.toLowerCase().includes(currentLocation)
-          );
+            donation.location && donation.location.toLowerCase().includes(currentLocation) &&
+            (donation.name.toLowerCase().includes(searchLower) ||
+             (donation.itemNames && donation.itemNames.some(name => name.toLowerCase().includes(searchLower))))
+          )
+          .reduce((acc, current) => {
+            // This check ensures there are no duplicates in the final results
+            const x = acc.find(item => item.id === current.id);
+            if (!x) {
+              return acc.concat([current]);
+            } else {
+              return acc;
+            }
+          }, []);
   
-        const combinedResults = [...nameData, ...itemNameData];
-        const uniqueResults = combinedResults.reduce((acc, current) => {
-          const x = acc.find(item => item.id === current.id);
-          if (!x) {
-            return acc.concat([current]);
-          } else {
-            return acc;
-          }
-        }, []);
-  
-        setSearchResults(uniqueResults);
+        setSearchResults(filteredData);
       } catch (error) {
         console.error("Error searching donations: ", error);
-      }finally {
+      } finally {
         setLoadingSearch(false);
       }
     };
