@@ -227,56 +227,6 @@ const Chatbox = ({ navigation }) => {
     }
   };
 
-  const rateUser = async (ratedUserEmail, rating, message = '') => {
-    const raterEmail = currentUser.email;
-
-    const ratingsRef = collection(db, 'userRatings');
-    const q = query(ratingsRef, where('userEmail', '==', ratedUserEmail), where('raterEmail', '==', raterEmail));
-    const querySnapshot = await getDocs(q);
-  
-    if (!querySnapshot.empty) {
-      Alert.alert("Error", "You have already rated this user.");
-      return;
-    }
-  
-    const newRating = {
-      userEmail: ratedUserEmail,
-      raterEmail,
-      rating,
-      message,
-      ratedAt: new Date(),
-    };
-    await addDoc(ratingsRef, newRating);
-  
-    updateAverageRating(ratedUserEmail);
-  
-    Alert.alert("Success", "User has been rated successfully.");
-  };
-  
-  const updateAverageRating = async (userEmail) => {
-    const ratingsRef = collection(db, 'userRatings');
-    const q = query(ratingsRef, where('userEmail', '==', userEmail));
-    const querySnapshot = await getDocs(q);
-  
-    let totalRating = 0;
-    querySnapshot.forEach((doc) => {
-      totalRating += doc.data().rating;
-    });
-  
-    const averageRating = querySnapshot.size > 0 ? totalRating / querySnapshot.size : 0;
-  
-    const userAvgRatingRef = doc(db, 'userAverageRating', userEmail);
-  
-    await setDoc(userAvgRatingRef, {
-      email: userEmail,
-      averageRating: averageRating
-    });
-  };
-
-  const handleRateUserOpen = () => {
-    setOptionModalVisible(false); 
-    setRatingModalVisible(true); 
-  };
 
   return (
     <View style={styles.container}>
@@ -309,36 +259,7 @@ const Chatbox = ({ navigation }) => {
         ListEmptyComponent={renderEmptyComponent}
       />
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={searchModalVisible}
-        onRequestClose={() => setSearchModalVisible(false)}
-      >
-        <View style={styles.centeredModalView}>
-          <View style={styles.modalView}>
-            <TextInput
-              autoFocus
-              placeholder="Search by email"
-              value={searchQuery}
-              onChangeText={handleSearch}
-              style={styles.modalTextInput}
-            />
-            <FlatList
-              data={searchResults}
-              keyExtractor={(item) => item.uid}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.searchResultItem}
-                  onPress={() => handleUserSelect(item.email)}
-                >
-                  <Text style={styles.searchResultText}>{item.email}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
+      
       
       <Modal
         animationType="slide"
@@ -357,68 +278,11 @@ const Chatbox = ({ navigation }) => {
               <Text style={styles.modalOptionText}>Delete Conversation</Text>
             </TouchableOpacity>
             <TouchableOpacity
-                style={styles.modalOption}
-                onPress={handleRateUserOpen}
-              >
-              <Icon name="star" size={20} color="#FFD700" />
-              <Text style={styles.modalOptionText}>Rate User</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
               style={styles.modalOption}
               onPress={() => setOptionModalVisible(false)}
             >
               <Icon name="times" size={20} color="#000" />
               <Text style={styles.modalOptionText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={ratingModalVisible}
-        onRequestClose={() => setRatingModalVisible(false)}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Rating
-              type="star"
-              ratingCount={5}
-              imageSize={40}
-              showRating  
-              onFinishRating={(rating) => setUserRating(rating.toString())} 
-              style={{ paddingVertical: 10 }}
-            />
-            <TextInput
-              placeholder="Enter a message for the user"
-              value={userMessage}
-              onChangeText={setUserMessage}
-              multiline
-              numberOfLines={4}
-              style={styles.ratingMessageInput}
-            />
-            <TouchableOpacity
-              style={styles.ratingSubmitButton}
-              onPress={() => {
-                const rating = parseInt(userRating);
-                if (!isNaN(rating) && rating >= 1 && rating <= 5) {
-                  rateUser(selectedChat?.otherParticipantEmail, rating, userMessage);
-                  setRatingModalVisible(false);
-                  setUserRating('');
-                  setUserMessage('');
-                } else {
-                  Alert.alert('Invalid Rating', 'Please enter a valid rating between 1 and 5.');
-                }
-              }}
-            >
-              <Text style={styles.buttonTextStyle}>Submit Rating</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.ratingCancelButton}
-              onPress={() => setRatingModalVisible(false)}
-            >
-              <Text style={styles.buttonTextStyle}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
