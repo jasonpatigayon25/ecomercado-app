@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { query, where, getDocs, collection, limit, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
@@ -13,6 +13,10 @@ const SearchDonations = () => {
   const [suggestions, setSuggestions] = useState([]);
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
+  
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
+  
   const [selectedCity, setSelectedCity] = useState('Cebu');
 
   useEffect(() => {
@@ -30,6 +34,7 @@ const SearchDonations = () => {
 
   useEffect(() => {
     const handleSearch = async () => {
+      setLoadingSearch(true);
       try {
         const nameQuery = query(
           collection(db, 'donation'),
@@ -77,6 +82,8 @@ const SearchDonations = () => {
         setSearchResults(uniqueResults);
       } catch (error) {
         console.error("Error searching donations: ", error);
+      }finally {
+        setLoadingSearch(false);
       }
     };
   
@@ -89,6 +96,7 @@ const SearchDonations = () => {
 
   useEffect(() => {
     const fetchRecommendedDonations = async () => {
+      setLoadingRecommended(true);
       try {
         const auth = getAuth();
         const user = auth.currentUser;
@@ -131,6 +139,8 @@ const SearchDonations = () => {
         setRecommendedDonations(prioritizedRecommended);
       } catch (error) {
         console.error("Error fetching recommended donations: ", error);
+      } finally {
+        setLoadingRecommended(false);
       }
     };
   
@@ -268,6 +278,12 @@ const SearchDonations = () => {
           <Text style={styles.searchingText}>Searching for "{searchQuery}"</Text>
         )}
       </View>
+
+      {loadingSearch && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#05652D" />
+        </View>
+      )}
   
       {searchQuery.length > 0 && suggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
@@ -281,10 +297,11 @@ const SearchDonations = () => {
         </View>
       )}
   
-      {searchQuery.length > 0 && searchResults.length === 0 && (
+      {searchQuery.length > 0 && !loadingSearch && searchResults.length === 0 && (
         <View style={styles.noResultsContainer}>
           <Icon name="search" size={20} color="#ccc" />
-          <Text style={styles.noResultsText}>No donations found for '{searchQuery}'</Text>
+          <Text style={styles.noResultsText}>No donations found for '{searchQuery}'
+          {selectedCity && selectedCity !== 'Cebu' && ` in ${selectedCity}`}</Text>
         </View>
       )}
   
@@ -298,19 +315,36 @@ const SearchDonations = () => {
         />
       )}
   
-      {searchQuery.length === 0 && recommendedDonations.length > 0 && (
-        <>
-          <Text style={styles.recommendedText}>Donations You Can Request</Text>
-          <FlatList
-            data={recommendedDonations}
-            renderItem={renderDonationItem}
-            keyExtractor={(item, index) => index.toString()}
-            numColumns={2}
-            columnWrapperStyle={styles.row}
-            contentContainerStyle={styles.recommendedContainer}
-          />
-        </>
-      )}
+  {searchQuery.length === 0 && (
+  <>
+    {loadingRecommended ? (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#05652D" />
+      </View>
+    ) : (
+      <>
+        {recommendedDonations.length > 0 ? (
+          <>
+            <Text style={styles.recommendedText}>Donations You Can Request</Text>
+            <FlatList
+              data={recommendedDonations}
+              renderItem={renderDonationItem}
+              keyExtractor={(item, index) => index.toString()}
+              numColumns={2}
+              columnWrapperStyle={styles.row}
+              contentContainerStyle={styles.recommendedContainer}
+            />
+          </>
+        ) : (
+          <View style={styles.noResultsContainer}>
+            <Icon name="search" size={20} color="#ccc" />
+            <Text style={styles.noResultsText}>No donations found in {selectedCity}</Text>
+          </View>
+        )}
+      </>
+    )}
+  </>
+)}
     </View>
   );
 };
@@ -519,6 +553,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 10,
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });
 
