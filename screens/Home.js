@@ -487,7 +487,7 @@ const Home = ({ navigation, route }) => {
                 )}
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('DonationWishlist')}>
+            <TouchableOpacity style={styles.wishlistContainer} onPress={() => navigation.navigate('DonationWishlist')}>
             <View style={{ position: 'relative' }}>
               <Image source={wishlistIcon} style={styles.wishlistIcon} />
               {wishlistCount > 0 && (
@@ -1085,6 +1085,9 @@ searchSuggestions: {
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold'
+  },
+  wishlistContainer: {
+    marginRight: 10,
   },
   wishlistIcon: {
     width: 24,
