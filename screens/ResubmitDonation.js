@@ -150,12 +150,11 @@ const ResubmitDonation = ({ route, navigation }) => {
           const querySnapshot = await getDocs(q);
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
-            
-            setUserEmail(user.email);
+            setUserEmail(userData.email);
   
             setDonationInfo(prevState => ({
               ...prevState,
-              location: userData.address || '',
+              donor_email: userData.email, 
             }));
           } else {
             console.log('No user profile found.');
