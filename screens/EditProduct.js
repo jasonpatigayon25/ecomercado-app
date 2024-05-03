@@ -134,13 +134,7 @@ const EditProduct = ({ route, navigation }) => {
           const querySnapshot = await getDocs(q);
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
-
             setUserEmail(userData.email);
-
-            setProductInfo(prevState => ({
-              ...prevState,
-              location: userData.address || '',
-            }));
           } else {
             console.log('No user profile found.');
           }
