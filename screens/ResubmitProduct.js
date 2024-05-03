@@ -53,7 +53,14 @@ const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, naviga
 };
 
 const ResubmitProduct = ({ route, navigation }) => {
-    
+  useEffect(() => {
+    if (route.params?.location) {
+      setProductInfo(prevState => ({
+        ...prevState,
+        location: route.params.location
+      }));
+    }
+  }, [route.params?.location]);
     useEffect(() => {
         if (route.params?.productInfo) {
           const {
@@ -775,7 +782,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
             Location
             {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
           </Text>
-          <TouchableOpacity style={styles.input}  onPress={() => setLocationSearchModalVisible(true)}>
+          <TouchableOpacity style={styles.input}  onPress={() => navigation.navigate('MapLocationSelectorResubmitProduct')}>
             <Text>{productInfo.location || 'Enter Location'}</Text>
           </TouchableOpacity>
           <Text style={styles.label}>

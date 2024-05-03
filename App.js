@@ -108,6 +108,10 @@ import MapLocationBased from './screens/MapLocationBased';
 import MapLocationBasedHome from './screens/MapLocationBasedHome';
 import MapLocationBasedDonation from './screens/MapLocationBasedDonation';
 import MapLocationSelector from './screens/MapLocationSelector';
+import MapLocationSelectorSell from './screens/MapLocationSelectorSell';
+import MapLocationSelectorSellProduct from './screens/MapLocationSelectorSellProduct';
+import MapLocationSelectorEditProduct from './screens/MapLocationSelectorEditProduct';
+import MapLocationSelectorResubmitProduct from './screens/MapLocationSelectorResubmitProduct';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -389,6 +393,10 @@ const App = () => {
               <Stack.Screen name="MapLocationBased" component={MapLocationBased} />
               <Stack.Screen name="MapLocationBasedDonation" component={MapLocationBasedDonation} />
               <Stack.Screen name="MapLocationBasedHome" component={MapLocationBasedHome} />
+              <Stack.Screen name="MapLocationSelectorSell" component={MapLocationSelectorSell} />
+              <Stack.Screen name="MapLocationSelectorSellProduct" component={MapLocationSelectorSellProduct} />
+              <Stack.Screen name="MapLocationSelectorEditProduct" component={MapLocationSelectorEditProduct} />
+              <Stack.Screen name="MapLocationSelectorResubmitProduct" component={MapLocationSelectorResubmitProduct} />
               <Stack.Screen name="Login" component={Login} />
               <Stack.Screen name="Logout" component={MainTabs} options={{ headerRight: () => <Button title="Logout" onPress={handleLogout} /> }} />
             </>

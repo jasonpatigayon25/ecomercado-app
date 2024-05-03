@@ -8,10 +8,11 @@ import { productsCollection, db } from '../config/firebase';
 import { getAuth } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Timestamp } from 'firebase/firestore';
-import axios from 'axios';
+import axios from 'axios'; 
 import { Dimensions } from 'react-native';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -53,8 +54,18 @@ const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, naviga
 };
 
 const Sell = ({ navigation }) => {
-
   const [subPhotos, setSubPhotos] = useState([]);
+  const route = useRoute();
+
+  useEffect(() => {
+    if (route.params?.location) {
+      setProductInfo(prevState => ({
+        ...prevState,
+        location: route.params.location
+      }));
+    }
+  }, [route.params?.location]);
+
   const MAX_SUB_PHOTOS = 15;
   const [isSubPhotoPickerModalVisible, setIsSubPhotoPickerModalVisible] = useState(false);
 
@@ -834,7 +845,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
             Location
             {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
           </Text>
-          <TouchableOpacity style={styles.input}  onPress={() => setLocationSearchModalVisible(true)}>
+          <TouchableOpacity style={styles.input}  onPress={() => navigation.navigate('MapLocationSelectorSell')}>
             <Text>{productInfo.location || 'Enter Location'}</Text>
           </TouchableOpacity>
           <Text style={styles.label}>

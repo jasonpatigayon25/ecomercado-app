@@ -12,6 +12,7 @@ import axios from 'axios';
 import { Dimensions } from 'react-native';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -53,6 +54,15 @@ const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, naviga
 };
 
 const EditProduct = ({ route, navigation }) => {
+
+  useEffect(() => {
+    if (route.params?.location) {
+      setProductInfo(prevState => ({
+        ...prevState,
+        location: route.params.location
+      }));
+    }
+  }, [route.params?.location]);
     
     useEffect(() => {
         if (route.params?.productInfo) {
@@ -773,7 +783,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
             Location
             {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
           </Text>
-          <TouchableOpacity style={styles.input}  onPress={() => setLocationSearchModalVisible(true)}>
+          <TouchableOpacity style={styles.input}  onPress={() => navigation.navigate('MapLocationSelectorEditProduct')}>
             <Text>{productInfo.location || 'Enter Location'}</Text>
           </TouchableOpacity>
           <Text style={styles.label}>
