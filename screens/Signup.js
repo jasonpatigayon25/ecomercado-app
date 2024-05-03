@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Modal, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon2 from 'react-native-vector-icons/MaterialIcons'; 
@@ -13,7 +14,7 @@ import { Dimensions } from 'react-native';
 
 const screenHeight = Dimensions.get('window').height;
 
-const Signup = ({ navigation }) => {
+const Signup = ({ navigation, route }) => {
   const [email, setEmail] = useState('');
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
@@ -30,6 +31,15 @@ const Signup = ({ navigation }) => {
   const [locationSearchResults, setLocationSearchResults] = useState([]);
 
   const [address, setAddress] = useState('');
+
+  useFocusEffect(
+    React.useCallback(() => {
+        if (route.params?.location) {
+            setAddress(route.params.location);
+        }
+    }, [route.params?.location])
+);
+
 
   const handleLocationSearch = async (query) => {
     setLocationSearchQuery(query);

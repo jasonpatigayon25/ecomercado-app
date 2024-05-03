@@ -1,12 +1,12 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { WebView } from 'react-native-webview';
 import { View, Button, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-
 const MapLocationSelector = () => {
     const navigation = useNavigation();
     const webViewRef = useRef(null);
+    const [selectedLocation, setSelectedLocation] = useState(null);
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -14,6 +14,7 @@ const MapLocationSelector = () => {
       <head>
         <style type="text/css">
           #map {
+            top: 100px;
             height: 100%;
           }
           #searchInput {
@@ -30,19 +31,6 @@ const MapLocationSelector = () => {
             background-color: white;
             outline: none; 
           }
-          #confirmButton {
-            position: fixed;
-            left: 50%;
-            bottom: 20px;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-            font-size: 20px;
-            color: white;
-            background-color: #4CAF50; 
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-          }
           html, body {
             height: 100%;
             margin: 0;
@@ -57,16 +45,14 @@ const MapLocationSelector = () => {
                 zoom: 15,
                 center: cebu,
                 mapTypeControl: false,
-                draggable: true,
-                title: 'Cebu City'
+                streetViewControl: false,
+                draggable: true         
             });
-        
             var marker = new google.maps.Marker({
                 position: cebu,
                 map: map,
-                draggable: true,
+                draggable: true
             });
-        
             var geocoder = new google.maps.Geocoder();
             var searchBox = new google.maps.places.SearchBox(document.getElementById('searchInput'));
             map.controls[google.maps.ControlPosition.TOP_LEFT].push(document.getElementById('searchInput'));
@@ -77,50 +63,36 @@ const MapLocationSelector = () => {
         
             searchBox.addListener('places_changed', function() {
                 var places = searchBox.getPlaces();
-                if (places.length === 0) {
-                    return;
-                }
+                if (places.length === 0) return;
                 var bounds = new google.maps.LatLngBounds();
                 places.forEach(function(place) {
-                    if (!place.geometry) {
-                        console.log("Returned place contains no geometry");
-                        return;
-                    }
-                    if (place.geometry.viewport) {
-                        bounds.union(place.geometry.viewport);
-                    } else {
-                        bounds.extend(place.geometry.location);
-                    }
+                    if (!place.geometry) return;
                     marker.setPosition(place.geometry.location);
+                    bounds.extend(place.geometry.location);
                     updateLocationInput(place.geometry.location);
                 });
                 map.fitBounds(bounds);
             });
         
-            // When the user clicks on the map, set the marker to the new location
             map.addListener('click', function(e) {
                 marker.setPosition(e.latLng);
                 updateLocationInput(e.latLng);
             });
         
-            // Update the location in the input field
+            google.maps.event.addListener(marker, 'dragend', function() {
+                updateLocationInput(marker.getPosition());
+            });
+        
             function updateLocationInput(latlng) {
                 geocoder.geocode({ 'location': latlng }, function(results, status) {
-                    if (status === 'OK') {
-                        if (results[0]) {
-                            document.getElementById('searchInput').value = results[0].formatted_address;
-                        } else {
-                            document.getElementById('searchInput').value = 'No results found';
-                        }
-                    } else {
-                        document.getElementById('searchInput').value = 'Geocoder failed due to: ' + status;
+                    if (status === 'OK' && results[0]) {
+                        document.getElementById('searchInput').value = results[0].formatted_address;
+                        window.ReactNativeWebView.postMessage(results[0].formatted_address);
                     }
                 });
             }
         
-            google.maps.event.addListener(marker, 'position_changed', function() {
-                updateLocationInput(marker.getPosition());
-            });
+            document.getElementById('searchInput').focus(); 
         }
         </script>
       </head>
@@ -130,14 +102,17 @@ const MapLocationSelector = () => {
       </body>
       </html>
     `;
-  
-    const confirmLocation = () => {
-        webViewRef.current.postMessage("getLocation");
-    };
 
     const onMessage = (event) => {
-        const location = event.nativeEvent.data;
-        navigation.navigate('Signup', { location });
+        setSelectedLocation(event.nativeEvent.data);
+    };
+
+    const confirmLocation = () => {
+        if (selectedLocation) {
+            navigation.navigate('Signup', { location: selectedLocation });
+        } else {
+            alert('Please select a location first.');
+        }
     };
 
     return (
@@ -151,7 +126,7 @@ const MapLocationSelector = () => {
                 domStorageEnabled={true}
                 onMessage={onMessage}
             />
-             <View style={styles.buttonContainer}>
+            <View style={styles.buttonContainer}>
                 <Button title="Confirm Location" onPress={confirmLocation} color="#4CAF50" />
             </View>
         </View>
@@ -160,11 +135,12 @@ const MapLocationSelector = () => {
 
 const styles = StyleSheet.create({
     buttonContainer: {
-        marginHorizontal: 20,  
-        marginTop: 20,       
-        height: 50,      
+        marginHorizontal: 20,
+        marginTop: 20,
+        height: 50,
         justifyContent: 'center'
     }
 });
 
-  export default MapLocationSelector;
+
+export default MapLocationSelector;
