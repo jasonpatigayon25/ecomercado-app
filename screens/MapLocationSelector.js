@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { WebView } from 'react-native-webview';
-import { View, Button, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { useNavigation } from '@react-navigation/native';
 
 const MapLocationSelector = () => {
@@ -14,12 +14,11 @@ const MapLocationSelector = () => {
       <head>
         <style type="text/css">
           #map {
-            top: 100px;
             height: 100%;
           }
           #searchInput {
             position: absolute;
-            top: 20px;
+            top: 120px;
             left: 10px; 
             right: 10px; 
             height: 120px; 
@@ -41,6 +40,8 @@ const MapLocationSelector = () => {
         <script>
         function initMap() {
             var cebu = {lat: 10.3157, lng: 123.8854};
+
+            
             var map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 15,
                 center: cebu,
@@ -86,8 +87,12 @@ const MapLocationSelector = () => {
             function updateLocationInput(latlng) {
                 geocoder.geocode({ 'location': latlng }, function(results, status) {
                     if (status === 'OK' && results[0]) {
-                        document.getElementById('searchInput').value = results[0].formatted_address;
-                        window.ReactNativeWebView.postMessage(results[0].formatted_address);
+                        var formattedAddress = results[0].formatted_address;
+                        document.getElementById('searchInput').value = formattedAddress;
+                        console.log('Sending address to React Native:', formattedAddress); // Debugging
+                        window.ReactNativeWebView.postMessage(formattedAddress);
+                    } else {
+                        console.log('Geocode was not successful for the following reason:', status); // Debugging
                     }
                 });
             }
@@ -111,7 +116,7 @@ const MapLocationSelector = () => {
         if (selectedLocation) {
             navigation.navigate('Signup', { location: selectedLocation });
         } else {
-            alert('Please select a location first.');
+            Alert.alert('Please select a location first.');
         }
     };
 
@@ -127,7 +132,10 @@ const MapLocationSelector = () => {
                 onMessage={onMessage}
             />
             <View style={styles.buttonContainer}>
-                <Button title="Confirm Location" onPress={confirmLocation} color="#4CAF50" />
+                {/* <Button title="Confirm Location" onPress={confirmLocation} color="#05620d" /> */}
+                <TouchableOpacity style={styles.button} onPress={confirmLocation}>
+                    <Text style={styles.buttonText}>Confirm Location</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );
@@ -139,6 +147,18 @@ const styles = StyleSheet.create({
         marginTop: 20,
         height: 50,
         justifyContent: 'center'
+    },
+    button: {
+        backgroundColor: '#05620d', 
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 5
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold'
     }
 });
 

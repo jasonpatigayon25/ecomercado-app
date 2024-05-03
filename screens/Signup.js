@@ -219,19 +219,21 @@ const Signup = ({ navigation, route }) => {
         />
         </View>
         <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Address"
-            value={address}
-            onChangeText={setAddress}
-            onFocus={() => setLocationSearchModalVisible(true)}
-          />
           <TouchableOpacity 
-            onPress={() => navigation.navigate('MapLocationSelector')}
-            style={styles.iconContainer}>
-            <Icon2 name="my-location" size={24} color="#D3D3D3" />
+              style={styles.inputTouchable}
+              onPress={() => navigation.navigate('MapLocationSelector')}
+          >
+              <Text style={[styles.inputText, { color: address ? '#000' : '#A9A9A9' }]}>
+                  {address || "Enter Address"}
+              </Text>
           </TouchableOpacity>
-        </View>
+          <TouchableOpacity 
+              onPress={() => navigation.navigate('MapLocationSelector')}
+              style={styles.iconContainer}
+          >
+              <Icon2 name="my-location" size={24} color="#D3D3D3" />
+          </TouchableOpacity>
+      </View>
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
@@ -369,6 +371,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
+  inputTouchable: {
+    flex: 1,
+    justifyContent: 'center',
+
+  },
+  inputText: {
+    color: '#000',
+    fontSize: 16
+},
   input: {
     flex: 1,
     fontSize: 16,
