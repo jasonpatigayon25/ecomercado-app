@@ -11,6 +11,7 @@ import axios from 'axios';
 import { Dimensions } from 'react-native';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const SuccessModal = ({ donationName, isVisible, onCancel, navigateToDonate, navigateToDonationPosts }) => {
   return (
@@ -52,8 +53,18 @@ const SuccessModal = ({ donationName, isVisible, onCancel, navigateToDonate, nav
 
 const screenHeight = Dimensions.get('window').height;
 
-const DonateAddDonation = ({ navigation }) => {
 
+const DonateAddDonation = ({ navigation }) => {
+  const route = useRoute();
+
+  useEffect(() => {
+    if (route.params?.location) {
+      setDonationInfo(prevState => ({
+        ...prevState,
+        location: route.params.location
+      }));
+    }
+  }, [route.params?.location]);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
 
   const [isSubPhotoPickerModalVisible, setIsSubPhotoPickerModalVisible] = useState(false);
@@ -829,7 +840,7 @@ const decrementWeight = () => {
           Location
           {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
         </Text>
-        <TouchableOpacity style={[styles.input, missingFields.location && styles.missingField]} onPress={openLocationSearchModal}>
+        <TouchableOpacity style={[styles.input, missingFields.location && styles.missingField]} onPress={() => navigation.navigate('MapLocationSelectorDonateAddDonation')}>
           <Text>{donationInfo.location || 'Enter Location'}</Text>
         </TouchableOpacity>
 
