@@ -107,6 +107,7 @@ import MapViewer from './screens/MapViewer';
 import MapLocationBased from './screens/MapLocationBased';
 import MapLocationBasedHome from './screens/MapLocationBasedHome';
 import MapLocationBasedDonation from './screens/MapLocationBasedDonation';
+import MapLocationSelector from './screens/MapLocationSelector';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -398,6 +399,7 @@ const App = () => {
               <Stack.Screen name="Login" component={Login} />
               <Stack.Screen name="Signup" component={SignupScreen} />
               <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+              <Stack.Screen name="MapLocationSelector" component={MapLocationSelector} />
             </>
           )}
         </Stack.Navigator>

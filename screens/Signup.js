@@ -208,14 +208,19 @@ const Signup = ({ navigation }) => {
         />
         </View>
         <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Address"
-          value={address}
-          onChangeText={setAddress}
-          onFocus={() => setLocationSearchModalVisible(true)} 
-        />
-      </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Address"
+            value={address}
+            onChangeText={setAddress}
+            onFocus={() => setLocationSearchModalVisible(true)}
+          />
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('MapLocationSelector')}
+            style={styles.iconContainer}>
+            <Icon name="map-marker" size={24} color="#D3D3D3" />
+          </TouchableOpacity>
+        </View>
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
