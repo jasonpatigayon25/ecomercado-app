@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Modal, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { usersCollection } from '../config/firebase';
 import { addDoc } from "firebase/firestore";
@@ -69,11 +69,11 @@ const Signup = ({ navigation }) => {
     const isAnyInputMissing = !email.trim() || !firstname.trim() || !lastname.trim() || !address.trim() || !password.trim() || !repeatPassword.trim();
 
     if (isAnyInputMissing) {
-      alert('Missing inputs. Please provide the missing information.');
+      Alert.alert('Missing inputs. Please provide the missing information.');
       return;
     }
     if (!termsChecked) {
-      alert('Please accept the terms and conditions.');
+      Alert.alert('Please accept the terms and conditions.');
       return;
     }
 
@@ -83,12 +83,12 @@ const Signup = ({ navigation }) => {
     }
 
     if (!email.includes('@')) {
-      alert('Please enter a valid email address.');
+      Alert.alert('Please enter a valid email address.');
       return;
     }
 
     if (password !== repeatPassword) {
-      alert('Passwords do not match. Please re-enter the password.');
+      Alert.alert('Passwords do not match. Please re-enter the password.');
       return;
     }
 
@@ -100,22 +100,22 @@ const Signup = ({ navigation }) => {
       const hasDigit = /[0-9]/.test(pass);
       
       if (pass.length < MIN_LENGTH || pass.length > MAX_LENGTH) {
-        alert(`Password should be between ${MIN_LENGTH} and ${MAX_LENGTH} characters.`);
+        Alert.alert(`Password should be between ${MIN_LENGTH} and ${MAX_LENGTH} characters.`);
         return false;
       }
       
       if (!hasUpperCase) {
-        alert('Password should contain at least one uppercase letter.');
+        Alert.alert('Password should contain at least one uppercase letter.');
         return false;
       }
       
       if (!hasLowerCase) {
-        alert('Password should contain at least one lowercase letter.');
+        Alert.alert('Password should contain at least one lowercase letter.');
         return false;
       }
       
       if (!hasDigit) {
-        alert('Password should contain at least one numeric digit.');
+        Alert.alert('Password should contain at least one numeric digit.');
         return false;
       }
       
@@ -144,20 +144,20 @@ const Signup = ({ navigation }) => {
           console.log(`User added with ID: ${docRef.id}`);
           await AsyncStorage.setItem('hasJustRegistered', 'true');
           await auth.signOut();
-          alert('Registration complete. Please log in to ECOMercado.');
+          Alert.alert('Registration complete. Please log in to ECOMercado.');
           navigation.navigate('Login');
         } catch (error) {
           console.error('Error occurred:', error);
-          alert('Registration failed. Please try again later.');
+          Alert.alert('Registration failed. Please try again later.');
         }
 
       })
       .catch((error) => {
         if (error.code === 'auth/email-already-in-use') {
-            alert('Email already taken, please provide another email address.');
+          Alert.alert('Email already taken, please provide another email address.');
         } else {
             console.error('Error occurred during authentication:', error);
-            alert('Registration failed. Please try again later.');
+            Alert.alert('Registration failed. Please try again later.');
         }
       });
 };
@@ -306,129 +306,108 @@ const Signup = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E3FCE9',
+    backgroundColor: '#E3FCE9',  
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    backgroundColor: '#E3FCE9',
+    backgroundColor: '#ffffff', 
     paddingVertical: 10,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 4,
   },
   backButtonContainer: {
-    marginRight: 10,
+    marginRight: 20,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 5,
-    color: '#000',
-    marginLeft: 20,
-    fontWeight: 'bold',
-  },
-  helpIconContainer: {
-    marginLeft: 'auto',
-  },
-  helpIcon: {
-    color: '#05652D',
-    fontSize: 24,
+    fontSize: 22,
+    color: '#3a3a3a', 
+    fontWeight: '600',
   },
   contentContainer: {
-    marginTop: 10,
+    marginTop: 20,
     paddingHorizontal: 20,
-    paddingBottom: 20,
   },
   logo: {
-    width: 320,
+    width: 300,
     height: 70,
+    alignSelf: 'center',
     marginBottom: 30,
   },
-  input: {
+  inputContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#FFF',
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    borderColor: '#dedede',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
-    backgroundColor: '#FFF',
-    color: '#000',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333333',  
+  },
+  iconContainer: {
+    padding: 10,
   },
   termsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginVertical: 16,
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 1,
-    borderColor: '#D3D3D3',
-    borderRadius: 4,
-    marginRight: 15,
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: '#05652D',
+    borderRadius: 5,
+    marginRight: 10,
+    backgroundColor: '#fff', 
   },
   termsText: {
-    fontSize: 16,
-    color: '#05652D',
+    fontSize: 14,
+    color: '#3a3a3a',
   },
   buttonContainer: {
-    height: 50,
-    marginVertical: 10,
+    marginVertical: 20,
   },
   button: {
-    flex: 1,
+    backgroundColor: '#05652D',
+    borderRadius: 30,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#05652D',
+    shadowColor: '#05652D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 3,
   },
   buttonText: {
-    color: '#FFFFFF',
     fontSize: 18,
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   text: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 8,
-    color: '#000',
+    color: '#3a3a3a',
   },
   loginText: {
     color: '#05652D',
     fontWeight: 'bold',
-  },
-  checked: {
-    backgroundColor: '#05652D',
-    borderColor: '#05652D',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FFF',
-    borderRadius: 25,
-    marginBottom: 16,
-    backgroundColor: '#FFF',
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    color: '#000',
-    borderWidth: 0,
-  },
-  iconContainer: {
-    padding: 10,
-  },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'flex-end', 
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   modalView: {
     height: screenHeight / 2, 
@@ -437,6 +416,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.25,
@@ -444,6 +424,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalTextInput: {
+    width: '100%',
     height: 40,
     borderColor: '#ccc',
     borderWidth: 1,
@@ -453,7 +434,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   searchResultsContainer: {
-    maxHeight: screenHeight / 2 - 80,
+    width: '100%',
   },
   searchResultItem: {
     padding: 10,
@@ -464,15 +445,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  inputError: {
-    borderColor: 'red', 
+  checkboxIcon: {
+    position: 'absolute',
+    alignSelf: 'center',
+    marginTop: 1,
   },
-  errorText: {
-    fontSize: 14,
-    color: 'red',
-    alignSelf: 'flex-start',
-    marginRight: 10,
-    marginTop: 4,
+  checked: {
+    backgroundColor: '#05652D', 
+    borderColor: '#05652D',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
