@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Modal, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon2 from 'react-native-vector-icons/MaterialIcons'; 
 import { usersCollection } from '../config/firebase';
 import { addDoc } from "firebase/firestore";
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
@@ -218,7 +219,7 @@ const Signup = ({ navigation }) => {
           <TouchableOpacity 
             onPress={() => navigation.navigate('MapLocationSelector')}
             style={styles.iconContainer}>
-            <Icon name="map-marker" size={24} color="#D3D3D3" />
+            <Icon2 name="my-location" size={24} color="#D3D3D3" />
           </TouchableOpacity>
         </View>
         <View style={styles.inputContainer}>
@@ -364,7 +365,7 @@ const styles = StyleSheet.create({
     color: '#333333',  
   },
   iconContainer: {
-    padding: 10,
+
   },
   termsContainer: {
     flexDirection: 'row',
