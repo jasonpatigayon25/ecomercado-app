@@ -30,6 +30,10 @@ const MapLocationSelectorDonateAddDonation = () => {
             background-color: white;
             outline: none; 
           }
+          .pac-container .pac-item, .pac-container .pac-item span {
+            font-size: 32px !important;
+            line-height: 120% !important; 
+          }
           html, body {
             height: 100%;
             margin: 0;
