@@ -89,7 +89,7 @@ const ChangePassword = ({ navigation }) => {
             onChangeText={setOldPassword}
           />
           <TouchableOpacity onPress={() => setOldPasswordVisible(!oldPasswordVisible)}>
-            <Icon name={oldPasswordVisible ? "eye-slash" : "eye"} size={20} color="#05652D" />
+            <Icon name={oldPasswordVisible ? "eye-slash" : "eye"} size={20} color="#CCC" style={styles.icon1} />
           </TouchableOpacity>
         </View>
 
@@ -103,7 +103,7 @@ const ChangePassword = ({ navigation }) => {
             onChangeText={setNewPassword}
           />
           <TouchableOpacity onPress={() => setNewPasswordVisible(!newPasswordVisible)}>
-            <Icon name={newPasswordVisible ? "eye-slash" : "eye"} size={20} color="#05652D" />
+            <Icon name={newPasswordVisible ? "eye-slash" : "eye"} size={20} color="#CCC" style={styles.icon1} />
           </TouchableOpacity>
         </View>
 
@@ -117,7 +117,7 @@ const ChangePassword = ({ navigation }) => {
             onChangeText={setConfirmNewPassword}
           />
           <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}>
-            <Icon name={confirmPasswordVisible ? "eye-slash" : "eye"} size={20} color="#05652D" />
+            <Icon name={confirmPasswordVisible ? "eye-slash" : "eye"} size={20} color="#CCC" style={styles.icon1} />
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
@@ -178,6 +178,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: '#FFF',
     color: '#000',
+  },
+  icon1: {
+    marginRight: 10,
   },
   button: {
     backgroundColor: '#05652D',

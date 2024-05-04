@@ -276,7 +276,7 @@ const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false
         </TouchableOpacity>
         <Text style={styles.title}>Edit Profile</Text>
       </View>
-      <View style={styles.contentContainer}>
+      <ScrollView style={styles.contentContainer}>
         <View style={styles.formItem}>
           <Text style={styles.label}>Email</Text>
           <TextInput
@@ -316,6 +316,7 @@ const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false
             value={userProfile.lastName}
             onChangeText={(text) => handleInputChange('lastName', text)}
           />
+           </View>
           <View style={styles.formItem}>
             <Text style={styles.label}>Address</Text>
             <TouchableOpacity
@@ -325,11 +326,11 @@ const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false
               <Text style={styles.inputText}>{address}</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        
         <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
           <Text style={styles.saveButtonText}>Save Changes</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
       <Modal
         animationType="slide"
         transparent={true}
@@ -386,16 +387,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   contentContainer: {
-    padding: 20,
+    flex: 1,
   },
   formItem: {
-    marginBottom: 15,
+    backgroundColor: '#FFFFFF',
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   label: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#05652D',
-    marginBottom: 5,
+    color: '#333333',
+    marginBottom: 10,
   },
   input: {
     borderWidth: 1,
@@ -404,13 +411,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     height: 40,
     backgroundColor: '#FFFFFF',
+    fontSize: 16,
   },
   saveButton: {
     backgroundColor: '#05652D',
     paddingVertical: 12,
     borderRadius: 5,
     alignItems: 'center',
-    marginTop: 20, 
+    marginTop: 20,
+    marginBottom: 20, 
+    marginHorizontal: 20,
   },
   saveButtonText: {
     color: '#FFFFFF',
@@ -423,10 +433,9 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   profileImageContainer: {
-    width: 100,
-    height: 100,
     alignSelf: 'center',
-    marginBottom: 15, 
+    marginTop: 20,
+    marginBottom: 20, 
   },
   changeButton: {
     position: 'absolute',
@@ -545,4 +554,4 @@ const styles = StyleSheet.create({
   },
 });
 
-  export default EditProfile;
+export default EditProfile;
