@@ -116,6 +116,7 @@ import MapLocationSelectorDonate from './screens/MapLocationSelectorDonate';
 import MapLocationSelectorDonateAddDonation from './screens/MapLocationSelectorDonateAddDonation';
 import MapLocationSelectorEditDonation from './screens/MapLocationSelectorEditDonation';
 import MapLocationSelectorResubmitDonation from './screens/MapLocationSelectorResubmitDonation';
+import MapLocationSelectorProfile from './screens/MapLocationSelectorProfile';
 
 const getActiveRouteName = (state) => {
   const route = state.routes[state.index];
@@ -405,6 +406,7 @@ const App = () => {
               <Stack.Screen name="MapLocationSelectorDonateAddDonation" component={MapLocationSelectorDonateAddDonation} />
               <Stack.Screen name="MapLocationSelectorEditDonation" component={MapLocationSelectorEditDonation} />
               <Stack.Screen name="MapLocationSelectorResubmitDonation" component={MapLocationSelectorResubmitDonation} />
+              <Stack.Screen name="MapLocationSelectorProfile" component={MapLocationSelectorProfile} />
               <Stack.Screen name="Login" component={Login} />
               <Stack.Screen name="Logout" component={MainTabs} options={{ headerRight: () => <Button title="Logout" onPress={handleLogout} /> }} />
             </>

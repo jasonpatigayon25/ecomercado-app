@@ -11,7 +11,8 @@ import { Dimensions } from 'react-native';
 
 const screenHeight = Dimensions.get('window').height;
 
-const EditProfile = ({ navigation }) => {
+const EditProfile = ({ route, navigation }) => {
+  const { location } = route.params || {};
 
   const [address, setAddress] = useState('');
   const [locationSearchModalVisible, setLocationSearchModalVisible] = useState(false);
@@ -62,6 +63,13 @@ const EditProfile = ({ navigation }) => {
   });
 
   useEffect(() => {
+
+    if (location) {
+      setAddress(location);
+    }
+  }, [location]);
+
+  useEffect(() => {
     const auth = getAuth();
     const user = auth.currentUser;
   
@@ -74,17 +82,20 @@ const EditProfile = ({ navigation }) => {
           const querySnapshot = await getDocs(q);
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
-            const initialData = {
+            setUserProfile({
               firstName: userData.firstName || '',
               lastName: userData.lastName || '',
               email: userData.email,
               photoUrl: userData.photoUrl || '',
-              address: userData.address || '',
-            };
-            setUserProfile(initialData);
-            setInitialUserProfile(initialData);
-            setProfilePhotoUrl(userData.photoUrl || '');
-            setAddress(userData.address || ''); 
+            });
+            setInitialUserProfile({
+              firstName: userData.firstName || '',
+              lastName: userData.lastName || '',
+              email: userData.email,
+              photoUrl: userData.photoUrl || '',
+              address: userData.address || ''
+            });  // Ensure this is set before trying to access it
+            setAddress(userData.address || '');
           } else {
             Alert.alert('Error', `No profile found for user email: ${user.email}`);
           }
@@ -96,14 +107,14 @@ const EditProfile = ({ navigation }) => {
   
       fetchUserProfile();
     }
-  }, []);
+  }, []);  
 
   const hasProfileChanged = () => {
     return (
-      userProfile.firstName !== initialUserProfile.firstName ||
-      userProfile.lastName !== initialUserProfile.lastName ||
-      profilePhotoUrl !== initialUserProfile.photoUrl ||
-      address !== initialUserProfile.address
+      userProfile?.firstName !== initialUserProfile?.firstName ||
+      userProfile?.lastName !== initialUserProfile?.lastName ||
+      profilePhotoUrl !== initialUserProfile?.photoUrl ||
+      address !== initialUserProfile?.address
     );
   };
 
@@ -307,11 +318,12 @@ const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false
           />
           <View style={styles.formItem}>
             <Text style={styles.label}>Address</Text>
-            <TextInput
+            <TouchableOpacity
               style={styles.input}
-              value={address}
-              onFocus={() => setLocationSearchModalVisible(true)}
-            />
+              onPress={() => navigation.navigate('MapLocationSelectorProfile')}
+            >
+              <Text style={styles.inputText}>{address}</Text>
+            </TouchableOpacity>
           </View>
         </View>
         <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
