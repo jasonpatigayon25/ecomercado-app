@@ -78,16 +78,22 @@ const SellerRegistration = ({ navigation }) => {
   }, []);
 
   const handleRegistration = async () => {
+    
+    if (!sellerName.trim() || !registeredName.trim() || !sellerAddress.trim() || !email.trim()  ) {
+      Alert.alert('Missing Information', 'Please fill out all the required fields, profile and background photos are optional.');
+      return;
+    }
+  
     console.log('Registering seller:', sellerName, sellerAddress, email);
     try {
       const sellerData = {
         sellerName,
         registeredName,
         type,
-        sellerAddress, 
+        sellerAddress,
         email,
         profilePhotoUri,
-        backgroundPhotoUri, 
+        backgroundPhotoUri,
       };
       await addDoc(collection(db, 'registeredSeller'), sellerData);
       Alert.alert('Seller registered successfully');
