@@ -100,49 +100,40 @@ const CheckoutProducts = ({ navigation, route }) => {
     return sellerAddresses;
 };
 
+const calculateShippingAndTotals = async () => {
+  if (!address || address === 'Search Location') {
+    return;
+  }
+
+  let overallTotal = 0;
+  const fees = {};
+  const totals = {};
+
+  const sellerAddresses = await getSellerAddresses();
+  let shippingTotal = 0;
+
+  for (const [seller, products] of Object.entries(groupedProducts)) {
+    const sellerAddress = sellerAddresses[seller];
+    const shippingFee = await calculateShippingFeePerSeller(sellerAddress, address);
+    fees[seller] = shippingFee;
+
+    shippingTotal += shippingFee;
+    const totalForSeller = products.reduce((sum, product) => sum + (product.price * product.orderedQuantity), 0);
+    totals[seller] = totalForSeller + shippingFee;
+    overallTotal += totalForSeller + shippingFee;
+  }
+
+  setShippingFees(fees);
+  setShippingSubtotal(shippingTotal);
+  setTotalPerSeller(totals);
+  setTotalPrice(overallTotal);
+};
+
 useEffect(() => {
-  const calculateShippingAndTotals = async () => {
-      let overallTotal = 0;
-      const fees = {};
-      const totals = {};
-
-      const auth = getAuth();
-      const user = auth.currentUser;
-      const userEmail = user ? user.email : null;
-      if (!userEmail) {
-          console.error('User email is not available');
-          return;
-      }
-
-      const buyerAddress = await getBuyerAddressByEmail(userEmail);
-      if (!buyerAddress) {
-          console.error('Buyer address is not available');
-          return;
-      }
-
-      const sellerAddresses = await getSellerAddresses();
-
-      let shippingTotal = 0;
-      for (const [seller, products] of Object.entries(groupedProducts)) {
-          const sellerAddress = sellerAddresses[seller];
-          const shippingFee = await calculateShippingFeePerSeller(sellerAddress, buyerAddress);
-          fees[seller] = shippingFee;
-
-          shippingTotal += shippingFee;
-
-          const totalForSeller = products.reduce((sum, product) => sum + (product.price * product.orderedQuantity), 0);
-          totals[seller] = totalForSeller + shippingFee;
-          overallTotal += totalForSeller + shippingFee;
-      }
-
-      setShippingFees(fees);
-      setShippingSubtotal(shippingTotal);
-      setTotalPerSeller(totals);
-      setTotalPrice(overallTotal);
-    };
-
+  if (address && address !== 'Search Location') {
     calculateShippingAndTotals();
-  }, [selectedProducts]);
+  }
+}, [address]); 
 
   const getBuyerAddressByEmail = async (email) => {
     if (!email) {
@@ -270,6 +261,8 @@ useEffect(() => {
     const total = selectedProducts.reduce((sum, product) => sum + (product.price * product.orderedQuantity), 0);
     setTotalPrice(total);
   }, [selectedProducts]);
+
+
 
   const handleBackPress = () => {
     navigation.goBack();

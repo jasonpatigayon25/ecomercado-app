@@ -99,9 +99,16 @@ const RequestCheckout = ({ navigation, route }) => {
       setLocationSearchResults([]);
     }
   };
-
+  useEffect(() => {
+    if (address && address !== 'Search Location') {
+      fetchDonationsWithDonorNames();
+    }
+  }, [selectedDonations, address]); 
+  
   const handleLocationSelect = (location) => {
-    setAddress(location);
+    if (location !== address) {
+      setAddress(location);
+    }
     setLocationSearchModalVisible(false);
   };
 
@@ -216,9 +223,9 @@ const RequestCheckout = ({ navigation, route }) => {
     setSections(sectionListData);
   };
   
-  useEffect(() => {
-    fetchDonationsWithDonorNames();
-  }, [selectedDonations, address]);
+  // useEffect(() => {
+  //   fetchDonationsWithDonorNames();
+  // }, [selectedDonations, address]);
 
   const getDonorData = async (donorEmail) => {
     try {
@@ -569,8 +576,9 @@ const styles = StyleSheet.create({
   modalView: {
     margin: 20,
     width: '100%',
+    height: '80%',
     backgroundColor: 'white',
-    borderRadius: 20,
+    borderRadius: 10,
     padding: 35,
     paddingTop: 50, 
     shadowColor: '#000',
