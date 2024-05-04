@@ -1,22 +1,39 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
 const ForgotPassword = ({ navigation }) => {
   const [email, setEmail] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleResetPassword = () => {
-    const auth = getAuth();
+  const handleResetPassword = async () => {
+    const db = getFirestore();
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
 
-    sendPasswordResetEmail(auth, email)
-      .then(() => {
-        alert('Password reset link sent to ' + email);
-      })
-      .catch((error) => {
-        console.error('Error sending password reset email:', error);
-        alert('Error sending password reset email. Please try again.');
-      });
+    if (querySnapshot.empty) {
+      setErrorMessage('Email not found in the application. Please check and try again.');
+    } else {
+      const auth = getAuth();
+
+      sendPasswordResetEmail(auth, email)
+        .then(() => {
+          Alert.alert('Password reset link sent to ' + email);
+          navigation.navigate('Login');
+          setErrorMessage(''); 
+        })
+        .catch((error) => {
+          if (error.code === 'auth/user-not-found') {
+            setErrorMessage('Email not recognized by the authentication system.');
+          } else {
+            console.error('Error sending password reset email:', error);
+            setErrorMessage('Error sending password reset email. Please try again.');
+          }
+        });
+    }
   };
 
   const handleSignInPress = () => {
@@ -43,6 +60,7 @@ const ForgotPassword = ({ navigation }) => {
             onChangeText={setEmail}
           />
         </View>
+        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
           <Text style={styles.buttonText}>Reset Password</Text>
         </TouchableOpacity>
@@ -130,6 +148,11 @@ const styles = StyleSheet.create({
   loginText: {
     color: '#05652D',
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
 
