@@ -94,7 +94,8 @@ const SellerRegistration = ({ navigation }) => {
         email,
         profilePhotoUri,
         backgroundPhotoUri,
-        status: 'pending'
+        status: 'pending',
+        registeredAt: new Date(),
       };
       await addDoc(collection(db, 'registeredSeller'), sellerData);
       Alert.alert('Seller registered successfully');
@@ -223,9 +224,10 @@ const SellerRegistration = ({ navigation }) => {
         <TextInput
           placeholder="Your Address"
           value={sellerAddress}
-          onChangeText={setSellerAddress}
-          onFocus={() => setLocationSearchModalVisible(true)}
-          style={styles.input}
+          // onChangeText={setSellerAddress}
+          // onFocus={() => setLocationSearchModalVisible(true)}
+          style={styles.inputEmail}
+          editable={false}
         />
 
         <Text style={styles.label}>Email Address:</Text>
