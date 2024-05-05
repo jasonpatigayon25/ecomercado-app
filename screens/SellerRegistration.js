@@ -94,6 +94,7 @@ const SellerRegistration = ({ navigation }) => {
         email,
         profilePhotoUri,
         backgroundPhotoUri,
+        status: 'pending'
       };
       await addDoc(collection(db, 'registeredSeller'), sellerData);
       Alert.alert('Seller registered successfully');
