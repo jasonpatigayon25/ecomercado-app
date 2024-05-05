@@ -98,7 +98,7 @@ const SellerRegistration = ({ navigation }) => {
         registeredAt: new Date(),
       };
       await addDoc(collection(db, 'registeredSeller'), sellerData);
-      Alert.alert('Seller registered successfully');
+      Alert.alert('You have successfully registered as a seller.');
       navigation.goBack();
     } catch (error) {
       console.error('Error registering seller:', error);
