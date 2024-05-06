@@ -186,7 +186,7 @@ const RequestCheckout = ({ navigation, route }) => {
           donations: [],
           totalWeight: 0,
           deliveryFee: 0,
-          disposalFee: 0 
+          disposalFee: 0
         };
       }
       grouped[donorEmail].donations.push(donation);
@@ -194,19 +194,25 @@ const RequestCheckout = ({ navigation, route }) => {
       return grouped;
     }, {});
   
+
+    const disposalFeeRate = 15; 
+    const reducedRate = 20 * 0.3; 
+  
     for (const donorEmail in groupedDonations) {
       const group = groupedDonations[donorEmail];
       const weight = group.totalWeight;
       if (weight > 5) { 
         const excessWeight = weight - 5;
-        group.disposalFee = excessWeight * 20; 
+        group.disposalFee = disposalFeeRate + excessWeight * reducedRate;
+      } else {
+        group.disposalFee = disposalFeeRate;
       }
+  
       if (weight > 0) {
-        const donorData = await getDonorData(donorEmail); 
-        if (donorData && donorData.address) { 
+        const donorData = await getDonorData(donorEmail);
+        if (donorData && donorData.address) {
           const deliveryFee = await getDistanceAndCalculateFee(donorData.address, address);
           group.deliveryFee = deliveryFee;
-        } else {
         }
       }
     }
