@@ -12,6 +12,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 // import * as Permissions from 'expo-permissions';
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
+
 const OrdersConfirmation = ({ route, navigation }) => {
   const {
     address,
@@ -29,6 +37,27 @@ const OrdersConfirmation = ({ route, navigation }) => {
   const handleBackPress = () => {
     navigation.goBack();
   };
+
+  useEffect(() => {
+
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
+    });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      const screen = response.notification.request.content.data.screen;
+  
+      if (screen === 'OrderHistory') {
+        navigation.navigate('OrderHistory');
+      }
+      console.log('Notification response received:', response);
+    });
+  
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
+    };
+  }, []);
 
   useEffect(() => {
     requestNotificationPermissions();
@@ -267,7 +296,8 @@ const OrdersConfirmation = ({ route, navigation }) => {
       appId: 18345,
       appToken: 'TdOuHYdDSqcy4ULJFVCN7l',
       title: 'ECOMercado',
-      message: message
+      message: message,
+      data: { screen: 'OrderHistory' } 
     };
   
     for (let attempt = 1; attempt <= 3; attempt++) { 
