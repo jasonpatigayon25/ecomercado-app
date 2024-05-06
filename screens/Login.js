@@ -79,14 +79,14 @@ const Login = ({ navigation }) => {
       } else {
         console.error(`No user found with email: ${email}`);
         Alert.alert(
-          "Login Failed",
+          "Incorrect Credentials",
           "Incorrect email or password. Please check your credentials and try again.",
           [{ text: "OK" }]
         );
       }
     } catch (error) {
       Alert.alert(
-        "Login Failed",
+        "Incorrect Credentials",
         "Incorrect email or password. Please check your credentials and try again.",
         [{ text: "OK" }]
       );
