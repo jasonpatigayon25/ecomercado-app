@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import { db } from '../config/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getDocs, collection } from 'firebase/firestore';
+import { getDocs, collection, getDoc, doc } from 'firebase/firestore';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Animated } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
@@ -21,13 +21,33 @@ const WishDonation = ({ navigation, route }) => {
   const [hasMatchedDonations, setHasMatchedDonations] = useState(true);
 
   useEffect(() => {
+    if (route.params?.donationId) {
+      fetchDonationDetails(route.params.donationId);
+    }
+  }, [route.params?.donationId]);
+  
+  const fetchDonationDetails = async (donationId) => {
+    try {
+      const docRef = doc(db, 'donation', donationId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const donationData = docSnap.data();
+      } else {
+        console.log('No such document!');
+      }
+    } catch (error) {
+      console.error('Error fetching donation details:', error);
+    }
+  };
+
+  useEffect(() => {
     const fetchDonationCategories = async () => {
       setLoading(true);
       try {
         const categoriesSnapshot = await getDocs(collection(db, 'donationCategories'));
         const categories = [];
         categoriesSnapshot.forEach((doc) => {
-          categories.push(doc.data().title); // Assuming 'title' is the field with the category name
+          categories.push(doc.data().title); 
         });
         setDonationCategories(categories);
       } catch (error) {
@@ -188,7 +208,9 @@ const WishDonation = ({ navigation, route }) => {
   
           if (
             detectedLabels.includes(productCategory.toLowerCase()) ||
-            product.subPhotos.some((subPhoto) => detectedLabels.includes(subPhoto.toLowerCase()))
+            product.subPhotos.some((subPhoto) => detectedLabels.includes(subPhoto.toLowerCase())) ||
+            detectedLabels.includes(product.name.toLowerCase()) ||
+            product.itemNames.some((itemName) => detectedLabels.includes(itemName.toLowerCase()))
           ) {
             matchedProductsData.push({
               id: doc.id,
@@ -202,17 +224,9 @@ const WishDonation = ({ navigation, route }) => {
       );
   
       if (matchedProductsData.length === 0) {
-        const mixedCategoryProducts = matchedProductsData.filter(product => product.category.toLowerCase() === 'mixed');
-        if (mixedCategoryProducts.length === 0) {
-          setMatchedProducts(['No product found']);
-          setMatchedImages([]);
-          setHasMatchedDonations(false);
-        } else {
-          const matchedProductNames = mixedCategoryProducts.map((product) => product.name);
-          setMatchedProducts(matchedProductNames);
-          setMatchedImages(mixedCategoryProducts.map((product) => product.imageUrl));
-          setMatchedProductsDetails(mixedCategoryProducts);
-        }
+        setMatchedProducts(['No product found']);
+        setMatchedImages([]);
+        setHasMatchedDonations(false);
       } else {
         const matchedProductNames = matchedProductsData.map((product) => product.name);
         setMatchedProducts(matchedProductNames);
@@ -236,7 +250,7 @@ const WishDonation = ({ navigation, route }) => {
     }
   
     const isEvenIndex = index % 2 === 0;
-
+  
     if (isEvenIndex) {
       const nextProduct = matchedProductsDetails[index + 1];
       return (
@@ -249,16 +263,14 @@ const WishDonation = ({ navigation, route }) => {
                 <Text>No Image Available</Text>
               )}
               <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productPrice}>{product.itemNames.join(' · ')}</Text>
               <Text style={styles.productCategory}>
                 <Text style={styles.matchedProductInfo}>{product.category}</Text>
               </Text>
-              {/* <Text style={styles.productPrice}>
-                <Text style={styles.matchedProductInfo}>{product.price}</Text>
-              </Text> */}
             </View>
           </TouchableOpacity>
           {nextProduct && (
-            <TouchableOpacity onPress={() => navigation.navigate('DonationDetail', { product: nextProduct })}>
+            <TouchableOpacity onPress={() => navigation.navigate('DonationDetail', { donation: nextProduct })}>
               <View style={styles.matchedProductCard}>
                 {nextProduct.photo ? (
                   <Image source={{ uri: nextProduct.photo }} style={styles.matchedImageItem} />
@@ -266,13 +278,10 @@ const WishDonation = ({ navigation, route }) => {
                   <Text>No Image Available</Text>
                 )}
                 <Text style={styles.productName}>{nextProduct.name}</Text>
-                <Text style={styles.productPrice}>{item.itemNames.join(' · ')}</Text>
+                <Text style={styles.productPrice}>{nextProduct.itemNames.join(' · ')}</Text>
                 <Text style={styles.productCategory}>
                   <Text style={styles.matchedProductInfo}>{nextProduct.category}</Text>
                 </Text>
-                {/* <Text style={styles.productPrice}>
-                  <Text style={styles.matchedProductInfo}>{nextProduct.price}</Text>
-                </Text> */}
               </View>
             </TouchableOpacity>
           )}
@@ -322,13 +331,11 @@ const WishDonation = ({ navigation, route }) => {
         ) : (
         <View style={styles.matchedImagesContainer}>
         <Text style={styles.matchedImagesText}>Matched Donations:</Text>
-        {
-            matchedProductsDetails.length > 0 ? (
-                matchedProductsDetails.map(renderMatchedProduct)
-            ) : (
-                <Text style={styles.noProductMatchedText}>No Matched Donations</Text>
-            )
-            }
+        {matchedProductsDetails && matchedProductsDetails.length > 0 ? (
+    matchedProductsDetails.map(renderMatchedProduct)
+) : (
+    <Text style={styles.noProductMatchedText}>No Matched Donations</Text>
+)}
         </View>
         )}
         {error !== '' && (

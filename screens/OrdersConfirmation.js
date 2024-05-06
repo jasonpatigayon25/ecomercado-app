@@ -9,6 +9,8 @@ import { db } from '../config/firebase';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
+// import * as Permissions from 'expo-permissions';
 
 const OrdersConfirmation = ({ route, navigation }) => {
   const {
@@ -27,6 +29,22 @@ const OrdersConfirmation = ({ route, navigation }) => {
   const handleBackPress = () => {
     navigation.goBack();
   };
+
+  useEffect(() => {
+    requestNotificationPermissions();
+  }, []);
+  
+  async function requestNotificationPermissions() {
+    const { status } = await Notifications.requestPermissionsAsync();
+    
+    if (status !== 'granted') {
+      alert('Failed to obtain push notifications permissions!');
+      return;
+    }
+
+    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    console.log('Push Notification Token:', token);
+  }
 
   const renderProductItem = ({ item }) => {
     return (
