@@ -12,8 +12,6 @@ import { getAuth } from 'firebase/auth';
 
 const screenHeight = Dimensions.get('window').height;
 
-// const centralShippingLocation = 'Cabangcalan, Mandaue City, Cebu';
-
 const getDistanceAndCalculateFee = async (origin, destination) => {
   const API_KEY = 'AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g';
   const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(destination)}&key=${API_KEY}`;
