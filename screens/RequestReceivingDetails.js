@@ -46,11 +46,29 @@ const RequestReceivingDetails = ({ route, navigation }) => {
       if (dateDelivered.isBefore(threeDaysAgo)) {
         Alert.alert(
           'Confirmation Reminder',
-          "The requester hasn't confirmed receipt yet. Confirm if your payment is received.",
+          "Requester hasn't confirmed the receipt yet. Did you receive the payment from the buyer? Confirm to complete the order.",
           [
             {
-              text: 'OK',
+              text: 'No',
               onPress: () => console.log('Confirmation reminder acknowledged.'),
+            },
+            {
+              text: 'Yes',
+              onPress: async () => {
+                try {
+                  const requestRef = doc(db, 'requests', request.id);
+                  await updateDoc(requestRef, { 
+                    status: 'Completed',
+                    deliveredStatus: 'Confirmed',
+                    dateReceived: new Date(),
+                    isTaken: true 
+                  });
+                  Alert.alert("Order Completed!");
+                  navigation.navigate('RequestManagement');
+                } catch (error) {
+                  console.error("Error updating request status:", error);
+                }
+              },
             },
           ]
         );

@@ -282,16 +282,16 @@ const SellerManagement = ({ navigation }) => {
                   />
                   <ScrollableItem
                     imageSource={toShipIcon}
-                    label="To Ship"
+                    label="To Deliver"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
-                    tabName="To Ship"
+                    tabName="To Deliver"
                     count={toShipCount}
                   />
                   <ScrollableItem
                     imageSource={shippedIcon}
-                    label="Shipped"
+                    label="Delivered"
                     onPress={(tabName) => navigation.navigate('SellerOrderManagement', { selectedTab: tabName })}
-                    tabName="Shipped"
+                    tabName="Delivered"
                     count={shippedCount}
                   />
                   <ScrollableItem
