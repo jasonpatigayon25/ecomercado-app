@@ -341,56 +341,57 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     });
 
     const auth = getAuth();
-                            const currentUser = auth.currentUser;
-                            const userEmail = currentUser ? currentUser.email : '';
+    const currentUser = auth.currentUser;
+    const userEmail = currentUser ? currentUser.email : '';
 
-                            const buyerNotificationMessage = `Order recieved. Order #${order.id.toUpperCase()}.`
-                            const sellerNotificationMessage = `The order #${order.id.toUpperCase()} has been confirmed by ${order.buyerEmail}.`
-                            try {
-                              await sendPushNotification(order.buyerEmail, 'Order Receive Confirmation', buyerNotificationMessage);
-                              await sendPushNotification(userEmail, 'Order Delivered', sellerNotificationMessage);
-                            } catch (error) {
-                              console.error("Error sending notifications:", error);
-                              Alert.alert("Error", "Could not send notifications.");
-                            }
-                
-                            const notificationsRef = collection(db, 'notifications');
-                            const buyerNotificationData = {
-                              email: userEmail,
-                              text: buyerNotificationMessage,
-                              timestamp: new Date(),
-                              type: 'completed',
-                              orderId: order.id
-                            };
-                            const sellerNotificationData = {
-                              email: order.sellerEmail,
-                              text: sellerNotificationMessage,
-                              timestamp: new Date(),
-                              type: 'completed',
-                              orderId: order.id
-                            };
-                            await addDoc(notificationsRef, buyerNotificationData);
-                            await addDoc(notificationsRef, sellerNotificationData);
-  
+    const buyerNotificationMessage = `Order received. Order #${order.id.toUpperCase()}.`;
+    const sellerNotificationMessage = `The order #${order.id.toUpperCase()} has been confirmed by ${order.buyerEmail}.`;
+
+    try {
+      await sendPushNotification(order.buyerEmail, 'Order Receive Confirmation', buyerNotificationMessage);
+      await sendPushNotification(userEmail, 'Order Delivered', sellerNotificationMessage);
+    } catch (error) {
+      console.error("Error sending notifications:", error);
+      Alert.alert("Error", "Could not send notifications.");
+    }
+
+    const notificationsRef = collection(db, 'notifications');
+    const buyerNotificationData = {
+      email: userEmail,
+      text: buyerNotificationMessage,
+      timestamp: new Date(),
+      type: 'completed',
+      orderId: order.id
+    };
+    const sellerNotificationData = {
+      email: order.sellerEmail,
+      text: sellerNotificationMessage,
+      timestamp: new Date(),
+      type: 'completed',
+      orderId: order.id
+    };
+    await addDoc(notificationsRef, buyerNotificationData);
+    await addDoc(notificationsRef, sellerNotificationData);
+
     try {
       const batch = writeBatch(db);
-  
-      await Promise.all(order.productDetails.map(async (detail) => {
+
+      for (const detail of order.productDetails) {
         const productRef = doc(db, 'products', detail.productId);
         const productSnap = await getDoc(productRef);
         if (productSnap.exists()) {
           const newQuantity = productSnap.data().quantity - detail.orderedQuantity;
           batch.update(productRef, { quantity: newQuantity });
         }
-      }));
-  
+      }      
+
       await batch.commit();
     } catch (error) {
       console.error("Failed to update product quantities", error);
       Alert.alert("Error", "Failed to update product quantities.");
       return;
     }
-  
+
     setModalVisible(false);
     setConfirmationModalVisible(true);
   };
@@ -399,12 +400,12 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     const auth = getAuth();
     const currentUser = auth.currentUser;
     const userEmail = currentUser ? currentUser.email : null; 
-  
+
     if (!userEmail) {
       Alert.alert('Error', 'You must be logged in to submit ratings.');
       return; 
     }
-  
+
     await Promise.all(order.productDetails.map(async item => {
       if (ratings[item.productId] > 0) {
         const ratingDoc = {
@@ -417,7 +418,7 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
         await addDoc(collection(db, 'productRatings'), ratingDoc);
       }
     }));
-  
+
     Alert.alert('Ratings Submitted', 'Your ratings have been submitted successfully.');
     navigation.navigate('OrderHistory');
   };
@@ -429,7 +430,6 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
   const handleCommentChange = (productId, text) => {
     setComments(prev => ({ ...prev, [productId]: text }));
   };
-
   
   return (
     <SafeAreaView style={styles.safeArea}>
