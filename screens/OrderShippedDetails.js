@@ -20,6 +20,7 @@ const OrderShippedDetails = ({ route, navigation }) => {
     checkIfTimeExceeded();
   }, []);  
 
+  
   const checkIfTimeExceeded = async () => {
     const currentTime = new Date();
   
@@ -59,12 +60,29 @@ const OrderShippedDetails = ({ route, navigation }) => {
               text: 'Yes',
               onPress: async () => {
                 try {
+                  // Update order status and deduct ordered quantity from stock
                   const orderRef = doc(db, 'orders', order.id);
                   await updateDoc(orderRef, { 
                     status: 'Completed',
                     deliveredStatus: 'Confirmed',
                     dateReceived: new Date(),
                   });
+                  
+                  // deduct ordered quantity from product quantity
+                  for (const item of order.productDetails) {
+                    const productId = item.productId;
+                    const orderedQuantity = item.orderedQuantity;
+                  
+                    const productDoc = await getDoc(doc(db, 'products', productId));
+                    const currentStock = productDoc.data().quantity;
+                  
+                    const newStock = currentStock - orderedQuantity;
+                  
+                    await updateDoc(doc(db, 'products', productId), {
+                      quantity: newStock
+                    });
+                  }
+                  
                   Alert.alert("Order Completed!");
                   navigation.navigate('SellerOrderManagement');
                 } catch (error) {
