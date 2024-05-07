@@ -17,6 +17,51 @@ const OrderShippedDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
 
   useEffect(() => {
+    checkIfTimeExceeded();
+  }, []);  
+
+  const checkIfTimeExceeded = async () => {
+    const currentTime = new Date();
+  
+    if (order.deliveredStatus === 'Processing') {
+      const deliveryEndTime = moment(order.deliveryEnd.toDate()).add(1, 'day');
+      if (currentTime > deliveryEndTime && order.status !== 'Approved') {
+        try {
+          const orderRef = doc(db, 'orders', order.id);
+          await updateDoc(orderRef, { status: 'Approved' });
+          Alert.alert(
+            'Time Exceeded',
+            'The delivery time has already exceeded. The order has been automatically moved back to the Deliver tab. Please set the delivery time again.',
+            [
+              {
+                text: 'OK',
+                onPress: () => navigation.navigate('SellerOrderManagement'),
+              },
+            ]
+          );
+        } catch (error) {
+          console.error('Error updating order status:', error);
+        }
+      }
+    } else if (order.deliveredStatus === 'Waiting') {
+      const threeDaysAgo = moment().subtract(3, 'days');
+      const dateDelivered = moment(order.dateDelivered.toDate());
+      if (dateDelivered.isBefore(threeDaysAgo)) {
+        Alert.alert(
+          'Confirmation Reminder',
+          "The buyer hasn't confirmed receipt yet. Confirm if your payment is received.",
+          [
+            {
+              text: 'OK',
+              onPress: () => console.log('Confirmation reminder acknowledged.'),
+            },
+          ]
+        );
+      }
+    }
+  };
+
+  useEffect(() => {
     if (route.params?.shouldOpenConfirmModal) {
       confirmDelivery();
     }

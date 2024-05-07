@@ -14,6 +14,51 @@ const RequestReceivingDetails = ({ route, navigation }) => {
   const [deliveredStatus, setDeliveredStatus] = useState(request.deliveredStatus);
 
   useEffect(() => {
+    checkIfTimeExceeded();
+  }, []);  
+
+  const checkIfTimeExceeded = async () => {
+    const currentTime = new Date();
+  
+    if (request.deliveredStatus === 'Processing') {
+      const deliveryEndTime = moment(request.deliveryEnd.toDate()).add(1, 'day');
+      if (currentTime > deliveryEndTime && request.status !== 'Approved') {
+        try {
+          const requestRef = doc(db, 'requests', request.id);
+          await updateDoc(requestRef, { status: 'Approved' });
+          Alert.alert(
+            'Time Exceeded',
+            'The delivery time has already exceeded. The request has been automatically moved back to the Deliver tab. Please set the delivery time again.',
+            [
+              {
+                text: 'OK',
+                onPress: () => navigation.navigate('RequestManagement'),
+              },
+            ]
+          );
+        } catch (error) {
+          console.error('Error updating order status:', error);
+        }
+      }
+    } else if (request.deliveredStatus === 'Waiting') {
+      const threeDaysAgo = moment().subtract(3, 'days');
+      const dateDelivered = moment(request.dateDelivered.toDate());
+      if (dateDelivered.isBefore(threeDaysAgo)) {
+        Alert.alert(
+          'Confirmation Reminder',
+          "The requester hasn't confirmed receipt yet. Confirm if your payment is received.",
+          [
+            {
+              text: 'OK',
+              onPress: () => console.log('Confirmation reminder acknowledged.'),
+            },
+          ]
+        );
+      }
+    }
+  };
+
+  useEffect(() => {
     if (route.params.autoConfirmDeliver) {
       confirmDelivery();  
     }

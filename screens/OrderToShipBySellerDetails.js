@@ -158,7 +158,7 @@ const handleConfirmEndDate = (date) => {
                             await addDoc(notificationsRef, sellerNotificationData);
 
                             setDeliveryDateModalVisible(false);
-                            Alert.alert("Success", "Delivery dates set successfully.", [
+                            Alert.alert("To Deliver", "Delivery dates set successfully.", [
                               { text: "OK", onPress: () => navigation.navigate('SellerOrderManagement') }
                           ]);
                         } catch (error) {
