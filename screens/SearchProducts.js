@@ -11,11 +11,13 @@ const SearchProducts = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [categories, setCategories] = useState([]);
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
 
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [loadingRecommended, setLoadingRecommended] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
   const [selectedCity, setSelectedCity] = useState('Cebu'); 
 
@@ -188,6 +190,24 @@ const SearchProducts = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const q = query(collection(db, 'categories'));
+        const querySnapshot = await getDocs(q);
+        const fetchedCategories = querySnapshot.docs.map(doc => doc.data().title);
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error("Error fetching categories: ", error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   const navigateToWish = () => {
     navigation.navigate('Wish', { shouldOpenConfirmModal: true });
   };
@@ -202,6 +222,10 @@ const SearchProducts = () => {
 
   const handleSuggestionPress = (suggestion) => {
     setSearchQuery(suggestion);
+  };
+
+  const handleCategoryPress = (category) => {
+    setSearchQuery(category);
   };
 
   const renderProductItem = ({ item }) => {
@@ -312,6 +336,25 @@ const SearchProducts = () => {
   
   {searchQuery.length === 0 && (
   <>
+            {loadingCategories ? (
+            <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator} />
+          ) : categories.length > 0 ? (
+            <View style={styles.suggestionsContainer}>
+              <Text style={styles.categoryText}>Categories</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {categories.map((category, index) => (
+                  <TouchableOpacity key={index} onPress={() => handleCategoryPress(category)} style={styles.categoryItem}>
+                    <Text>{category}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          ) : (
+            <View style={styles.noResultsContainer}>
+              <Icon name="search" size={20} color="#ccc" />
+              <Text style={styles.noResultsText}>No categories found.</Text>
+            </View>
+          )}
     {loadingRecommended ? (
       <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator} />
     ) : recommendedProducts.length > 0 ? (
@@ -455,6 +498,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 20,
   },
+  categoryText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
   recommendedContainer: {
     paddingHorizontal: 10,
   },
@@ -467,6 +515,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginRight: 10,
     backgroundColor: '#E0F7FA',
+    borderRadius: 10,
+  },
+   categoryItem: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginRight: 10,
+    backgroundColor: '#E0E7FF',
     borderRadius: 10,
   },
   optionsContainer: {
