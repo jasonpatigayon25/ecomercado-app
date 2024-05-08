@@ -166,14 +166,15 @@ const Wish = ({ navigation, route }) => {
         if (product.publicationStatus === 'approved' && detectedLabels.some((label) => product.name.toLowerCase().includes(label))) {
           matchedProductsData.push({
             id: doc.id,
-            name: product.name,
-            photo: product.photo,
-            price: product.price,
-            category: product.category,
-            description: product.description,
-            location: product.location,
-            seller_email: product.seller_email,
-            quantity: product.quantity
+            ...product
+            // name: product.name,
+            // photo: product.photo,
+            // price: product.price,
+            // category: product.category,
+            // description: product.description,
+            // location: product.location,
+            // seller_email: product.seller_email,
+            // quantity: product.quantity
           });
         }
       });
