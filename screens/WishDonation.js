@@ -9,13 +9,19 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Animated } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 
-const WishDonation = ({ navigation }) => {
+const WishDonation = ({ navigation, route }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [matchedDonations, setMatchedDonations] = useState([]);
   const [error, setError] = useState('');
   const [photoChosen, setPhotoChosen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hasNoMatch, setHasNoMatch] = useState(false);
+
+  useEffect(() => {
+    if (route.params?.shouldOpenConfirmModal) {
+      handleChoosePhoto();
+    }
+  }, [route.params?.shouldOpenConfirmModal]);
 
   const scaleAnim = new Animated.Value(1);
 
