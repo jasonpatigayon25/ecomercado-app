@@ -1,70 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, StyleSheet, FlatList, ScrollView  } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import { db } from '../config/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getDocs, collection, getDoc, doc } from 'firebase/firestore';
+import { getDocs, collection } from 'firebase/firestore';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Animated } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 
-const WishDonation = ({ navigation, route }) => {
+const WishDonation = ({ navigation }) => {
   const [selectedImage, setSelectedImage] = useState(null);
-  const [matchedProducts, setMatchedProducts] = useState([]);
+  const [matchedDonations, setMatchedDonations] = useState([]);
   const [error, setError] = useState('');
-  const [matchedImages, setMatchedImages] = useState([]);
-  const [matchedProductsDetails, setMatchedProductsDetails] = useState([]);
   const [photoChosen, setPhotoChosen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [donationCategories, setDonationCategories] = useState([]);
-  const [hasMatchedDonations, setHasMatchedDonations] = useState(true);
-
-  useEffect(() => {
-    if (route.params?.donationId) {
-      fetchDonationDetails(route.params.donationId);
-    }
-  }, [route.params?.donationId]);
-  
-  const fetchDonationDetails = async (donationId) => {
-    try {
-      const docRef = doc(db, 'donation', donationId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const donationData = docSnap.data();
-      } else {
-        console.log('No such document!');
-      }
-    } catch (error) {
-      console.error('Error fetching donation details:', error);
-    }
-  };
-
-  useEffect(() => {
-    const fetchDonationCategories = async () => {
-      setLoading(true);
-      try {
-        const categoriesSnapshot = await getDocs(collection(db, 'donationCategories'));
-        const categories = [];
-        categoriesSnapshot.forEach((doc) => {
-          categories.push(doc.data().title); 
-        });
-        setDonationCategories(categories);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        Alert.alert('Error', 'Failed to fetch donation categories.');
-      }
-      setLoading(false);
-    };
-  
-    fetchDonationCategories();
-  }, []);
-
-  useEffect(() => {
-    if (route.params?.shouldOpenConfirmModal) {
-      handleChoosePhoto();
-    }
-  }, [route.params?.shouldOpenConfirmModal]);
+  const [hasNoMatch, setHasNoMatch] = useState(false);
 
   const scaleAnim = new Animated.Value(1);
 
@@ -124,29 +75,16 @@ const WishDonation = ({ navigation, route }) => {
     );
   };
   
-  
   const processImageResult = (result) => {
     if (!result.canceled) {
         const imageUri = result.assets[0].uri;
         setSelectedImage(imageUri);
         saveImageToFolder(imageUri, 'taken_images_donation');
-        detectProductsInImage(imageUri);
+        detectDonationsInImage(imageUri);
         setPhotoChosen(true);
     }
-};
-
-  const handleChooseAgain = () => {
-    setSelectedImage(null);
-    setMatchedProducts([]);
-    setMatchedImages([]);
-    setMatchedProductsDetails([]);
-    setError('');
-    setPhotoChosen(false);
-  
-    if (matchedProducts.length > 0) {
-      handleChoosePhoto();
-    }
   };
+
   const saveImageToFolder = async (imageUri, folderName) => {
     try {
       const storage = getStorage();
@@ -161,7 +99,7 @@ const WishDonation = ({ navigation, route }) => {
     }
   };
 
-  const detectProductsInImage = async (imageUri) => {
+  const detectDonationsInImage = async (imageUri) => {
     try {
       setLoading(true);
       const storage = getStorage();
@@ -175,7 +113,6 @@ const WishDonation = ({ navigation, route }) => {
   
       const visionApiEndpoint = 'https://vision.googleapis.com/v1/images:annotate';
       const apiKey = 'AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g';
-  
       const requestBody = {
         requests: [
           {
@@ -199,97 +136,63 @@ const WishDonation = ({ navigation, route }) => {
       const labels = visionResponse.data.responses[0]?.labelAnnotations || [];
       const detectedLabels = labels.map((label) => label.description.toLowerCase());
   
-      const matchedProductsData = [];
-      const productsSnapshot = await getDocs(collection(db, 'donation'));
-      await Promise.all(
-        productsSnapshot.docs.map(async (doc) => {
-          const product = doc.data();
-          const productCategory = product.category;
+      const donationsSnapshot = await getDocs(collection(db, 'donation'));
+      const matchedDonationsData = [];
   
-          if (
-            detectedLabels.includes(productCategory.toLowerCase()) ||
-            product.subPhotos.some((subPhoto) => detectedLabels.includes(subPhoto.toLowerCase())) ||
-            detectedLabels.includes(product.name.toLowerCase()) ||
-            product.itemNames.some((itemName) => detectedLabels.includes(itemName.toLowerCase()))
-          ) {
-            matchedProductsData.push({
-              id: doc.id,
-              name: product.name,
-              itemNames: product.itemNames,
-              photo: product.photo,
-              category: productCategory,
-            });
-          }
-        })
-      );
+      donationsSnapshot.forEach((doc) => {
+        const donation = doc.data();
+        if (detectedLabels.some((label) => donation.itemNames.some(item => item.toLowerCase().includes(label)))) {
+          matchedDonationsData.push({
+            id: doc.id,
+            name: donation.name,
+            photo: donation.photo,
+            subPhotos: donation.subPhotos,
+            itemNames: donation.itemNames,
+            category: donation.category,
+            purpose: donation.purpose,
+            message: donation.message,
+            donor_email: donation.donor_email,
+            location: donation.location
+          });
+        }
+      });
   
-      if (matchedProductsData.length === 0) {
-        setMatchedProducts(['No product found']);
-        setMatchedImages([]);
-        setHasMatchedDonations(false);
+      setMatchedDonations(matchedDonationsData);
+
+      if (matchedDonationsData.length === 0) {
+        setHasNoMatch(true);
       } else {
-        const matchedProductNames = matchedProductsData.map((product) => product.name);
-        setMatchedProducts(matchedProductNames);
-        setMatchedImages(matchedProductsData.map((product) => product.imageUrl));
-        setMatchedProductsDetails(matchedProductsData);
+        setHasNoMatch(false); 
       }
-  
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      console.error('Error detecting products:', error);
-      Alert.alert('Error', 'Failed to detect products in the image.');
-      setError('Failed to detect products in the image.');
+      console.error('Error detecting donations:', error);
+      Alert.alert('Error', 'Failed to detect donations in the image.');
+      setError('Failed to detect donations in the image.');
     }
   };
 
-  const renderMatchedProduct = (product, index) => {
-    if (!product) {
-      console.error("Product is undefined");
-      return null;
-    }
-  
-    const isEvenIndex = index % 2 === 0;
-  
-    if (isEvenIndex) {
-      const nextProduct = matchedProductsDetails[index + 1];
-      return (
-        <View key={index} style={styles.matchedProductRow}>
-          <TouchableOpacity onPress={() => navigation.navigate('DonationDetail', { product })}>
-            <View style={styles.matchedProductCard}>
-              {product.photo ? (
-                <Image source={{ uri: product.photo }} style={styles.matchedImageItem} />
-              ) : (
-                <Text>No Image Available</Text>
-              )}
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productPrice}>{product.itemNames.join(' · ')}</Text>
-              <Text style={styles.productCategory}>
-                <Text style={styles.matchedProductInfo}>{product.category}</Text>
-              </Text>
-            </View>
-          </TouchableOpacity>
-          {nextProduct && (
-            <TouchableOpacity onPress={() => navigation.navigate('DonationDetail', { donation: nextProduct })}>
-              <View style={styles.matchedProductCard}>
-                {nextProduct.photo ? (
-                  <Image source={{ uri: nextProduct.photo }} style={styles.matchedImageItem} />
-                ) : (
-                  <Text>No Image Available</Text>
-                )}
-                <Text style={styles.productName}>{nextProduct.name}</Text>
-                <Text style={styles.productPrice}>{nextProduct.itemNames.join(' · ')}</Text>
-                <Text style={styles.productCategory}>
-                  <Text style={styles.matchedProductInfo}>{nextProduct.category}</Text>
-                </Text>
-              </View>
-            </TouchableOpacity>
+  const renderMatchedDonation = (donation, index) => {
+    return (
+      <TouchableOpacity key={index} onPress={() => navigation.navigate('DonationDetail', { donation })}>
+        <View style={styles.matchedProductCard}>
+          {donation.subPhotos.length > 0 ? (
+            <Image source={{ uri: donation.subPhotos[0] }} style={styles.matchedImageItem} />
+          ) : (
+            <Text>No Image Available</Text>
           )}
+          <Text style={styles.productName}>{donation.name}</Text>
+          <Text style={styles.productCategory}>{donation.category}</Text>
+          {/* <Text style={styles.productCategory}>
+            Purpose: <Text style={styles.matchedProductInfo}>{donation.purpose}</Text>
+          </Text>
+          <Text style={styles.productCategory}>
+            Message: <Text style={styles.matchedProductInfo}>{donation.message}</Text>
+          </Text> */}
         </View>
-      );
-    } else {
-      return null;
-    }
+      </TouchableOpacity>
+    );
   };
 
   return (
@@ -299,55 +202,47 @@ const WishDonation = ({ navigation, route }) => {
           <Icon name="arrow-left" size={20} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Search Via Image</Text>
-        <TouchableOpacity style={styles.searchImageButton} onPress={photoChosen ? handleChooseAgain : handleChoosePhoto}>
+        <TouchableOpacity style={styles.searchImageButton} onPress={photoChosen ? handleChoosePhoto : handleChoosePhoto}>
           <Image source={require('../assets/zoom-in.png')} style={styles.searchImageIcon} />
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollView}>
-      <Text style={styles.hintText}>Please take or choose a photo that matches the donation.</Text>
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <TouchableOpacity
-        style={styles.circleButton}
-        onPress={photoChosen ? handleChooseAgain : handleChoosePhoto}
-      >
-        <Icon name="camera" size={30} color="#FFF" />
-        <Text style={styles.circleButtonText}>
-          {photoChosen ? 'Choose Again' : 'Choose Photo'}
-        </Text>
-      </TouchableOpacity>
-      </Animated.View>
-      
-      {selectedImage && (
-        <View style={styles.imageContainer}>
-          <Text style={styles.matchedImagesSearch}>Searched Image:</Text>
-          <Image source={{ uri: selectedImage }} style={styles.image} />
-        </View>
-      )}
-        {loading ? (
-        <View style={styles.loadingIndicator}>
-            <ActivityIndicator size="large" color="#05652D" />
-            <Text style={styles.loadingText}>Finding matches...</Text>
-        </View>
-        ) : (
-        <View style={styles.matchedImagesContainer}>
-        <Text style={styles.matchedImagesText}>Matched Donations:</Text>
-        {matchedProductsDetails && matchedProductsDetails.length > 0 ? (
-    matchedProductsDetails.map(renderMatchedProduct)
-) : (
-    <Text style={styles.noProductMatchedText}>No Matched Donations</Text>
-)}
-        </View>
+        <Text style={styles.hintText}>Please take or choose a photo that could match a donation.</Text>
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <TouchableOpacity
+            style={styles.circleButton}
+            onPress={photoChosen ? handleChoosePhoto : handleChoosePhoto}
+          >
+            <Icon name="camera" size={30} color="#FFF" />
+            <Text style={styles.circleButtonText}>
+              {photoChosen ? 'Choose Again' : 'Choose Photo'}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+        
+        {selectedImage && (
+          <View style={styles.imageContainer}>
+            <Text style={styles.matchedImagesSearch}>Searched Image:</Text>
+            <Image source={{ uri: selectedImage }} style={styles.image} />
+          </View>
         )}
+        <View style={styles.matchedImagesContainer}>
+          {hasNoMatch ? (
+            <Text style={styles.noProductMatchedText}>No Matched Donations</Text>
+          ) : (
+            matchedDonations.map(renderMatchedDonation)
+          )}
+        </View>
         {error !== '' && (
-        <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>{error}</Text>
         )}
       </ScrollView>
-      {/* {loading && (
-      <View style={styles.loadingIndicator}>
-        <ActivityIndicator size="large" color="#05652D" />
-        <Text style={styles.loadingText}>Finding matches...</Text>
-      </View>
-    )} */}
+      {loading && (
+        <View style={styles.loadingIndicator}>
+          <ActivityIndicator size="large" color="#05652D" />
+          <Text style={styles.loadingText}>Finding matches...</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -399,12 +294,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  matchedImagesText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 20,
-  },
   matchedImageItem: {
     width: 120,
     height: 120,
@@ -452,26 +341,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  matchedProductTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333', 
-    marginBottom: 5,
-  },
-  matchedProductText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  matchedProductInfo: {
-    fontWeight: 'bold',
-  },
-  searchedProductText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 5,
-  },
   productName: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -491,50 +360,35 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
     textAlign: 'center',
   },
-  productPrice: {
-    color: '#05652D',
-    fontSize: 14,
+  matchedProductInfo: {
     fontWeight: 'bold',
   },
-  matchedProductRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  loadingIndicator: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  matchedProductsList: {
-  marginTop: 10,
-  paddingHorizontal: 20,
-},
-matchedProductName: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  color: '#333',
-  marginBottom: 5,
-},
-searchImageButton: {
-  marginLeft: 50,
-},
-loadingIndicator: {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-loadingText: {
-  fontSize: 18,
-  fontWeight: 'bold',
-  marginTop: 10,
-  color: '#05652D',
-},
-noProductMatchedText: {
-  fontSize: 20,
-  fontWeight: 'bold',
-  color: '#666', 
-  marginTop: 20,
-},
+  loadingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 10,
+    color: '#05652D',
+  },
+  noProductMatchedText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#666', 
+    marginTop: 20,
+    textAlign: 'center', 
+  },
+  searchImageButton: {
+    marginLeft: 50,
+  },
 });
 
 export default WishDonation;
