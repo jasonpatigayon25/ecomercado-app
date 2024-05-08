@@ -144,15 +144,16 @@ const WishDonation = ({ navigation }) => {
         if (detectedLabels.some((label) => donation.itemNames.some(item => item.toLowerCase().includes(label)))) {
           matchedDonationsData.push({
             id: doc.id,
-            name: donation.name,
-            photo: donation.photo,
-            subPhotos: donation.subPhotos,
-            itemNames: donation.itemNames,
-            category: donation.category,
-            purpose: donation.purpose,
-            message: donation.message,
-            donor_email: donation.donor_email,
-            location: donation.location
+            ...donation
+            // name: donation.name,
+            // photo: donation.photo,
+            // subPhotos: donation.subPhotos,
+            // itemNames: donation.itemNames,
+            // category: donation.category,
+            // purpose: donation.purpose,
+            // message: donation.message,
+            // donor_email: donation.donor_email,
+            // location: donation.location
           });
         }
       });
