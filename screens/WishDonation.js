@@ -176,15 +176,16 @@ const WishDonation = ({ navigation }) => {
 
   const renderMatchedDonation = (donation, index) => {
     return (
-      <TouchableOpacity key={index} onPress={() => navigation.navigate('DonationDetail', { donation })}>
-        <View style={styles.matchedProductCard}>
+      <TouchableOpacity style={styles.matchedProductCard} key={index} onPress={() => navigation.navigate('DonationDetail', { donation })}>
+        <View >
           {donation.subPhotos.length > 0 ? (
             <Image source={{ uri: donation.subPhotos[0] }} style={styles.matchedImageItem} />
           ) : (
             <Text>No Image Available</Text>
           )}
           <Text style={styles.productName}>{donation.name}</Text>
-          <Text style={styles.productCategory}>{donation.category}</Text>
+          <Text style={styles.productPrice}>{donation.itemNames.join(' · ')}</Text>
+          <Text style={styles.productCategory}>{donation.category} Bundle</Text>
           {/* <Text style={styles.productCategory}>
             Purpose: <Text style={styles.matchedProductInfo}>{donation.purpose}</Text>
           </Text>
@@ -287,8 +288,12 @@ const styles = StyleSheet.create({
     borderColor: '#D3D3D3', 
   },
   matchedImagesContainer: {
+    flexDirection: 'row', 
+    flexWrap: 'wrap',
+    justifyContent: 'space-between', 
     alignItems: 'center',
-    paddingBottom: 20,
+    // paddingBottom: 20,
+    // paddingHorizontal: 10, 
   },
   matchedImagesSearch: {
     fontSize: 20,
@@ -332,6 +337,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   matchedProductCard: {
+    width: '50%', 
     backgroundColor: '#FFF',
     padding: 10,
     marginVertical: 5,
@@ -389,6 +395,11 @@ const styles = StyleSheet.create({
   },
   searchImageButton: {
     marginLeft: 50,
+  },
+  productPrice: {
+    color: '#05652D',
+    fontSize: 12,
+    marginLeft: 5,
   },
 });
 

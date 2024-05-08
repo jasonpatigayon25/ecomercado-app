@@ -217,8 +217,8 @@ const Wish = ({ navigation, route }) => {
       const nextProduct = matchedProductsDetails[index + 1];
       return (
         <View key={index} style={styles.matchedProductRow}>
-          <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product })}>
-            <View style={styles.matchedProductCard}>
+          <TouchableOpacity style={styles.matchedProductCard} onPress={() => navigation.navigate('ProductDetail', { product })}>
+            <View >
               {product.photo ? (
                 <Image source={{ uri: product.photo }} style={styles.matchedImageItem} />
               ) : (
@@ -234,8 +234,8 @@ const Wish = ({ navigation, route }) => {
             </View>
           </TouchableOpacity>
           {nextProduct && (
-            <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: nextProduct })}>
-              <View style={styles.matchedProductCard}>
+            <TouchableOpacity style={styles.matchedProductCard} onPress={() => navigation.navigate('ProductDetail', { product: nextProduct })}>
+              <View >
                 {nextProduct.photo ? (
                   <Image source={{ uri: nextProduct.photo }} style={styles.matchedImageItem} />
                 ) : (
@@ -349,8 +349,12 @@ const styles = StyleSheet.create({
     borderColor: '#D3D3D3', 
   },
   matchedImagesContainer: {
+    flexDirection: 'row', 
+    flexWrap: 'wrap',
+    justifyContent: 'space-between', 
     alignItems: 'center',
-    paddingBottom: 20,
+    // paddingBottom: 20,
+    // paddingHorizontal: 10, 
   },
   matchedImagesSearch: {
     fontSize: 20,
@@ -400,6 +404,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   matchedProductCard: {
+    width: '50%', 
     backgroundColor: '#FFF',
     padding: 10,
     marginVertical: 5,
