@@ -38,29 +38,32 @@ const SearchProducts = () => {
     const handleSearch = async () => {
       setLoadingSearch(true);
       try {
-        const q = query(
+        const productsQuery = query(
           collection(db, 'products'),
-          where('name', '>=', searchQuery),
-          where('name', '<=', searchQuery + '\uf8ff'),
-          limit(50),
-          orderBy('name')
+          where('publicationStatus', '==', 'approved'),
+          limit(50)
         );
-        const querySnapshot = await getDocs(q);
+
+        const productsResults = await getDocs(productsQuery);
         const currentLocation = selectedCity.toLowerCase();
-        const results = querySnapshot.docs
+        const searchLower = searchQuery.toLowerCase();
+
+        const filteredData = productsResults.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
           .filter(product => 
-            product.publicationStatus === 'approved' &&
-            product.location && product.location.toLowerCase().includes(currentLocation)
+            product.location && product.location.toLowerCase().includes(currentLocation) &&
+            ((product.name && product.name.toLowerCase().includes(searchLower)) ||
+            (product.category && product.category.toLowerCase() === searchLower)) 
           );
-        setSearchResults(results);
+
+        setSearchResults(filteredData);
       } catch (error) {
         console.error("Error searching products: ", error);
       } finally {
         setLoadingSearch(false);
       }
     };
-  
+
     if (searchQuery) {
       handleSearch();
     } else {
@@ -216,8 +219,17 @@ const SearchProducts = () => {
     navigation.navigate('SearchDonations');
   };
 
+
   const navigateToSearchResults = () => {
-    navigation.navigate('SearchProductResults', { searchQuery: searchQuery });
+
+    const matchedCategory = categories.find(category => category.toLowerCase() === searchQuery.toLowerCase());
+    if (matchedCategory) {
+
+      navigation.navigate('CategoryResults', { categoryName: matchedCategory });
+    } else if (searchQuery.length > 0) {
+
+      navigation.navigate('SearchProductResults', { searchQuery });
+    }
   };
 
   const handleSuggestionPress = (suggestion) => {
