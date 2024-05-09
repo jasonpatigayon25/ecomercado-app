@@ -52,18 +52,10 @@ const SearchDonations = () => {
           .map(doc => ({ id: doc.id, ...doc.data() }))
           .filter(donation => 
             donation.location && donation.location.toLowerCase().includes(currentLocation) &&
-            (donation.name.toLowerCase().includes(searchLower) ||
-             (donation.itemNames && donation.itemNames.some(name => name.toLowerCase().includes(searchLower))))
-          )
-          .reduce((acc, current) => {
-            
-            const x = acc.find(item => item.id === current.id);
-            if (!x) {
-              return acc.concat([current]);
-            } else {
-              return acc;
-            }
-          }, []);
+            ((donation.name && donation.name.toLowerCase().includes(searchLower)) ||
+            (donation.itemNames && donation.itemNames.some(name => name.toLowerCase().includes(searchLower))) ||
+            (donation.category && donation.category.toLowerCase() === searchLower)) // Filter by complete category name
+          );
   
         setSearchResults(filteredData);
       } catch (error) {
@@ -79,6 +71,7 @@ const SearchDonations = () => {
       setSearchResults([]);
     }
   }, [searchQuery, selectedCity]);
+  
 
   useEffect(() => {
     const fetchRecommendedDonations = async () => {
