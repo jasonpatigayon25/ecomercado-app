@@ -20,6 +20,7 @@ const Chatbox = ({ navigation }) => {
   const [userRating, setUserRating] = useState('');
   const [userMessage, setUserMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
 
   const auth = getAuth();
   const currentUser = auth.currentUser;
@@ -30,6 +31,71 @@ const Chatbox = ({ navigation }) => {
     return initials.toUpperCase();
   };
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef);
+      const querySnapshot = await getDocs(q);
+  
+      const users = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+  
+      setAllUsers(users);
+    };
+  
+    if (currentUser) {
+      fetchUsers(); // Fetch all users once at the component mount
+  
+      setIsLoading(true);
+      const chatsRef = collection(db, 'chats');
+      const unsubscribeChats = onSnapshot(chatsRef, async (querySnapshot) => {
+        const allChats = [];
+        querySnapshot.forEach((doc) => {
+          if (doc.data().users.includes(currentUser.email)) {
+            allChats.push({
+              ...doc.data(),
+              chatId: doc.id,
+            });
+          }
+        });
+  
+        const currentUserDetails = await fetchUserDetailsByEmail(currentUser.email);
+  
+        Promise.all(allChats.map(async (chat) => {
+          const messagesRef = collection(db, 'messages');
+          const q = query(messagesRef, where('chatId', '==', chat.chatId), orderBy('timestamp', 'desc'), limit(1));
+          const messagesSnapshot = await getDocs(q);
+          let lastMessageData = messagesSnapshot.docs[0]?.data();
+          let lastMessageText = lastMessageData?.imageUrl ? 'Photo attached' : lastMessageData?.text || 'No messages yet';
+          let lastMessageTimestamp = lastMessageData?.timestamp ? new Date(lastMessageData.timestamp.seconds * 1000) : new Date(0);
+  
+          const otherParticipantEmail = chat.users.find(email => email !== currentUser.email);
+          const otherUserDetails = await fetchUserDetailsByEmail(otherParticipantEmail);
+  
+          return {
+            chatId: chat.chatId,
+            otherParticipantEmail,
+            otherParticipantName: `${otherUserDetails.firstName} ${otherUserDetails.lastName}`,
+            otherParticipantPhotoUrl: otherUserDetails.photoUrl,
+            currentUserFirstName: currentUserDetails.firstName,
+            currentUserLastName: currentUserDetails.lastName,
+            lastMessage: lastMessageText,
+            timestamp: lastMessageTimestamp,
+          };
+        })).then(chatSummaries => {
+          chatSummaries.sort((a, b) => b.timestamp - a.timestamp);
+          setChatSummaries(chatSummaries);
+          setIsLoading(false);
+        });
+      });
+  
+      return () => unsubscribeChats();
+    }
+  }, [currentUser]);
+  
+
   const handleSearch = async (text) => {
     const searchText = text.toLowerCase();
     setSearchQuery(searchText);
@@ -38,24 +104,25 @@ const Chatbox = ({ navigation }) => {
       setSearchResults([]);
       return;
     }
-
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef);
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      const users = [];
-      querySnapshot.forEach((doc) => {
-        const userData = doc.data();
-        if (userData.email.toLowerCase().includes(searchText)) {
-          users.push(userData);
-        }
-      });
-      setSearchResults(users);
-    } else {
-      console.error("No users found for the search query:", searchText);
+  
+    if (!allUsers || allUsers.length === 0) {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef);
+      const querySnapshot = await getDocs(q);
+    
+      if (!querySnapshot.empty) {
+        allUsers = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      }
     }
-}
+  
+    const filteredUsers = allUsers.filter(user =>
+      user.email.toLowerCase().includes(searchText) ||
+      user.firstName.toLowerCase().includes(searchText) ||
+      user.lastName.toLowerCase().includes(searchText)
+    );
+  
+    setSearchResults(filteredUsers);
+  };
 
   const handleLongPress = (chat) => {
     setSelectedChat(chat);
@@ -104,7 +171,22 @@ const Chatbox = ({ navigation }) => {
   };
   
   useEffect(() => {
+    const fetchUsers = async () => {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef);
+      const querySnapshot = await getDocs(q);
+  
+      const users = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+  
+      setAllUsers(users);
+    };
+  
     if (currentUser) {
+      fetchUsers(); // Fetch all users once at the component mount
+  
       setIsLoading(true);
       const chatsRef = collection(db, 'chats');
       const unsubscribeChats = onSnapshot(chatsRef, async (querySnapshot) => {
@@ -117,7 +199,7 @@ const Chatbox = ({ navigation }) => {
             });
           }
         });
-
+  
         const currentUserDetails = await fetchUserDetailsByEmail(currentUser.email);
   
         Promise.all(allChats.map(async (chat) => {
@@ -130,18 +212,14 @@ const Chatbox = ({ navigation }) => {
   
           const otherParticipantEmail = chat.users.find(email => email !== currentUser.email);
           const otherUserDetails = await fetchUserDetailsByEmail(otherParticipantEmail);
-
-          let otherParticipantName = otherUserDetails
-            ? `${otherUserDetails.firstName} ${otherUserDetails.lastName}`
-            : 'Unknown User';
   
           return {
             chatId: chat.chatId,
             otherParticipantEmail,
-            otherParticipantName,
-            otherParticipantPhotoUrl: otherUserDetails ? otherUserDetails.photoUrl : null,
-            currentUserFirstName: currentUserDetails?.firstName || 'Current',
-            currentUserLastName: currentUserDetails?.lastName || 'User',
+            otherParticipantName: `${otherUserDetails.firstName} ${otherUserDetails.lastName}`,
+            otherParticipantPhotoUrl: otherUserDetails.photoUrl,
+            currentUserFirstName: currentUserDetails.firstName,
+            currentUserLastName: currentUserDetails.lastName,
             lastMessage: lastMessageText,
             timestamp: lastMessageTimestamp,
           };
@@ -155,7 +233,7 @@ const Chatbox = ({ navigation }) => {
       return () => unsubscribeChats();
     }
   }, [currentUser]);
-
+  
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.itemContainer, styles.itemShadow]}
@@ -182,7 +260,6 @@ const Chatbox = ({ navigation }) => {
     </TouchableOpacity>
   );
   
-
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
       <Icon name="comments" size={50} color="#ccc" />
@@ -230,36 +307,61 @@ const Chatbox = ({ navigation }) => {
 
 
   return (
-    <View style={styles.container}>
-      {isLoading ? (
+     <View style={styles.container}>
+    {isLoading ? (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#05652D" />
         <Text>Loading chats...</Text>
       </View>
     ) : (
       <>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Chat List</Text>
-      </View>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="arrow-left" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Chat List</Text>
+        </View>
 
-      {/* <TouchableOpacity
-        onPress={() => setSearchModalVisible(true)}
-        style={styles.searchBar}
-      >
-        <Icon name="search" size={20} color="#666" />
-        <Text style={styles.searchPlaceholderText}> Search for a user...</Text>
-      </TouchableOpacity> */}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search users..."
+            value={searchQuery}
+            onChangeText={handleSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearchButton}>
+              <Icon name="times-circle" size={20} color="#ccc" />
+            </TouchableOpacity>
+          )}
+        </View>
 
-      <FlatList
-        data={chatSummaries}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.chatId}
-        ListEmptyComponent={renderEmptyComponent}
-      />
-
+        {searchResults.length > 0 ? (
+          <FlatList
+            data={searchResults}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.searchResultItem}
+                onPress={() => {
+                  setSearchModalVisible(false);
+                  handleUserSelect(item.email, item.id);
+                }}
+              >
+                <Text style={styles.searchResultText}>{`${item.firstName} ${item.lastName} (${item.email})`}</Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item.id}
+          />
+        ) : (
+          <FlatList
+            data={chatSummaries}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.chatId}
+            ListEmptyComponent={renderEmptyComponent}
+          />
+        )}
       
       <Modal
         animationType="slide"
@@ -631,6 +733,31 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     lineHeight: 60, 
   },  
+  searchContainer: {
+    flexDirection: 'row',
+    padding: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    marginRight: 10,
+  },
+  clearSearchButton: {
+    padding: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
 
 export default Chatbox;
