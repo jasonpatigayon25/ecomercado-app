@@ -212,7 +212,15 @@ const SearchDonations = () => {
 
 
   const navigateToSearchResults = () => {
-    navigation.navigate('SearchDonationResults', { searchQuery });
+
+    const matchedCategory = categories.find(category => category.toLowerCase() === searchQuery.toLowerCase());
+    if (matchedCategory) {
+
+      navigation.navigate('CategoryResultsDonation', { categoryName: matchedCategory });
+    } else if (searchQuery.length > 0) {
+
+      navigation.navigate('SearchDonationResults', { searchQuery });
+    }
   };
 
   const handleSuggestionPress = (suggestion) => {
