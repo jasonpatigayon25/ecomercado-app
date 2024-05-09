@@ -256,9 +256,18 @@ const SearchDonations = () => {
     </TouchableOpacity>
   );
 
+  
+  const clearSearch = () => {
+    setSearchQuery('');
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
+      <View style={styles.inputContainer}>
         <TextInput
           ref={searchInputRef}
           style={styles.input}
@@ -266,6 +275,12 @@ const SearchDonations = () => {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
+         {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+            <Icon name="times-circle" size={20} color="#ccc" />
+          </TouchableOpacity>
+        )}
+         </View>
         <TouchableOpacity style={styles.searchImageButton} onPress={navigateToWish}>
           <Image source={require('../assets/zoom-in.png')} style={styles.searchImageIcon} />
         </TouchableOpacity>
@@ -388,14 +403,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 20,
   },
-  input: {
+  inputContainer: {
     flex: 1,
+    flexDirection: 'row',
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
     paddingVertical: 10,
     paddingHorizontal: 15,
     marginRight: 10,
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    paddingHorizontal: 5,
+    paddingVertical: 0,
+    margin: 0,
+    fontSize: 16,
+    color: '#333',
+  },
+  clearButton: {
+    marginLeft: 5,
   },
   searchButton: {
     padding: 10,
