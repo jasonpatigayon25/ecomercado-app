@@ -151,11 +151,10 @@ const Chatbox = ({ navigation }) => {
       console.error('Error updating messageStatus:', error);
     }
   
-    const user = auth.currentUser;
-    const navigation = // your navigation reference;
-  
-
-    handleChatWithSeller(selectedEmail, user, navigation);
+    navigation.navigate('Chat', {
+      chatId: chatId,
+      receiverEmail: selectedEmail,
+    });
   };
 
   const handleChatWithSelectedUser = async (selectedUserEmail) => {
@@ -224,16 +223,29 @@ const Chatbox = ({ navigation }) => {
 
   const renderSearchItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.searchResultItem}
+      style={[styles.searchResultItem, styles.itemContainer]}
       onPress={() => {
-        handleUserSelect(item.email, item.id);
+        setSearchModalVisible(false);
+        handleChatWithSelectedUser(item.email);
       }}
     >
-      <Text style={styles.searchResultText}>{`${item.firstName} ${item.lastName} (${item.email})`}</Text>
+      <View style={[styles.avatarContainer, styles.itemShadow]}>
+        {item.photoUrl ? (
+          <Image
+            source={{ uri: item.photoUrl }}
+            style={styles.avatarImage}
+          />
+        ) : (
+          <Text style={styles.avatarInitials}>{getInitials(item.firstName)}</Text>
+        )}
+      </View>
+      <View style={styles.searchResultTextContainer}>
+        <Text style={styles.nameText}>{`${item.firstName} ${item.lastName}`}</Text>
+        <Text style={styles.emailText}>{item.email}</Text>
+      </View>
     </TouchableOpacity>
   );
-  
-  
+    
   useEffect(() => {
     const fetchUsers = async () => {
       const usersRef = collection(db, 'users');
@@ -315,7 +327,7 @@ const Chatbox = ({ navigation }) => {
       )}
     </View>
       <View style={styles.textAndTimestampContainer}>
-        <Text style={styles.emailText}>{item.otherParticipantName}</Text>
+        <Text style={styles.nameText}>{item.otherParticipantName}</Text>
         <Text style={styles.lastMessageText} numberOfLines={1} ellipsizeMode="tail">{item.lastMessage}</Text>
         <Text style={styles.timestampText}>
           {item.timestamp.toLocaleDateString()} {item.timestamp.toLocaleTimeString()}
@@ -405,17 +417,7 @@ const Chatbox = ({ navigation }) => {
         {searchResults.length > 0 ? (
           <FlatList
             data={searchResults}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.searchResultItem}
-                onPress={() => {
-                  setSearchModalVisible(false);
-                  handleChatWithSelectedUser(item.email);
-                }}
-              >
-                <Text style={styles.searchResultText}>{`${item.firstName} ${item.lastName} (${item.email})`}</Text>
-              </TouchableOpacity>
-            )}
+            renderItem={renderSearchItem}
             keyExtractor={(item) => item.id}
           />
         ) : (
@@ -629,6 +631,17 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
+  },
+  searchResultTextContainer: {
+    marginLeft: 10,
+  },
+  nameText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  emailText: {
+    fontSize: 14,
+    color: '#666',
   },
   searchResultText: {
     fontSize: 16,
