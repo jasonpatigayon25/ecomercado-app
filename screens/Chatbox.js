@@ -46,7 +46,7 @@ const Chatbox = ({ navigation }) => {
     };
   
     if (currentUser) {
-      fetchUsers(); // Fetch all users once at the component mount
+      fetchUsers(); 
   
       setIsLoading(true);
       const chatsRef = collection(db, 'chats');
@@ -135,15 +135,18 @@ const Chatbox = ({ navigation }) => {
       const chatDocSnap = await getDoc(chatDocRef);
       const chatData = chatDocSnap.data();
   
-      const currentUser = auth.currentUser;
-
-      const updatedMessageStatus = { ...chatData.messageStatus };
-      delete updatedMessageStatus[currentUser.email];
-  
-      await updateDoc(chatDocRef, {
-        messageStatus: updatedMessageStatus,
-        status: 'read',
-      });
+      if (chatData) { 
+        const currentUser = auth.currentUser;
+        const updatedMessageStatus = chatData.messageStatus ? { ...chatData.messageStatus } : {};
+        delete updatedMessageStatus[currentUser.email];
+        
+        await updateDoc(chatDocRef, {
+          messageStatus: updatedMessageStatus,
+          status: 'read',
+        });
+      } else {
+        console.error('Chat data is undefined.');
+      }
     } catch (error) {
       console.error('Error updating messageStatus:', error);
     }
@@ -152,8 +155,59 @@ const Chatbox = ({ navigation }) => {
       chatId: chatId,
       receiverEmail: selectedEmail,
     });
-  };
+  };  
+
+  const handleChatSelectedUser = async (selectedUser, currentUser, navigation) => {
+    if (!currentUser) {
+      console.log('User not authenticated');
+      return;
+    }
   
+    if (selectedUser.email === currentUser.email) {
+      Alert.alert("You are trying to chat with yourself.");
+      return;
+    }
+  
+    const buyerEmail = currentUser.email;
+    const sellerEmail = selectedUser.email;
+  
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('users', 'array-contains', buyerEmail));
+      const querySnapshot = await getDocs(q);
+  
+      let existingChatId = null;
+  
+      querySnapshot.forEach((doc) => {
+        const chatData = doc.data();
+        if (chatData.users.includes(sellerEmail)) {
+          existingChatId = doc.id;
+        }
+      });
+  
+      if (existingChatId) {
+        navigation.navigate('Chat', {
+          chatId: existingChatId,
+          receiverEmail: sellerEmail,
+        });
+      } else {
+        const newChatRef = collection(db, 'chats');
+        const newChat = {
+          users: [buyerEmail, sellerEmail],
+          messages: [],
+        };
+  
+        const docRef = await addDoc(newChatRef, newChat);
+        navigation.navigate('Chat', {
+          chatId: docRef.id,
+          receiverEmail: sellerEmail,
+        });
+      }
+    } catch (error) {
+      console.error('Error handling chat with selected user:', error);
+    }
+  };
+
   const fetchUserDetailsByEmail = async (email) => {
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('email', '==', email));
@@ -169,6 +223,18 @@ const Chatbox = ({ navigation }) => {
       return { firstName: 'Unknown', lastName: 'User', photoUrl: null };
     }
   };
+
+  const renderSearchItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.searchResultItem}
+      onPress={() => {
+        handleUserSelect(item.email, item.id);
+      }}
+    >
+      <Text style={styles.searchResultText}>{`${item.firstName} ${item.lastName} (${item.email})`}</Text>
+    </TouchableOpacity>
+  );
+  
   
   useEffect(() => {
     const fetchUsers = async () => {
@@ -185,7 +251,7 @@ const Chatbox = ({ navigation }) => {
     };
   
     if (currentUser) {
-      fetchUsers(); // Fetch all users once at the component mount
+      fetchUsers(); 
   
       setIsLoading(true);
       const chatsRef = collection(db, 'chats');

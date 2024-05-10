@@ -315,7 +315,7 @@ const Cart = ({ navigation }) => {
           <Icon name="arrow-left" size={20} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Cart</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('SearchScreen')} style={styles.wishlistButton}>
+        <TouchableOpacity onPress={() => navigation.navigate('SearchProducts')} style={styles.wishlistButton}>
          <Icon name="search" size={24} color="#FFFFFF" style={styles.icon} />
         </TouchableOpacity>
       </View>

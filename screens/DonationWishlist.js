@@ -274,7 +274,7 @@ const handleSelectAll = (selectAll) => {
           <Icon name="arrow-left" size={20} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Wishlist</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('SearchDonationScreen')} style={styles.wishlistButton}>
+        <TouchableOpacity onPress={() => navigation.navigate('SearchDonations')} style={styles.wishlistButton}>
           <Icon name="search" size={24} color="#FFFFFF" style={styles.icon} />
         </TouchableOpacity>
       </View>
