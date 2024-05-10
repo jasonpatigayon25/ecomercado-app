@@ -151,36 +151,35 @@ const Chatbox = ({ navigation }) => {
       console.error('Error updating messageStatus:', error);
     }
   
-    navigation.navigate('Chat', {
-      chatId: chatId,
-      receiverEmail: selectedEmail,
-    });
-  };  
+    const user = auth.currentUser;
+    const navigation = // your navigation reference;
+  
 
-  const handleChatSelectedUser = async (selectedUser, currentUser, navigation) => {
-    if (!currentUser) {
+    handleChatWithSeller(selectedEmail, user, navigation);
+  };
+
+  const handleChatWithSelectedUser = async (selectedUserEmail) => {
+    const user = getAuth().currentUser; 
+    if (!user) {
       console.log('User not authenticated');
       return;
     }
   
-    if (selectedUser.email === currentUser.email) {
-      Alert.alert("You are trying to chat with yourself.");
+    if (selectedUserEmail === user.email) {
+      Alert.alert("Error", "You are trying to chat with yourself.");
       return;
     }
   
-    const buyerEmail = currentUser.email;
-    const sellerEmail = selectedUser.email;
-  
     try {
       const chatsRef = collection(db, 'chats');
-      const q = query(chatsRef, where('users', 'array-contains', buyerEmail));
+      const q = query(chatsRef, where('users', 'array-contains', user.email));
       const querySnapshot = await getDocs(q);
   
       let existingChatId = null;
   
       querySnapshot.forEach((doc) => {
         const chatData = doc.data();
-        if (chatData.users.includes(sellerEmail)) {
+        if (chatData.users.includes(selectedUserEmail)) {
           existingChatId = doc.id;
         }
       });
@@ -188,25 +187,24 @@ const Chatbox = ({ navigation }) => {
       if (existingChatId) {
         navigation.navigate('Chat', {
           chatId: existingChatId,
-          receiverEmail: sellerEmail,
+          receiverEmail: selectedUserEmail,
         });
       } else {
         const newChatRef = collection(db, 'chats');
-        const newChat = {
-          users: [buyerEmail, sellerEmail],
+        const newChatDoc = {
+          users: [user.email, selectedUserEmail],
           messages: [],
         };
-  
-        const docRef = await addDoc(newChatRef, newChat);
+        const docRef = await addDoc(newChatRef, newChatDoc);
         navigation.navigate('Chat', {
           chatId: docRef.id,
-          receiverEmail: sellerEmail,
+          receiverEmail: selectedUserEmail,
         });
       }
     } catch (error) {
-      console.error('Error handling chat with selected user:', error);
+      console.error('Error in handleChatWithSelectedUser:', error);
     }
-  };
+  };  
 
   const fetchUserDetailsByEmail = async (email) => {
     const usersRef = collection(db, 'users');
@@ -412,7 +410,7 @@ const Chatbox = ({ navigation }) => {
                 style={styles.searchResultItem}
                 onPress={() => {
                   setSearchModalVisible(false);
-                  handleUserSelect(item.email, item.id);
+                  handleChatWithSelectedUser(item.email);
                 }}
               >
                 <Text style={styles.searchResultText}>{`${item.firstName} ${item.lastName} (${item.email})`}</Text>
