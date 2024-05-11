@@ -12,6 +12,8 @@ const Notification = ({ navigation }) => {
   const [error, setError] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
+  const [selectedNotifications, setSelectedNotifications] = useState([]);
+  const [isSteadied, setIsSteadied] = useState(false);
 
   const auth = getAuth();
   const user = auth.currentUser;
@@ -49,29 +51,18 @@ const Notification = ({ navigation }) => {
     navigation.goBack();
   };
 
-  const handleLongPress = async (notificationId) => {
-    Alert.alert(
-      'Delete Notification',
-      'Do you want to delete this notification?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          onPress: async () => {
-            try {
-              await deleteDoc(doc(db, 'notifications', notificationId));
-              const updatedNotifications = notifications.filter(notification => notification.id !== notificationId);
-              setNotifications(updatedNotifications);
-              Alert.alert('Notification Deleted');
-            } catch (error) {
-              console.error('Error deleting notification: ', error);
-              Alert.alert('Error', 'Failed to delete the notification');
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+  const handleLongPress = (notificationId) => {
+    setIsSteadied(true);
+    toggleNotificationSelection(notificationId);
+  };
+
+  const toggleNotificationSelection = (notificationId) => {
+    const index = selectedNotifications.indexOf(notificationId);
+    if (index === -1) {
+      setSelectedNotifications([...selectedNotifications, notificationId]);
+    } else {
+      setSelectedNotifications(selectedNotifications.filter(id => id !== notificationId));
+    }
   };
 
   const handlePress = async (notification) => {
@@ -142,20 +133,60 @@ const Notification = ({ navigation }) => {
     }
   };
 
+  const handleDeleteSelectedNotifications = async () => {
+    if (selectedNotifications.length === 0) {
+      Alert.alert('No notifications selected');
+      return;
+    }
+
+    Alert.alert(
+      'Remove notification',
+      'Do you want to remove selected notifications?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          onPress: async () => {
+            try {
+              await Promise.all(selectedNotifications.map(async id => {
+                await deleteDoc(doc(db, 'notifications', id));
+              }));
+              const updatedNotifications = notifications.filter(notification => !selectedNotifications.includes(notification.id));
+              setNotifications(updatedNotifications);
+              setSelectedNotifications([]);
+              setIsSteadied(false);
+              Alert.alert('Notifications Deleted');
+            } catch (error) {
+              console.error('Error deleting notifications: ', error);
+              Alert.alert('Error', 'Failed to delete the notifications');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedNotifications(notifications.map(notification => notification.id));
+  };
+
+
   const renderNotificationItem = (notification) => {
-    // Define icons and colors based on notification types
+
     const iconMap = {
         'new_order': 'shopping-cart',
-        'approved_order': 'check-circle',
+        'approved_order': 'thumbs-up-o',
         'delivery_scheduled_order': 'calendar',
         'receive_order': 'inbox',
-        'completed_order': 'check',
+        'completed_order': 'flag',
         'declined_order': 'times-circle',
         'order_placed': 'money',
-        'order_approved': 'truck',
+        'order_delivery_scheduled': 'calendar',
+        'order_approved': 'thumbs-up',
         'order_delivered': 'package',
-        'order_receive': 'truck',
-        'order_completed': 'check',
+        'order_receive': 'inbox',
+        'order_completed': 'flag',
         'order_declined': 'times-circle',
         'donation_requested': 'heart',
         'approved_request': 'handshake-o',
@@ -167,7 +198,7 @@ const Notification = ({ navigation }) => {
         'request_approved': 'handshake-o',
         'request_delivery_scheduled': 'calendar-o',
         'request_delivery_confirmation': 'check-circle',
-        'donation_confirmed': 'check',
+        'donation_confirmed': 'flag',
         'request_declined': 'times-circle',
     };
 
@@ -175,6 +206,7 @@ const Notification = ({ navigation }) => {
         'new_order': '#32CD32', 
         'approved_order': '#32CD32', 
         'delivery_scheduled_order': '#32CD32',
+        'order_delivery_scheduled': '#32CD32',
         'receive_order': '#32CD32',
         'completed_order': '#32CD32',
         'declined_order': '#32CD32',
@@ -202,6 +234,13 @@ const Notification = ({ navigation }) => {
         ? styles.notificationItem
         : { ...styles.notificationItem, ...styles.unreadNotificationItem };
 
+        const isSelected = selectedNotifications.includes(notification.id);
+    const checkbox = isSteadied && (
+      <TouchableOpacity onPress={() => toggleNotificationSelection(notification.id)} style={styles.checkbox}>
+        <Icon name={isSelected ? 'check-square-o' : 'square-o'} size={24} color="#888888" />
+      </TouchableOpacity>
+    );
+
     return (
         <TouchableOpacity
             key={notification.id}
@@ -209,6 +248,7 @@ const Notification = ({ navigation }) => {
             onPress={() => handlePress(notification)}
             onLongPress={() => handleLongPress(notification.id)}
         >
+           {checkbox}
             <Icon name={iconMap[notification.type]} size={24} color={colorMap[notification.type]} style={styles.notificationIcon} />
 
             <View style={styles.notificationContent}>
@@ -245,6 +285,16 @@ const Notification = ({ navigation }) => {
           </View>
         )}
       </ScrollView>
+      {isSteadied && (
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.selectAllButton} onPress={handleSelectAll}>
+            <Text style={styles.selectAllButtonText}>Select All</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteSelectedNotifications}>
+            <Icon name="trash-o" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -329,6 +379,40 @@ const styles = StyleSheet.create({
   },
   unreadNotificationItem: {
     backgroundColor: '#E8F4E5',
+  },
+  checkbox: {
+    marginRight: 10,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#CCCCCC',
+    backgroundColor: '#05652D',
+  },
+  selectAllButton: {
+    backgroundColor: '#05652D',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  selectAllButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  deleteButton: {
+    backgroundColor: '#FF6347',
+    padding: 10,
+    borderRadius: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
+    padding: 15,
+    textAlign: 'center',
   },
 });
 
