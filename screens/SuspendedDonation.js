@@ -103,29 +103,30 @@ const SuspendedDonation = ({ navigation }) => {
     }
   };
   
-
   const handleDelete = async (donationItem) => {
     Alert.alert(
-      "Confirm Deletion",
-      "Are you sure you want to permanently delete this product?",
+      "Remove",
+      "Are you sure you want to remove this donation?",
       [
         {
           text: "Cancel",
           style: "cancel",
         },
         {
-          text: "Yes, Delete Permanently",
+          text: "Yes, Remove",
           onPress: async () => {
             try {
               const donationRef = doc(db, 'donation', donationItem.id);
-              await deleteDoc(donationRef);
-              Alert.alert('Deleted', 'Donation has been deleted.');
-    
-              setDonations(donations.filter(item => item.id !== donationItem.id));
-              setIsModalVisible(false); 
+              await updateDoc(donationRef, {
+                publicationStatus: 'removed'
+              });
+              Alert.alert('Removed', 'Donation has been removed.');
+  
+              setDonations(donations.map(item => item.id === donationItem.id ? { ...item, publicationStatus: 'removed' } : item));
+              setIsModalVisible(false);
             } catch (error) {
-              console.error("Error deleting Donation: ", error);
-              Alert.alert('Error', 'Unable to delete Donation.');
+              console.error("Error updating donation status: ", error);
+              Alert.alert('Error', 'Unable to update donation status.');
             }
           },
         },
@@ -134,6 +135,43 @@ const SuspendedDonation = ({ navigation }) => {
     );
   };
 
+  // const handleDelete = async (donationItem) => {
+  //   Alert.alert(
+  //     "Confirm Deletion",
+  //     "Are you sure you want to permanently delete this product?",
+  //     [
+  //       {
+  //         text: "Cancel",
+  //         style: "cancel",
+  //       },
+  //       {
+  //         text: "Yes, Delete Permanently",
+  //         onPress: async () => {
+  //           try {
+  //             const donationRef = doc(db, 'donation', donationItem.id);
+  //             await deleteDoc(donationRef);
+  //             Alert.alert('Deleted', 'Donation has been deleted.');
+    
+  //             setDonations(donations.filter(item => item.id !== donationItem.id));
+  //             setIsModalVisible(false); 
+  //           } catch (error) {
+  //             console.error("Error deleting Donation: ", error);
+  //             Alert.alert('Error', 'Unable to delete Donation.');
+  //           }
+  //         },
+  //       },
+  //     ],
+  //     { cancelable: false }
+  //   );
+  // };
+
+  const showOptions = (item, event) => {
+    const { pageX, pageY } = event.nativeEvent;
+    const dropdownY = pageY > window.height / 2 ? pageY - 150 : pageY;
+    setDropdownPosition({ x: pageX, y: dropdownY });
+    setSelectedProduct(item);
+    setIsModalVisible(true);
+  };
 
   const renderEmptyProducts = () => (
     <View style={styles.emptyProductsContainer}>
@@ -273,7 +311,7 @@ const SuspendedDonation = ({ navigation }) => {
               ]}
             >
             <TouchableOpacity style={styles.modalButton} onPress={() => handleDelete(selectedProduct)}>
-              <Text style={styles.modalButtonText}>Delete</Text>
+              <Text style={styles.modalButtonText}>Remove</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.modalButton} onPress={() => setIsModalVisible(false)}>
               <Text style={styles.modalButtonText}>Cancel</Text>
