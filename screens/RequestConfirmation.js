@@ -3,7 +3,17 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, Mod
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { collection, addDoc, doc, updateDoc, getDoc, runTransaction, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { db } from '../config/firebase';
+import { db } from '../config/firebase'
+import axios from 'axios';
+import * as Notifications from 'expo-notifications';;
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 const RequestConfirmation = ({ navigation, route }) => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
@@ -12,6 +22,51 @@ const RequestConfirmation = ({ navigation, route }) => {
   const { address, donationDetails, deliveryFeeSubtotal, disposalFeeSubtotal, totalFee, message, paymentMethod } = route.params;
   const auth = getAuth();
   const currentUser = auth.currentUser;
+
+  useEffect(() => {
+    requestNotificationPermissions();
+
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
+    });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification response received:', response);
+    });
+
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
+    };
+  }, []);
+
+  async function requestNotificationPermissions() {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Failed to obtain push notifications permissions!');
+      return;
+    }
+  }
+
+  const sendPushNotification = async (email, title, message) => {
+    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    console.log('Push Notification Token:', token);
+
+    const notificationData = {
+      to: token,
+      title: title,
+      body: message,
+      data: { email }
+    };
+
+    try {
+      await axios.post('https://exp.host/--/api/v2/push/send', notificationData);
+      console.log('Push notification sent successfully');
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+    }
+  };
+
 
   const handleProceed = async () => {
     setConfirmModalVisible(false); 
@@ -44,32 +99,35 @@ const RequestConfirmation = ({ navigation, route }) => {
             batch.set(requestDocRef, requestDoc);
 
             allRequestedDonationIds.push(...section.data.map(donation => donation.id));
-
-            // Notification for the requester
             const requesterNotificationData = {
-                email: currentUser?.email,
-                text: "Your request has been submitted successfully.",
-                timestamp: serverTimestamp(),
-                type: 'request_submitted',
-                requestId: requestDocRef.id
+              email: currentUser?.email,
+              text: "Your request has been submitted successfully.",
+              timestamp: serverTimestamp(),
+              type: 'request_submitted',
+              requestId: requestDocRef.id
             };
             const requesterNotificationRef = doc(collection(db, "notifications"));
             batch.set(requesterNotificationRef, requesterNotificationData);
-
+    
+            sendPushNotification(currentUser.email, 'Request Submitted', 'Your request has been submitted successfully.');
+    
             // Notification for each donor
             section.data.forEach((donation) => {
-                const donorNotificationMessage = `Your donation is requested by ${currentUser?.email}.`;
-                const donorNotificationData = {
-                    email: donation.donorEmail,
-                    text: donorNotificationMessage,
-                    timestamp: serverTimestamp(),
-                    type: 'donation_requested',
-                    requestId: requestDocRef.id,
-                    donationId: donation.id
-                };
-                const donorNotificationRef = doc(collection(db, "notifications"));
-                batch.set(donorNotificationRef, donorNotificationData);
+              const donorNotificationMessage = `Your donation is requested by ${currentUser?.email}.`;
+              const donorNotificationData = {
+                email: donation.donorEmail,
+                text: donorNotificationMessage,
+                timestamp: serverTimestamp(),
+                type: 'donation_requested',
+                requestId: requestDocRef.id,
+                donationId: donation.id
+              };
+              const donorNotificationRef = doc(collection(db, "notifications"));
+              batch.set(donorNotificationRef, donorNotificationData);
+    
+              sendPushNotification(donation.donorEmail, 'Donation Requested', donorNotificationMessage);
             });
+    
 
             if (allRequestedDonationIds.length > 0) {
                 const updatedWishItems = wishSnapshot.data().wishItems.filter(
