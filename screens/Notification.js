@@ -31,7 +31,8 @@ const Notification = ({ navigation }) => {
         const querySnapshot = await getDocs(q);
         const fetchedNotifications = querySnapshot.docs
           .map(doc => ({ id: doc.id, isRead: doc.data().isRead || false, ...doc.data() }))
-          .sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate());
+          .sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate())
+          .filter(notification => notification.type !== 'order_completed');
   
         setNotifications(fetchedNotifications);
       } catch (error) {
@@ -84,7 +85,7 @@ const Notification = ({ navigation }) => {
     const typeToTabSeller = {
       'new_order': 'To Approve',
       'approved_order': 'To Deliver',
-      'delivered_order': 'Delivered',
+      'delivery_scheduled_order': 'Delivered',
       'receive_order': 'Delivered',
       'completed_order': 'Completed',
       };
@@ -94,19 +95,18 @@ const Notification = ({ navigation }) => {
       'order_approved': 'To Deliver',
       'order_delivered': 'To Receive',
       'order_receive': 'To Receive',
-      'order_completed': 'Completed',
+      'order_completed': 'To Receive',
       };
     
     const typeToTabDonor = {
-      'request_submitted': 'To Approve',
-
+      'donation_requested': 'To Approve',
       'request_approved': 'To Deliver',
       'delivery_scheduled': 'Receiving',
       'donation_received': 'Completed',
       };
 
     const typeToTabRequester = {
-      'donation_requested': 'To Approve',
+      'request_submitted': 'To Approve',
       'approved_request': 'To Deliver',
       'request_delivery_scheduled': 'Receiving',
       'donation_confirmed': 'Completed',

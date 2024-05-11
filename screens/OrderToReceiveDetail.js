@@ -345,11 +345,11 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
     const userEmail = currentUser ? currentUser.email : '';
 
     const buyerNotificationMessage = `Order received. Order #${order.id.toUpperCase()}.`;
-    const sellerNotificationMessage = `The order #${order.id.toUpperCase()} has been confirmed by ${order.buyerEmail}.`;
+    const sellerNotificationMessage = `The order #${order.id.toUpperCase()} has been confirmed by ${order.sellerEmail}.`;
 
     try {
-      await sendPushNotification(order.buyerEmail, 'Order Receive Confirmation', buyerNotificationMessage);
-      await sendPushNotification(userEmail, 'Order Delivered', sellerNotificationMessage);
+      await sendPushNotification(userEmail, 'Order Received', buyerNotificationMessage);
+      await sendPushNotification(order.sellerEmail, 'Order Received', sellerNotificationMessage);
     } catch (error) {
       console.error("Error sending notifications:", error);
       Alert.alert("Error", "Could not send notifications.");

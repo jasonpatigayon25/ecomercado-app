@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, SafeAreaView, Dimensions, Alert, Modal, Button } from 'react-native';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { getAuth } from 'firebase/auth';
 import { collection, getDocs, query, where, orderBy, getDoc, doc, updateDoc, onSnapshot, addDoc } from 'firebase/firestore';
 import { Timestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
+import { getAuth } from 'firebase/auth';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,7 +20,6 @@ const OrderToShipBySellerDetails = ({ route, navigation }) => {
   const [deliveryStart, setDeliveryStart] = useState(new Date());
   const [deliveryEnd, setDeliveryEnd] = useState(new Date());
   const [isDeliveryDateModalVisible, setDeliveryDateModalVisible] = useState(false);
-
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -77,7 +76,6 @@ const OrderToShipBySellerDetails = ({ route, navigation }) => {
     }
   };
 
-
   const approveToShipOrder = (orderId) => {
     setCurrentOrder(orderId);
     setDeliveryStart(new Date()); 
@@ -130,7 +128,7 @@ const confirmDeliveryDates = async () => {
                           const userEmail = currentUser ? currentUser.email : '';
 
                           if (userEmail && order.buyerEmail) {
-                            const buyerNotificationMessage = `Your order #${request.id.toUpperCase()} delivery has been scheduled.`;
+                            const buyerNotificationMessage = `Your order #${order.id.toUpperCase()} delivery has been scheduled.`;
                             const sellerNotificationMessage = `You've set the delivery for order #${order.id.toUpperCase()}.`;
 
                             await sendPushNotification(order.buyerEmail, 'Order Scheduled for Delivery', buyerNotificationMessage);
@@ -148,8 +146,8 @@ const confirmDeliveryDates = async () => {
                               email: userEmail,
                               text: sellerNotificationMessage,
                               timestamp: new Date(),
-                              type: 'delivery_order',
-                              orderId: order.id
+                              type: 'delivery_scheduled_order',
+                              orderIddelivery_scheduled_order: order.id
                             };
                             await addDoc(notificationsRef, buyerNotificationData);
                             await addDoc(notificationsRef, sellerNotificationData);
