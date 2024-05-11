@@ -433,30 +433,66 @@ const UserVisit = ({ route, navigation }) => {
         </Text>
     </TouchableOpacity>
           </View>
-          {isProductsLoading ? (
-            <ActivityIndicator size="large" color="#05652D" />
-          ) : products.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No products yet</Text>
-            </View>
-          ) : (
-            <View style={styles.productsContainer}>
-              {products.filter(product => product.publicationStatus === 'approved').map((product) => (
-                <TouchableOpacity 
-                  key={product.id} 
-                  onPress={() => handleProductSelect(product)} 
-                  style={styles.productCard}
-                >
-                  <Image source={{ uri: product.photo }} style={styles.productImage} />
-                  <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{product.name}</Text>
-                  <Text style={styles.productCategory}>{product.category}</Text>
-                  <Text style={styles.productPrice}>₱{product.price}</Text>
-                </TouchableOpacity>
-              ))}
+          {productTab === 'Popular' ? (
+                isProductsLoading ? (
+                  <ActivityIndicator size="large" color="#05652D" />
+                ) : (
+                  <View style={styles.productsContainer}>
+                    {products.map((product) => (
+                      <TouchableOpacity 
+                        key={product.id} 
+                        onPress={() => handleProductSelect(product)} 
+                        style={styles.productCard}
+                      >
+                        <Image source={{ uri: product.photo }} style={styles.productImage} />
+                        <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{product.name}</Text>
+                        <Text style={styles.productCategory}>{product.category}</Text>
+                        <Text style={styles.productPrice}>₱{product.price}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )
+              ) : productTab === 'Latest' ? (
+                isProductsLoading ? (
+                  <ActivityIndicator size="large" color="#05652D" />
+                ) : (
+                  <View style={styles.productsContainer}>
+                    {products.filter(product => product.publicationStatus === 'approved').map((product) => (
+                      <TouchableOpacity 
+                        key={product.id} 
+                        onPress={() => handleProductSelect(product)} 
+                        style={styles.productCard}
+                      >
+                        <Image source={{ uri: product.photo }} style={styles.productImage} />
+                        <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{product.name}</Text>
+                        <Text style={styles.productCategory}>{product.category}</Text>
+                        <Text style={styles.productPrice}>₱{product.price}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )
+              ) : (
+                isProductsLoading ? (
+                  <ActivityIndicator size="large" color="#05652D" />
+                ) : (
+                  <View style={styles.productsContainer}>
+                    {products.sort((a, b) => (priceSort === 'Low' ? a.price - b.price : b.price - a.price)).map((product) => (
+                      <TouchableOpacity 
+                        key={product.id} 
+                        onPress={() => handleProductSelect(product)} 
+                        style={styles.productCard}
+                      >
+                        <Image source={{ uri: product.photo }} style={styles.productImage} />
+                        <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{product.name}</Text>
+                        <Text style={styles.productCategory}>{product.category}</Text>
+                        <Text style={styles.productPrice}>₱{product.price}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )
+              )}
             </View>
           )}
-        </View>
-      )}
        {selectedTab === 'Donations' && (
           <View style={styles.content}>
             {isDonationsLoading ? (
