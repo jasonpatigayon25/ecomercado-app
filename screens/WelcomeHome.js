@@ -1,25 +1,54 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Image, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Image, ScrollView, TouchableOpacity, Modal, Alert, Button } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
 import { FlatList } from 'react-native-gesture-handler';
 import { db } from '../config/firebase';
-import { collection, getDocs, query, orderBy, limit, getDoc, doc, where, documentId } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, getDoc, doc, where, documentId, onSnapshot } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { BackHandler } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import NavbarLogin from '../navbars/NavbarLogin';
+import axios from 'axios';
 
-const WelcomeHome = ({ navigation }) => {
+const WelcomeHome = ({ navigation, route }) => {
   const [firestoreCategories, setFirestoreCategories] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedHeader] = useState('Most Popular Products');
   const [mostPopularProducts, setMostPopularProducts] = useState([]);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [searchText, setSearchText] = useState('');
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-
+  const [categorySearchText, setCategorySearchText] = useState('');
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
-
   const [donations, setDonations] = useState([]);
-
   const carouselRef = useRef(null);
+  const wishlistIcon = require('../assets/wishlist-donation.png');
+
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingMostPopular, setLoadingMostPopular] = useState(true);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
+  const [loadingDonations, setLoadingDonations] = useState(true);
+
+  const [categoryType, setCategoryType] = useState('productCategories');
+
+  const [selectedCity, setSelectedCity] = useState('Cebu'); 
+
+  const [modalVisible, setModalVisible] = useState(false);	
+
+  const handleNavigateToModal = () => {
+    setModalVisible(true);
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (route.params?.selectedCity) {
+        setSelectedCity(route.params.selectedCity);
+      }
+    }, [route.params?.selectedCity])
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -28,131 +57,354 @@ const WelcomeHome = ({ navigation }) => {
         if (nextIndex < mostPopularProducts.length) {
           return nextIndex;
         }
-        return 0;
+        return 0; 
       });
-    }, 3000);
+    }, 3000); 
   
     return () => clearInterval(timer); 
   }, [mostPopularProducts.length]);
-  
+
   useEffect(() => {
     if (carouselRef.current && currentIndex < mostPopularProducts.length) {
       carouselRef.current.scrollToIndex({ animated: true, index: currentIndex });
     }
   }, [currentIndex, mostPopularProducts.length]);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchCartCount();
+      const onBackPress = () => {
+        Alert.alert("Exit App", "Do you want to close the app?", [
+          {
+            text: "No",
+            onPress: () => null,
+            style: "cancel"
+          },
+          { text: "Yes", onPress: () => BackHandler.exitApp() }
+        ]);
+        return true;
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => {
+        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      };
+    }, [])
+  );
+
   useEffect(() => {
     const fetchCategories = async () => {
-      const querySnapshot = await getDocs(collection(db, "categories"));
-      const categories = querySnapshot.docs.map(doc => ({
+      setLoadingCategories(true);
+    try {
+      const collectionName = categoryType === 'productCategories' ? "categories" : "donationCategories";
+      const querySnapshot = await getDocs(collection(db, collectionName));
+      let categories = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      categories.sort((a, b) => a.title.localeCompare(b.title));
       setFirestoreCategories(categories);
-    };
-
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    const fetchMostPopularProducts = async () => {
-      const searchHitsRef = collection(db, "searchHits");
-      const hitsQuery = query(searchHitsRef, orderBy("hits", "desc"), limit(5));
-      const querySnapshot = await getDocs(hitsQuery);
+      setLoadingCategories(false); 
+    } catch (error) {
+      console.error("Error fetching categories: ", error);
+      setLoadingCategories(false); 
+    }
+  };
   
-      const productPromises = querySnapshot.docs.map(async (hit) => {
-        const productRef = doc(db, "products", hit.data().productId);
-        const productSnap = await getDoc(productRef);
-        return productSnap.exists() ? { id: productSnap.id, ...productSnap.data() } : null;
+    fetchCategories();
+  }, [categoryType]);
+
+  const fetchMostPopularProducts = async () => {
+    setLoadingMostPopular(true);
+    try {
+      const userRecommendsRef = collection(db, "userRecommend");
+      const snapshot = await getDocs(userRecommendsRef);
+      const productHits = {};
+  
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        Object.entries(data.productHits || {}).forEach(([productId, hits]) => {
+          if (productHits[productId]) {
+            productHits[productId] += hits;
+          } else {
+            productHits[productId] = hits;
+          }
+        });
       });
   
-      const products = (await Promise.all(productPromises)).filter(Boolean);
-      setMostPopularProducts(products);
-    };
+      const topProductIds = Object.entries(productHits)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(entry => entry[0]);
   
+      const productDetails = await Promise.all(
+        topProductIds.map(async productId => {
+          const productRef = doc(db, "products", productId);
+          const productSnap = await getDoc(productRef);
+          return productSnap.exists() ? { id: productSnap.id, ...productSnap.data() } : null;
+        })
+      );
+  
+      const filteredProducts = productDetails.filter(Boolean).filter(product => product.publicationStatus === 'approved' && !product.isDisabled && product.quantity > 0);
+      
+      setMostPopularProducts(filteredProducts);
+    } catch (error) {
+      console.error("Error fetching most popular products: ", error);
+    } finally {
+      setLoadingMostPopular(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchMostPopularProducts();
   }, []);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const querySnapshot = await getDocs(collection(db, "categories"));
-      const categories = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setFirestoreCategories(categories);
-    };
-
-    const fetchRandomProducts = async () => {
-      const productsRef = collection(db, 'products');
-      const allProductsQuery = query(productsRef, orderBy("name"), limit(10));
-      const querySnapshot = await getDocs(allProductsQuery);
-      const allProducts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
+  
+  const fetchRandomProducts = async () => {
+    setLoadingRecommended(true);
+    try {
+  
+      const allProductsQuery = query(
+        collection(db, 'products'),
+        where('publicationStatus', '==', 'approved'),
+        limit(30)
+      );
+      const allProductsSnapshot = await getDocs(allProductsQuery);
+      let allProducts = allProductsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  
+      const currentLocation = selectedCity.toLowerCase();
+  
+      allProducts = allProducts.filter(product => 
+        product.location.toLowerCase().includes(currentLocation)
+      );
+  
       allProducts.sort(() => 0.5 - Math.random());
+  
       setRecommendedProducts(allProducts);
-    };
-
-    fetchCategories();
+    } catch (error) {
+      console.error("Error fetching recommended products: ", error);
+    } finally {
+      setLoadingRecommended(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchRandomProducts();
-  }, []);
-
+  }, [selectedCity]);
+  
   const handleSearchFocus = () => {
     handleNavigateToModal();
   };
 
-  const Category = ({ id, image, title }) => (
-    <TouchableOpacity onPress={handleNavigateToModal}>
-      <View style={styles.category}>
-        <Image source={{ uri: image }} style={styles.categoryImage} />
-        <Text style={styles.categoryTitle}>{title}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const handleNavigateToModal = () => {
-    setModalVisible(true);
+  const Category = ({ id, image, title, type }) => {
+    const targetScreen = type === 'productCategories' ? 'CategoryResults' : 'CategoryResultsDonation';
+  
+    return (
+      <>
+        {loadingCategories ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator} />
+          </View>
+        ) : (
+          <TouchableOpacity onPress={handleNavigateToModal}>
+            <View style={styles.category}>
+              <Image source={{ uri: image }} style={styles.categoryImage} />
+              <Text style={styles.categoryTitle}>{title}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </>
+    );
   };
 
   const renderProductItem = ({ item }) => (
     <TouchableOpacity onPress={handleNavigateToModal}>
-      <Image source={{ uri: item.photo }} style={styles.carouselImage} />
+      <View style={styles.popularContainer}>
+        <Image source={{ uri: item.photo }} style={styles.carouselImage} />
+        <View style={styles.carouselOverlay}>
+          <Text style={styles.carouselName} numberOfLines={1} ellipsizeMode='tail'>{item.name}</Text>
+          {/* <Text style={styles.carouselCategory}>{item.category}</Text>
+          <Text style={styles.carouselPrice}>₱{item.price}</Text> */}
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
+  // useEffect(() => {
+    
+  //   const fetchRandomProducts = async () => {
+  //     const productsRef = collection(db, 'products');
+  //     const allProductsQuery = query(productsRef, orderBy("name"), limit(30));
+  //     const querySnapshot = await getDocs(allProductsQuery);
+  //     const allProducts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+  //     allProducts.sort(() => 0.5 - Math.random());
+  //     setRecommendedProducts(allProducts);
+  //   };
+
+  //   fetchRandomProducts();
+  // }, []);
+
   const renderRecommendedProductItem = ({ item }) => (
     <TouchableOpacity onPress={handleNavigateToModal}>
-      <Image source={{ uri: item.photo }} style={styles.recommendedImage} />
+      <View style={styles.recommendationContainer}>
+        <Text style={styles.productName} numberOfLines={1} ellipsizeMode='tail'>{item.name}</Text>
+        <Image source={{ uri: item.photo }} style={styles.recommendedImage} />
+        <View style={styles.productDetailsContainer}>
+          <Text style={styles.productCategory}>{item.category}</Text>
+          <Text style={styles.productPrice}>₱{item.price}</Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
+
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
   };
 
+  const fetchWishlistCount = () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+  
+    if (user && user.email) {
+      const wishlistRef = doc(db, 'wishlists', user.email);
+      const unsubscribe = onSnapshot(wishlistRef, (doc) => {
+        if (doc.exists()) {
+          const wishlistData = doc.data();
+          const wishItems = wishlistData.wishItems;
+          setWishlistCount(wishItems.length);
+        } else {
+          console.log('No wishlist found for the current user.');
+          setWishlistCount(0);
+        }
+      }, (error) => {
+        console.error("Error fetching wishlist count: ", error);
+      });
+      return unsubscribe; 
+    }
+  };
+  
+  useEffect(() => {
+    const unsubscribe = fetchWishlistCount();
+    return unsubscribe; 
+  }, []);
+
+  const fetchCartCount = () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+  
+    if (user && user.email) {
+      const cartRef = doc(db, 'carts', user.email);
+      const unsubscribe = onSnapshot(cartRef, (doc) => {
+        if (doc.exists()) {
+          const cartData = doc.data();
+          const cartItems = cartData.cartItems;
+          setCartCount(Object.keys(cartItems).length);
+        } else {
+          console.log('No cart found for the current user.');
+          setCartCount(0);
+        }
+      }, (error) => {
+        console.error("Error fetching cart count: ", error);
+      });
+      return unsubscribe; 
+    }
+  };
+  
+  useEffect(() => {
+    const unsubscribe = fetchCartCount();
+    return unsubscribe; 
+  }, []);
+
   useEffect(() => {
     const fetchDonations = async () => {
-      const donationsRef = collection(db, 'donation');
-      const snapshot = await getDocs(donationsRef);
-      let donationsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  
-      // shuffle 10 item donations
-      donationsList.sort(() => Math.random() - 0.5);
-      setDonations(donationsList.slice(0, 10));
+      setLoadingDonations(true); 
+      try {
+        const donationsRef = collection(db, 'donation');
+        const allDonationsQuery = query(donationsRef, orderBy("name"), limit(30));
+        const querySnapshot = await getDocs(allDonationsQuery);
+        let donationsList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        donationsList.sort(() => 0.5 - Math.random());
+        setDonations(donationsList);
+      } catch (error) {
+        console.error("Error fetching donations: ", error);
+      } finally {
+        setLoadingDonations(false); 
+      }
     };
   
     fetchDonations();
   }, []);
   
-  const DonationItem = ({ item }) => (
-    <TouchableOpacity onPress={handleNavigateToModal}>
-      <Image source={{ uri: item.photo }} style={styles.donationImage} />
-    </TouchableOpacity>
-  );  
+  const DonationItem = ({ item }) => {
+    const displayExtraPhotos = () => {
+      const subPhotosToShow = item.subPhotos.slice(0, 3);
+      const moreCount = item.subPhotos.length - 3;
+  
+      return (
+        <View style={styles.subPhotosOverlay}>
+          {subPhotosToShow.map((photo, index) => (
+            <Image key={index} source={{ uri: photo }} style={styles.subPhoto} />
+          ))}
+          {item.subPhotos.length > 3 && (
+            <Text style={styles.morePhotosText}>+{moreCount} more</Text>
+          )}
+        </View>
+      );
+    };
+  
+    return (
+      <TouchableOpacity onPress={handleNavigateToModal}>
+        <View style={styles.donationItemContainer}>
+          <Text style={styles.donationName}>{item.name}</Text>
+          <Image source={{ uri: item.photo }} style={styles.donationImage} />
+          {item.subPhotos && item.subPhotos.length > 0 && displayExtraPhotos()}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+  
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      const currentUserEmail = currentUser ? currentUser.email : '';
+      if (!currentUserEmail) return;
+  
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('users', 'array-contains', currentUserEmail));
+  
+      try {
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+          let count = 0;
+          querySnapshot.forEach((doc) => {
+            const chatData = doc.data();
+            const messageStatus = chatData.messageStatus || {};
+            if (messageStatus[currentUserEmail] === 'unread') {
+              count++;
+            }
+          });
+          setUnreadCount(count);
+        });
+        
+        return () => unsubscribe();
+      } catch (error) {
+        console.error('Error fetching unread message count:', error);
+      }
+    };
+  
+    fetchUnreadCount();
+  }, []);
 
   return (
     <View style={styles.container}>
-      <View style={styles.mainHeader}>
+      <View style={styles.mainHeader}>  
         <View style={styles.searchContainer}>
+        <View style={styles.inputIconContainer}>
+          <Icon name="search" size={20} color="#A9A9A9" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search Products"
@@ -160,7 +412,195 @@ const WelcomeHome = ({ navigation }) => {
             onChangeText={setSearchText}
             onFocus={handleSearchFocus}
           />
-          <Modal
+        </View>
+          <View style={styles.iconsContainer}>
+            <TouchableOpacity onPress={handleNavigateToModal}>
+            <View style={{ position: 'relative' }}>
+              <Icon name="comments" size={24} color="#05652D" style={styles.icon} />
+              {unreadCount > 0 && (
+                <View style={styles.cartCountContainer}>
+                  <Text style={styles.cartCountText}>{unreadCount}</Text>
+                </View>
+              )}
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleNavigateToModal}>
+              <View style={{ position: 'relative' }}>
+                <Icon name="shopping-cart" size={24} color="#05652D" style={styles.icon} />
+                {cartCount > 0 && (
+                  <View style={styles.cartCountContainer}>
+                    <Text style={styles.cartCountText}>{cartCount}</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.wishlistContainer} onPress={handleNavigateToModal}>
+            <View style={{ position: 'relative' }}>
+              <Image source={wishlistIcon} style={styles.wishlistIcon} />
+              {wishlistCount > 0 && (
+                <View style={styles.cartCountContainer}>
+                  <Text style={styles.cartCountText}>{wishlistCount}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+      <ScrollView>
+      <View style={styles.categoryHeader}>
+      <View style={styles.switchContainer}>
+      <Button
+            title="Product Categories"
+            onPress={() => setCategoryType('productCategories')}
+            color={categoryType === 'productCategories' ? '#05652D' : '#D3D3D3'}
+          />
+          <Button
+            title="Donation Categories"
+            onPress={() => setCategoryType('donationCategories')}
+            color={categoryType === 'donationCategories' ? '#05652D' : '#D3D3D3'}
+          />
+      </View>
+        <View style={styles.viewAllIconContainer}>
+          <TouchableOpacity onPress={toggleModal}>
+            <View style={styles.viewAllIconBackground}>
+              <Icon name="th-list" size={20} color="#FFF" />
+            </View>
+          </TouchableOpacity>
+        </View>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isModalVisible}
+          onRequestClose={toggleModal}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity style={styles.closeModalIconContainer} onPress={toggleModal}>
+              <Icon name="times-circle" size={30} color="#05652D" />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.modalSearchInput}
+              placeholder="Search Categories"
+              value={categorySearchText}
+              onChangeText={setCategorySearchText}
+            />
+            {categorySearchText !== '' && (
+              <Text style={styles.searchingText}>Searching '{categorySearchText}'...</Text>
+            )}
+            <ScrollView contentContainerStyle={styles.modalGrid}>
+              {firestoreCategories.filter(category => 
+                category.title.toLowerCase().includes(categorySearchText.toLowerCase())
+              ).length > 0 ? (
+                firestoreCategories.filter(category => 
+                  category.title.toLowerCase().includes(categorySearchText.toLowerCase())
+                ).map((category) => (
+                  <Category key={category.id} id={category.id} image={category.image} title={category.title} />
+                ))
+              ) : (
+                <View style={styles.notFoundContainer}>
+                  <Text style={styles.notFoundText}>Category not found.</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </Modal>
+        
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContainer}>
+          {firestoreCategories.map((category) => (
+            <Category
+              key={category.id}
+              id={category.id}
+              image={category.image}
+              title={category.title}
+              type={categoryType} 
+            />
+          ))}
+        </ScrollView>
+      </View>
+        <View style={[styles.carouselContainer, styles.sectionContainer]}>
+        {loadingMostPopular ? (
+            <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
+          </View>
+        ) : (
+        <FlatList
+          ref={carouselRef}
+          data={mostPopularProducts}
+          renderItem={renderProductItem}
+          keyExtractor={(item) => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          pagingEnabled
+          onScrollToIndexFailed={(info) => {
+            const wait = new Promise((resolve) => setTimeout(resolve, 500));
+            wait.then(() => {
+              carouselRef.current?.scrollToIndex({ index: info.index, animated: true });
+            });
+          }}
+        />
+      )}
+          <View style={styles.carouselTitleContainer}>
+            <Text style={styles.carouselTitle}>{selectedHeader}</Text>
+          </View>
+        </View>
+        <View style={[styles.recommendedContainer, styles.sectionContainer]}>
+          <View style={styles.locationHeader}>
+            <Text style={styles.sectionTitle}>Recommended for You</Text>
+            <TouchableOpacity style={styles.filterContainer} onPress={() => setModalVisible(true)}>
+              <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
+            </TouchableOpacity>
+          </View>
+          {loadingRecommended ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
+                    </View>
+                ) : recommendedProducts.length === 0 ? (
+                    <View style={styles.emptyProductIcon}>
+                        <Icon name="shopping-bag" size={50} color="#D3D3D3" />
+                        <Text style={styles.notFoundText}>No products found in {selectedCity}</Text>
+                    </View>
+                ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {recommendedProducts.map((product) => (
+                <View key={product.id}>
+                  {renderRecommendedProductItem({ item: product })}
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+        <View style={[styles.donationsContainer, styles.sectionContainer]}>
+                <View style={styles.donationsHeader}>
+                    <Text style={styles.sectionTitle}>Donations You Can Request</Text>
+                    <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.shuffleButton}>
+                        <Icon name="random" size={20} color="#05652D" />
+                    </TouchableOpacity>
+                </View>
+                {loadingDonations ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
+                    </View>
+                ) : donations.length === 0 ? (
+                    <View style={styles.emptyProductIcon}>
+                        <Icon2 name="hand-heart" size={50} color="#D3D3D3" />
+                        <Text style={styles.notFoundText}>No donations found in {selectedCity}</Text>
+                    </View>
+                ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {donations.map((donation) => (
+              <View key={donation.id}>
+                <DonationItem item={donation} />
+              </View>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+      </ScrollView>
+      <NavbarLogin
+        onLoginPress={() => navigation.navigate('Login')}
+        onSignUpPress={() => navigation.navigate('Signup')}
+      />
+      <Modal
             animationType="slide"
             transparent={true}
             visible={modalVisible}
@@ -180,93 +620,7 @@ const WelcomeHome = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </Modal>
-          <View style={styles.iconsContainer}>
-            <TouchableOpacity onPress={() => setModalVisible(true)}>
-              <Icon name="comments" size={24} color="#05652D" style={styles.icon} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setModalVisible(true)}>
-              <Icon name="shopping-cart" size={24} color="#05652D" style={styles.icon} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-      <View style={styles.categoryHeader}>
-        <View style={styles.viewAllIconContainer}>
-          <TouchableOpacity onPress={toggleModal}>
-            <View style={styles.viewAllIconBackground}>
-              <Icon name="th-list" size={20} color="#FFF" />
-            </View>
-          </TouchableOpacity>
-        </View>
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isModalVisible}
-          onRequestClose={toggleModal}
-        >
-          <View style={styles.modalContainer}>
-            <TouchableOpacity style={styles.closeModalIconContainer} onPress={toggleModal}>
-              <Icon name="times-circle" size={30} color="#05652D" />
-            </TouchableOpacity>
-            <ScrollView contentContainerStyle={styles.modalGrid}>
-              {firestoreCategories.map((category) => (
-                <Category key={category.id} id={category.id} image={category.image} title={category.title} />
-              ))}
-            </ScrollView>
-          </View>
-        </Modal>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContainer}>
-          {firestoreCategories.map((category) => (
-            <Category key={category.id} id={category.id} image={category.image} title={category.title} />
-          ))}
-        </ScrollView>
-      </View>
-      <ScrollView>
-        <View style={[styles.carouselContainer, styles.sectionContainer]}>
-          <FlatList
-            ref={carouselRef}
-            data={mostPopularProducts}
-            renderItem={renderProductItem}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            pagingEnabled
-            onScrollToIndexFailed={(info) => {
-              const wait = new Promise((resolve) => setTimeout(resolve, 500));
-              wait.then(() => {
-                carouselRef.current?.scrollToIndex({ index: info.index, animated: true });
-              });
-            }}
-          />
-          <View style={styles.carouselTitleContainer}>
-            <Text style={styles.carouselTitle}>{selectedHeader}</Text>
-          </View>
-        </View>
-        <View style={[styles.recommendedContainer, styles.sectionContainer]}>
-          <Text style={styles.sectionTitle}>Recommended for You</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {recommendedProducts.map((product) => (
-              <View key={product.id}>
-                {renderRecommendedProductItem({ item: product })}
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-        <View style={[styles.donationsContainer, styles.sectionContainer]}>
-          <Text style={styles.sectionTitle}>Recent Donations</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {donations.map((donation) => (
-              <View key={donation.id}>
-                <DonationItem item={donation} />
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      </ScrollView>
-      <NavbarLogin
-        onLoginPress={() => navigation.navigate('Login')}
-        onSignUpPress={() => navigation.navigate('Signup')}
-      />
+
     </View>
   );
 };
@@ -306,17 +660,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  searchInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#D3D3D3',
+  inputIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
     borderRadius: 25,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    flex: 1,
     marginRight: 10,
     marginLeft: 15,
-    backgroundColor: '#FFF',
+  },
+  
+  searchInput: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 16,
     color: '#000',
+    borderColor: '#D3D3D3',
+  },
+  
+  searchIcon: {
+    paddingLeft: 15,
+    color: '#A9A9A9',
   },
   iconsContainer: {
     flexDirection: 'row',
@@ -325,7 +690,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   categoriesContainer: {
-    marginTop: 20,
+    marginTop: 10,
     marginBottom: 10,
     marginHorizontal: 10,
   },
@@ -379,6 +744,29 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  carouselOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    // left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    padding: 10,
+    borderTopStartRadius: 20,
+  },
+  carouselName: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  carouselCategory: {
+    color: '#FFFFFF',
+    fontSize: 12,
+  },
+  carouselPrice: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
   carouselHeaderText: {
     position: 'absolute',
     top: 10,
@@ -403,10 +791,9 @@ const styles = StyleSheet.create({
     color: '#05652D',
   },
   recommendedImage: {
-    width: 200,
+    width: '100%',
     height: 150,
-    marginRight: 10,
-    borderRadius: 10,
+    resizeMode: 'cover',
   },
 
   viewAllIconContainer: {
@@ -491,17 +878,43 @@ searchSuggestions: {
     color: '#05652D',
     fontSize: 14,
   },
+  locationIcon: {
+    marginRight: 5,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#E3FCE9',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    top: -10,
+    right: -10,
+    justifyContent: 'center',
   },
-  locationIcon: {
-    marginRight: 10,
+  enableLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    top: -10,
+    right: -10,
   },
   locationText: {
+    marginRight: 5, 
     color: '#05652D',
     fontSize: 16,
     fontWeight: 'bold',
@@ -528,11 +941,17 @@ searchSuggestions: {
     fontWeight: 'bold',
     color: '#FFF',
   },
-  carouselImage: {
+  popularContainer: {
     width: 320, 
     height: 200, 
     marginRight: 10,
     borderRadius: 20,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  carouselImage: {
+    width: '100%',
+    height: '100%',
   },
   carouselTitleContainer: {
     position: 'absolute',
@@ -540,11 +959,285 @@ searchSuggestions: {
     left: 20,
     backgroundColor: 'rgba(5, 101, 45, 0.7)', 
     padding: 8,
-    borderTopRightRadius: 20,
+
     borderTopLeftRadius: 20,
+    borderBottomRightRadius: 50,
   },
   carouselTitle: {
     color: 'white',
+    fontWeight: 'bold',
+  },
+  donationsContainer: {
+    marginBottom: 20,
+  },
+  donationImage: {
+    width: 200,
+    height: 150,
+    marginRight: 10,
+    borderRadius: 10,
+  },
+  locationText: {
+    color: '#05652D',
+    fontSize: 12,
+    marginRight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shuffleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    top: -15,
+    right: -10,
+    justifyContent: 'center',
+  }, 
+  donationsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  
+  shuffleButton: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    top: -5,
+    right: -5,
+  }, 
+  modalSearchInput: {
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    borderRadius: 25,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    backgroundColor: '#FFF',
+    color: '#000',
+  },
+  searchingText: {
+    textAlign: 'left',
+    marginBottom: 10,
+    marginHorizontal: 10,
+    color: '#05652D',
+  },
+  notFoundContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  notFoundText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#CCC',
+  }, 
+  cartCountContainer: {
+    position: 'absolute',
+    right: -6,
+    top: -3,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  cartCountText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold'
+  },
+  wishlistContainer: {
+    marginRight: 10,
+  },
+  wishlistIcon: {
+    width: 24,
+    height: 24,
+    marginLeft: 15,
+    resizeMode: 'contain', 
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  switchButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    color: 'grey',
+  },
+  activeSwitchButton: {
+    fontWeight: 'bold',
+    color: 'green',
+  },
+  filterContainer: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#05652D',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    top: -10,
+  },
+  filterText: {
+    color: '#05652D',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  emptyProductIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  emptyProductIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingIndicator: {
+    width: 100,
+    height: 100,
+  },
+  productName: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10
+  },
+  productCategory: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#ECECEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
+    marginVertical: 4,
+    marginHorizontal: 2,
+    textAlign: 'center',
+  },
+  productPrice: {
+    color: '#05620D',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  nameBackground: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
+    padding: 5,
+    shadowColor: 'rgba(0, 0, 0, 0.2)',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 5,
+    borderRadius: 10,
+  },
+  nameText: {
+    color: 'white',
+  },
+  productDetailsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+  },
+  recommendationContainer: {
+    marginBottom: 10,
+    marginRight: 5,
+    width: 200,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  donationItemContainer: {
+    marginBottom: 10,
+    marginRight: 5,
+    width: 200,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  donationImage: {
+    width: '100%',
+    height: 150, 
+    resizeMode: 'cover',
+  },
+  donationName: {
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10
+  },
+  subPhotosOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    paddingVertical: 5,
+    borderBottomEndRadius: 10,
+    borderBottomStartRadius: 10,
+  },
+  subPhoto: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginHorizontal: 3,
+    borderWidth: 1,
+    borderColor: '#fff', 
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+
+  },
+  morePhotosText: {
+    color: '#FFF', 
+    marginLeft: 5,
     fontWeight: 'bold',
   },
   modalContent: {
@@ -592,15 +1285,8 @@ searchSuggestions: {
   signupButtonText: {
     color: 'white',
   },
-  donationsContainer: {
-    marginBottom: 20,
-  },
-  donationImage: {
-    width: 200,
-    height: 150,
-    marginRight: 10,
-    borderRadius: 10,
-  },
+
 });
+
 
 export default WelcomeHome;
