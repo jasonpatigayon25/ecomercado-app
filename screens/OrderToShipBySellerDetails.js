@@ -130,10 +130,10 @@ const handleConfirmEndDate = (date) => {
                             const userEmail = currentUser ? currentUser.email : '';
 
                             const buyerNotificationMessage = `Your order #${order.id.toUpperCase()} delivery has been processed.`;
-                            const sellerNotificationMessage = `You've set the delivery for order #${order.id.toUpperCase()}. Proceed to Shipped if the order is delivered.`;
+                            const sellerNotificationMessage = `You've set the delivery for order #${order.id.toUpperCase()}. Proceed to Delivered if the order is delivered.`;
                             try {
-                              await sendPushNotification(order.buyerEmail, 'Order Shipped', buyerNotificationMessage);
-                              await sendPushNotification(userEmail, 'Order Shipped', sellerNotificationMessage);
+                              await sendPushNotification(order.buyerEmail, 'Order Delivered', buyerNotificationMessage);
+                              await sendPushNotification(userEmail, 'Order Delivered', sellerNotificationMessage);
                             } catch (error) {
                               console.error("Error sending notifications:", error);
                               Alert.alert("Error", "Could not send notifications.");
@@ -144,14 +144,14 @@ const handleConfirmEndDate = (date) => {
                               email: order.buyerEmail,
                               text: buyerNotificationMessage,
                               timestamp: new Date(),
-                              type: 'order_shipped',
+                              type: 'order_delivered',
                               orderId: order.id
                             };
                             const sellerNotificationData = {
                               email: userEmail,
                               text: sellerNotificationMessage,
                               timestamp: new Date(),
-                              type: 'shipped_order',
+                              type: 'delivered_order',
                               orderId: order.id
                             };
                             await addDoc(notificationsRef, buyerNotificationData);

@@ -3,13 +3,74 @@ import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Alert, Saf
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
-import { getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
+import { getDocs, query, collection, where, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { Timestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
+import { registerIndieID, unregisterIndieDevice } from 'native-notify';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth } from 'firebase/auth';
+
 
 const RequestToDeliverByDonorDetails = ({ route, navigation }) => {
   const { request, donations, users, requesterEmail } = route.params;
+
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    setUser(auth.currentUser);
+
+    registerIndieID(auth.currentUser.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
+      .then(() => console.log("Device registered for notifications"))
+      .catch(err => console.error("Error registering device:", err));
+
+    return () => {
+      unregisterIndieDevice(auth.currentUser.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
+        .then(() => console.log("Device unregistered for notifications"))
+        .catch(err => console.error("Error unregistering device:", err));
+    };
+  }, []);
+
+  const shouldSendNotification = async (email) => {
+    try {
+      const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
+      return sellingNotifications === null || JSON.parse(sellingNotifications);
+    } catch (error) {
+      console.error('Error reading notification settings:', error);
+      return true;
+    }
+  };
+
+  const sendPushNotification = async (subID, title, message) => {
+    if (!(await shouldSendNotification(subID))) {
+      console.log('Notifications are muted for:', subID);
+      return;
+    }
+
+    const notificationData = {
+      subID: subID,
+      appId: 21249,
+      appToken: 'kHrDsgwvsjqsZkDuubGBMU',
+      title: 'ECOMercado',
+      message: message
+    };
+  
+    for (let attempt = 1; attempt <= 3; attempt++) { 
+      try {
+        await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
+        console.log('Push notification sent to:', subID);
+        break; 
+      } catch (error) {
+        console.error(`Attempt ${attempt} - Error sending push notification:`, error);
+        if (attempt === 3) {
+          console.error('Unable to send push notification at this time.'); 
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  };
 
   useEffect(() => {
     if (route.params.autoDeliver) {
@@ -159,6 +220,39 @@ const handleConfirmEndDate = (date) => {
                                 deliveredStatus: 'Processing', 
                                 status: 'Receiving'
                             });
+
+                            const auth = getAuth();
+                            const currentUser = auth.currentUser;
+                            const userEmail = currentUser ? currentUser.email : '';
+
+                            if (userEmail && request.requesterEmail) {
+                              const requesterNotificationMessage = `Your request #${request.id.toUpperCase()} delivery has been scheduled.`;
+                              const donorNotificationMessage = `You've set the delivery for request #${request.id.toUpperCase()}.`;
+
+                              await sendPushNotification(request.requesterEmail, 'Request Scheduled for Delivery', requesterNotificationMessage);
+                              await sendPushNotification(userEmail, 'Delivery Scheduled', donorNotificationMessage);
+
+                              const notificationsRef = collection(db, 'notifications');
+                              const requesterNotificationData = {
+                                email: request.requesterEmail,
+                                text: requesterNotificationMessage,
+                                timestamp: new Date(),
+                                type: 'request_delivery_scheduled',
+                                requestId: request.id
+                              };
+                              const donorNotificationData = {
+                                email: userEmail,
+                                text: donorNotificationMessage,
+                                timestamp: new Date(),
+                                type: 'delivery_scheduled',
+                                requestId: request.id
+                              };
+                              await addDoc(notificationsRef, requesterNotificationData);
+                              await addDoc(notificationsRef, donorNotificationData);
+                            } else {
+                              console.error("Undefined email(s):", { donorEmail: userEmail, requesterEmail: request.requesterEmail });
+                            }
+                            
                             setDeliveryDateModalVisible(false);
                             Alert.alert("Success", "Delivery dates set successfully.", [
                               { text: "OK", onPress: () => navigation.navigate('RequestManagement') }
