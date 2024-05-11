@@ -11,7 +11,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';  
 
 const OrderShippedDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
@@ -261,7 +261,6 @@ const OrderShippedDetails = ({ route, navigation }) => {
       ]
     );
   };
-
 
   return (
     <SafeAreaView style={styles.safeArea}>
