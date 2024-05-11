@@ -8,7 +8,7 @@ import { productsCollection, db } from '../config/firebase';
 import { getAuth } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Timestamp } from 'firebase/firestore';
-import axios from 'axios';
+import axios from 'axios'; 
 import { Dimensions } from 'react-native';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -54,7 +54,9 @@ const SuccessModal = ({ productName, isVisible, onCancel, navigateToSell, naviga
 };
 
 const SellAddProduct = ({ navigation }) => {
+  const [subPhotos, setSubPhotos] = useState([]);
   const route = useRoute();
+
   useEffect(() => {
     if (route.params?.location) {
       setProductInfo(prevState => ({
@@ -63,7 +65,7 @@ const SellAddProduct = ({ navigation }) => {
       }));
     }
   }, [route.params?.location]);
-  const [subPhotos, setSubPhotos] = useState([]);
+
   const MAX_SUB_PHOTOS = 15;
   const [isSubPhotoPickerModalVisible, setIsSubPhotoPickerModalVisible] = useState(false);
 
@@ -357,60 +359,6 @@ const SellAddProduct = ({ navigation }) => {
     }
 };
 
-const sendPushNotification = async (subID, title, message) => {
-  if (!(await shouldSendNotification(subID))) {
-    console.log('Notifications are muted for:', subID);
-    return;
-  }
-
-  const notificationData = {
-    subID: subID,
-    appId: 21246,
-    appToken: 'ARqV6berafqNBzVeBIamZR',
-    title: 'ECOMercado',
-    message: message
-  };
-
-  try {
-    await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
-    console.log('Push notification sent to:', subID);
-  } catch (error) {
-    console.error('Error sending push notification:', error);
-  }
-};
-
-const notifySubscribers = async (sellerEmail, updatedProductInfo) => {
-  const title = 'New Product Added';
-  const message = `Check out the new product "${updatedProductInfo.name}" added by ${sellerEmail}`;
-
-  const subscribersQuery = query(collection(db, 'subscriptions'), where('subscribedTo_email', '==', sellerEmail));
-  const subscribersSnapshot = await getDocs(subscribersQuery);
-
-  subscribersSnapshot.forEach(async (doc) => {
-    const subscriberEmail = doc.data().subscriber_email;
-
-    if (await shouldSendNotification(subscriberEmail)) {
-      const notificationDoc = {
-        email: subscriberEmail,
-        title: title,
-        type: 'subscribed_sell',
-        text: message,
-        timestamp: new Date(),
-        productInfo: {
-          id: updatedProductInfo.id,
-          name: updatedProductInfo.name,
-          photo: updatedProductInfo.photo,
-          price: updatedProductInfo.price,
-          sellerEmail: sellerEmail
-        }
-      };
-
-      await addDoc(collection(db, 'notifications'), notificationDoc);
-      sendPushNotification(subscriberEmail, title, message);
-    }
-  });
-};
-
 const handleSubmit = async () => {
   if (!validateForm()) return;
 
@@ -438,13 +386,6 @@ const handleSubmit = async () => {
       },
     });
 
-    const updatedProductInfo = {
-      ...productInfo,
-      id: productDocRef.id,
-      publicationStatus: 'pending'
-    };
-
-    await notifySubscribers(userEmail, updatedProductInfo);
     setProductName(productInfo.name);
     setSuccessModalVisible(true);
     //Alert.alert(`${productInfo.name} successfully Added!`);
@@ -478,7 +419,7 @@ const resetProductInfo = () => {
   const handleShippingInfoPress = () => {
     Alert.alert(
       "Note:",
-      "Volume and weight also determine the cost of the delivery fee.\n\nMaximum measures are:\nWidth: 60cm\nHeight: 60cm\nLength: 90cm \n\nMaximum weight is:\nWidth: 30kg"
+      "Both volume and weight determine the cost of the delivery fee.\n\nThe maximum dimensions are:\n- Width: 60 cm\n- Height: 60 cm\n- Length: 90 cm\nIf the item you are adding exceeds these dimensions, just maximize the measurements to fit within these limits.\n\nThe maximum weight is 30 kg."
     );
   };
 
@@ -843,7 +784,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
             Location
             {missingFields.location && <Text style={{ color: 'red' }}> *</Text>}
           </Text>
-          <TouchableOpacity style={styles.input}  onPress={() => navigation.navigate('MapLocationSelectorSellProduct')}>
+          <TouchableOpacity style={styles.input}  onPress={() => navigation.navigate('MapLocationSelectorSell')}>
             <Text>{productInfo.location || 'Enter Location'}</Text>
           </TouchableOpacity>
           <Text style={styles.label}>
@@ -865,7 +806,7 @@ const ProductModal = ({ productInfo, isVisible, onCancel, onSubmit }) => {
           </TouchableOpacity>
         </View>
         <Text style={styles.label}>
-          Logistic Details: 
+          Logistic Details:
           {missingFields.photo && <Text style={{ color: 'red' }}> *</Text>} 
           <Icon
             name="info-circle"
