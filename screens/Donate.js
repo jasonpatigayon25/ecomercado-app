@@ -9,9 +9,7 @@ import { getAuth } from 'firebase/auth';
 import { Timestamp } from 'firebase/firestore';
 import axios from 'axios';
 import { Dimensions } from 'react-native';
-import { registerIndieID, unregisterIndieDevice } from 'native-notify';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 
 const SuccessModal = ({ donationName, isVisible, onCancel, navigateToDonate, navigateToDonationPosts }) => {
   return (
@@ -76,85 +74,6 @@ const Donate = ({ navigation }) => {
 
   const [userEmail, setUserEmail] = useState(null);
 
-  useEffect(() => {
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (user) {
-      registerIndieID(user.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
-        .then(() => console.log("Device registered for notifications"))
-        .catch(err => console.error("Error registering device:", err));
-
-      return () => {
-        unregisterIndieDevice(user.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
-          .then(() => console.log("Device unregistered for notifications"))
-          .catch(err => console.error("Error unregistering device:", err));
-      };
-    }
-  }, []);
-
-  const shouldSendNotification = async (email) => {
-    try {
-      const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
-      return sellingNotifications === null || JSON.parse(sellingNotifications);
-    } catch (error) {
-      console.error('Error reading notification settings:', error);
-      return true;
-    }
-  };
-
-  const sendPushNotification = async (subID, title, message) => {
-    if (!(await shouldSendNotification(subID))) {
-      console.log('Notifications are muted for:', subID);
-      return;
-    }
-  
-    const notificationData = {
-      subID: subID,
-      appId: 18345,
-      appToken: 'TdOuHYdDSqcy4ULJFVCN7l',
-      title: 'ECOMercado',
-      message: message
-    };
-  
-    try {
-      await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
-      console.log('Push notification sent to:', subID);
-    } catch (error) {
-      console.error('Error sending push notification:', error);
-    }
-  };
-
-  const notifySubscribers = async (donorEmail, updatedDonationInfo) => {
-    const title = 'New Donation Available';
-    const message = `A new donation "${updatedDonationInfo.name}" is available from ${donorEmail}`;
-  
-    const subscribersQuery = query(collection(db, 'subscriptions'), where('subscribedTo_email', '==', donorEmail));
-    const subscribersSnapshot = await getDocs(subscribersQuery);
-  
-    subscribersSnapshot.forEach(async (doc) => {
-      const subscriberEmail = doc.data().subscriber_email;
-  
-      if (await shouldSendNotification(subscriberEmail)) {
-        const notificationDoc = {
-          email: subscriberEmail,
-          title: title,
-          type: 'subscribed_donate',
-          text: message,
-          timestamp: new Date(),
-          donationInfo: {
-            id: updatedDonationInfo.id,
-            name: updatedDonationInfo.name,
-            photo: updatedDonationInfo.photo,
-            donor_email: donorEmail,
-          }
-        };
-  
-        await addDoc(collection(db, 'notifications'), notificationDoc);
-        sendPushNotification(subscriberEmail, title, message);
-      }
-    });
-  };
-  
   const addNewItemNameField = () => {
     setDonationInfo(prevState => ({
       ...prevState,
@@ -348,13 +267,6 @@ const Donate = ({ navigation }) => {
           publicationStatus: 'pending',
         });
   
-        const updatedDonationInfo = {
-          ...donationInfo,
-          id: donationDocRef.id,
-          publicationStatus: 'pending',
-        };
-  
-        await notifySubscribers(userEmail, updatedDonationInfo);
         setSuccessModalVisible(true);
         // Alert.alert(`Donation of ${donationInfo.name} successfully submitted!`);
         resetDonationInfo();
