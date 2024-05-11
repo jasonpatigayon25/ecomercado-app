@@ -86,14 +86,33 @@ const Notification = ({ navigation }) => {
       'approved_order': 'To Deliver',
       'delivered_order': 'Delivered',
       'receive_order': 'Delivered',
+      'completed_order': 'Completed',
       };
 
-      const typeToTabBuyer = {
-        'order_placed': 'To Pay',
-        'order_approved': 'To Deliver',
-        'order_delivered': 'To Receive',
-        'order_receive': 'Completed',
-        };
+    const typeToTabBuyer = {
+      'order_placed': 'To Pay',
+      'order_approved': 'To Deliver',
+      'order_delivered': 'To Receive',
+      'order_receive': 'To Receive',
+      'order_completed': 'Completed',
+      };
+    
+    const typeToTabDonor = {
+      'request_submitted': 'To Approve',
+
+      'request_approved': 'To Deliver',
+      'delivery_scheduled': 'Receiving',
+      'donation_received': 'Completed',
+      };
+
+    const typeToTabRequester = {
+      'donation_requested': 'To Approve',
+      'approved_request': 'To Deliver',
+      'request_delivery_scheduled': 'Receiving',
+      'donation_confirmed': 'Completed',
+      };
+    
+      // request_submitted approved_request  delivery_scheduled
 
     const navigateToTabSeller = typeToTabSeller[notification.type];
     if (navigateToTabSeller) {
@@ -103,6 +122,16 @@ const Notification = ({ navigation }) => {
     const navigateToTabBuyer = typeToTabBuyer[notification.type];
     if (navigateToTabBuyer) {
       navigation.navigate('OrderHistory', { selectedTab: navigateToTabBuyer });
+    }
+
+    const navigateToTabDonor = typeToTabDonor[notification.type];
+    if (navigateToTabDonor) {
+      navigation.navigate('RequestManagement', { selectedTab: navigateToTabDonor });
+    }
+
+    const navigateToTabRequester = typeToTabRequester[notification.type];
+    if (navigateToTabRequester) {
+      navigation.navigate('RequestHistory', { selectedTab: navigateToTabRequester });
     }
   };
 

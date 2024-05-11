@@ -103,74 +103,74 @@ const handleConfirmEndDate = (date) => {
     setEndDatePickerVisibility(false);
 };
 
-  const confirmDeliveryDates = async () => {
-    if (currentOrder) {
-        Alert.alert(
-            "Finalize Delivery Dates",
-            "Are you sure you want to set these delivery dates?",
-            [
-                {
-                    text: "Cancel",
-                    style: "cancel"
-                },
-                {
-                    text: "Confirm",
-                    onPress: async () => {
-                        try {
-                            const orderRef = doc(db, 'orders', currentOrder);
-                            await updateDoc(orderRef, {
-                                deliveryStart: Timestamp.fromDate(new Date(deliveryStart)), 
-                                deliveryEnd: Timestamp.fromDate(new Date(deliveryEnd)), 
-                                status: 'Receiving',
-                                deliveredStatus: 'Processing',
-                            });
+const confirmDeliveryDates = async () => {
+  if (currentOrder) {
+      Alert.alert(
+          "Finalize Delivery Dates",
+          "Are you sure you want to set these delivery dates?",
+          [
+              {
+                  text: "Cancel",
+                  style: "cancel"
+              },
+              {
+                  text: "Confirm",
+                  onPress: async () => {
+                      try {
+                          const orderRef = doc(db, 'orders', currentOrder);
+                          await updateDoc(orderRef, {
+                              deliveryStart: Timestamp.fromDate(new Date(deliveryStart)), 
+                              deliveryEnd: Timestamp.fromDate(new Date(deliveryEnd)), 
+                              status: 'Receiving',
+                              deliveredStatus: 'Processing',
+                          });
 
-                            const auth = getAuth();
-                            const currentUser = auth.currentUser;
-                            const userEmail = currentUser ? currentUser.email : '';
+                          const auth = getAuth();
+                          const currentUser = auth.currentUser;
+                          const userEmail = currentUser ? currentUser.email : '';
 
-                            const buyerNotificationMessage = `Your order #${order.id.toUpperCase()} delivery has been processed.`;
-                            const sellerNotificationMessage = `You've set the delivery for order #${order.id.toUpperCase()}. Proceed to Delivered if the order is delivered.`;
-                            try {
-                              await sendPushNotification(order.buyerEmail, 'Order Delivered', buyerNotificationMessage);
-                              await sendPushNotification(userEmail, 'Order Delivered', sellerNotificationMessage);
-                            } catch (error) {
-                              console.error("Error sending notifications:", error);
-                              Alert.alert("Error", "Could not send notifications.");
-                            }
-                
+                          if (userEmail && order.buyerEmail) {
+                            const buyerNotificationMessage = `Your order #${request.id.toUpperCase()} delivery has been scheduled.`;
+                            const sellerNotificationMessage = `You've set the delivery for order #${order.id.toUpperCase()}.`;
+
+                            await sendPushNotification(order.buyerEmail, 'Order Scheduled for Delivery', buyerNotificationMessage);
+                            await sendPushNotification(userEmail, 'Delivery Scheduled', sellerNotificationMessage);
+
                             const notificationsRef = collection(db, 'notifications');
                             const buyerNotificationData = {
                               email: order.buyerEmail,
                               text: buyerNotificationMessage,
                               timestamp: new Date(),
-                              type: 'order_delivered',
+                              type: 'order_delivery_scheduled',
                               orderId: order.id
                             };
                             const sellerNotificationData = {
                               email: userEmail,
                               text: sellerNotificationMessage,
                               timestamp: new Date(),
-                              type: 'delivered_order',
+                              type: 'delivery_order',
                               orderId: order.id
                             };
                             await addDoc(notificationsRef, buyerNotificationData);
                             await addDoc(notificationsRef, sellerNotificationData);
-
-                            setDeliveryDateModalVisible(false);
-                            Alert.alert("To Deliver", "Delivery dates set successfully.", [
-                              { text: "OK", onPress: () => navigation.navigate('SellerOrderManagement') }
-                          ]);
-                        } catch (error) {
-                            console.error("Error setting delivery dates: ", error);
-                            Alert.alert("Error", "Failed to set delivery dates.");
-                        }
-                    }
-                }
-            ],
-            { cancelable: false }
-        );
-    }
+                          } else {
+                            console.error("Undefined email(s):", { sellerEmail: userEmail, buyerEmail: order.buyerEmail });
+                          }
+                          
+                          setDeliveryDateModalVisible(false);
+                          Alert.alert("Success", "Delivery dates set successfully.", [
+                            { text: "OK", onPress: () => navigation.navigate('SellerOrderManagement') }
+                        ]);
+                      } catch (error) {
+                          console.error("Error setting delivery dates: ", error);
+                          Alert.alert("Error", "Failed to set delivery dates.");
+                      }
+                  }
+              }
+          ],
+          { cancelable: false }
+      );
+  }
 };
 
   const cancelOrder = async () => {
