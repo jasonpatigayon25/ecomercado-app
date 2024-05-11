@@ -430,6 +430,24 @@ const ProductDetail = ({ navigation, route }) => {
   const handleVisitSeller = () => {
     navigation.navigate('UserVisit', { email: product.seller_email });
   };
+  
+  const renderRating = () => {
+    //  if there are no ratings yet
+    if (totalRatings === 0) {
+      return <Text style={styles.noRatingText}>Not Yet Rated</Text>;
+    }
+
+    return (
+      <Rating
+        type="star"
+        ratingCount={5}
+        imageSize={30}
+        readonly
+        startingValue={averageRating}
+        style={styles.rating}
+      />
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -506,14 +524,7 @@ const ProductDetail = ({ navigation, route }) => {
         <View style={styles.ratingCard}>
           <Text style={styles.ratingLabel}>Rating</Text>
           <View style={styles.ratingContainer}>
-            <Rating
-              type="star"
-              ratingCount={5}
-              imageSize={30}
-              readonly
-              startingValue={averageRating}
-              style={styles.rating}
-            />
+            {renderRating()}
             <Text
               onPress={() => navigation.navigate('RatingReview', { prodId: product.id })}
               style={styles.viewReviewText}>
@@ -1064,6 +1075,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  noRatingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#666',
+    textAlign: 'center',
+  },
+
 });
 
 

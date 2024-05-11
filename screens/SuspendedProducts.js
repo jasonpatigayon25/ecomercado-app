@@ -236,29 +236,30 @@ const SuspendedProducts = ({ navigation }) => {
     }
   };
   
-
   const handleDelete = async (product) => {
     Alert.alert(
-      "Confirm Deletion",
-      "Are you sure you want to permanently delete this product?",
+      "Remove",
+      "Are you sure you want to remove this product?",
       [
         {
           text: "Cancel",
           style: "cancel",
         },
         {
-          text: "Yes, Delete Permanently",
+          text: "Yes, Remove this product",
           onPress: async () => {
             try {
               const productRef = doc(db, 'products', product.id);
-              await deleteDoc(productRef);
-              Alert.alert('Deleted', 'Product has been deleted.');
-    
-              setProducts(products.filter(p => p.id !== product.id));
+              await updateDoc(productRef, {
+                publicationStatus: 'removed'
+              });
+              Alert.alert('Removed', 'Product has been removed.');
+
+              setProducts(products.map(p => p.id === product.id ? { ...p, publicationStatus: 'removed' } : p));
               setIsModalVisible(false); 
             } catch (error) {
-              console.error("Error deleting product: ", error);
-              Alert.alert('Error', 'Unable to delete product.');
+              console.error("Error updating product status: ", error);
+              Alert.alert('Error', 'Unable to update product status.');
             }
           },
         },
@@ -266,6 +267,36 @@ const SuspendedProducts = ({ navigation }) => {
       { cancelable: false }
     );
   };
+
+  // const handleDelete = async (product) => {
+  //   Alert.alert(
+  //     "Confirm Deletion",
+  //     "Are you sure you want to permanently delete this product?",
+  //     [
+  //       {
+  //         text: "Cancel",
+  //         style: "cancel",
+  //       },
+  //       {
+  //         text: "Yes, Delete Permanently",
+  //         onPress: async () => {
+  //           try {
+  //             const productRef = doc(db, 'products', product.id);
+  //             await deleteDoc(productRef);
+  //             Alert.alert('Deleted', 'Product has been deleted.');
+    
+  //             setProducts(products.filter(p => p.id !== product.id));
+  //             setIsModalVisible(false); 
+  //           } catch (error) {
+  //             console.error("Error deleting product: ", error);
+  //             Alert.alert('Error', 'Unable to delete product.');
+  //           }
+  //         },
+  //       },
+  //     ],
+  //     { cancelable: false }
+  //   );
+  // };
 
 const showOptions = (item, event) => {
   const { pageX, pageY } = event.nativeEvent;
@@ -539,7 +570,7 @@ const showOptions = (item, event) => {
               ]}
             >
             <TouchableOpacity style={styles.modalButton} onPress={() => handleDelete(selectedProduct)}>
-              <Text style={styles.modalButtonText}>Delete</Text>
+              <Text style={styles.modalButtonText}>Remove</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.modalButton} onPress={() => setIsModalVisible(false)}>
               <Text style={styles.modalButtonText}>Cancel</Text>
