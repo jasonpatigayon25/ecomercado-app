@@ -217,7 +217,7 @@ const CCCTabs = () => {
 };
 
 const App = () => {
-  registerNNPushToken(18345, 'TdOuHYdDSqcy4ULJFVCN7l');
+  registerNNPushToken(21249, 'kHrDsgwvsjqsZkDuubGBMU');
 
   const [user, setUser] = useState(null);
   const [initializing, setInitializing] = useState(true);

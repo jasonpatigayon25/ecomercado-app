@@ -53,14 +53,14 @@ const Login = ({ navigation }) => {
         navigation.navigate('Main', { username: email });
         setPassword('');
   
-        registerIndieID(email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
+        registerIndieID(email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
           .then(() => {
             console.log('Device registered for notifications with subID:', email);
   
             const notificationData = {
               subID: email,
-              appId: 18345,
-              appToken: 'TdOuHYdDSqcy4ULJFVCN7l',
+              appId: 21249,
+              appToken: 'kHrDsgwvsjqsZkDuubGBMU',
               title: 'Welcome!',
               message: 'You have successfully logged in.'
             };

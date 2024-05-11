@@ -99,12 +99,12 @@ const SellAddProduct = ({ navigation }) => {
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
-      registerIndieID(user.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
+      registerIndieID(user.email, 21246, 'ARqV6berafqNBzVeBIamZR')
         .then(() => console.log("Device registered for notifications"))
         .catch(err => console.error("Error registering device:", err));
 
       return () => {
-        unregisterIndieDevice(user.email, 18345, 'TdOuHYdDSqcy4ULJFVCN7l')
+        unregisterIndieDevice(user.email, 21246, 'ARqV6berafqNBzVeBIamZR')
           .then(() => console.log("Device unregistered for notifications"))
           .catch(err => console.error("Error unregistering device:", err));
       };
@@ -365,8 +365,8 @@ const sendPushNotification = async (subID, title, message) => {
 
   const notificationData = {
     subID: subID,
-    appId: 18345,
-    appToken: 'TdOuHYdDSqcy4ULJFVCN7l',
+    appId: 21246,
+    appToken: 'ARqV6berafqNBzVeBIamZR',
     title: 'ECOMercado',
     message: message
   };

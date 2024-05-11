@@ -8,10 +8,13 @@ import { Timestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import OrderSellerTab from '../navbars/OrderSellerTab';
 import { useRoute } from '@react-navigation/native';
+import { LogBox } from 'react-native';
+
+ LogBox.ignoreLogs(['Warning: Unknown: Support for defaultProps will be removed from memo components in a future major release.']);
 
 const windowWidth = Dimensions.get('window').width;
 
-const SellerOrderManagement = ({ navigation }) => {
+const SellerOrderManagement = ({ navigation, route  }) => {
     const [orders, setOrders] = useState([]);
     const [currentOrder, setCurrentOrder] = useState(null);
     const [products, setProducts] = useState({});
@@ -24,7 +27,7 @@ const SellerOrderManagement = ({ navigation }) => {
     const [deliveryEnd, setDeliveryEnd] = useState(new Date());
     const auth = getAuth();
     const user = auth.currentUser;
-    const route = useRoute(); 
+    // const route = useRoute(); 
     const initialTab = route.params?.selectedTab || 'To Approve';
     const [selectedTab, setSelectedTab] = useState(initialTab);
 

@@ -2,9 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Alert, SafeAreaView, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
-import { getDocs, query, collection, where, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { getDocs, query, collection, where, doc, updateDoc, getDoc, addDoc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import moment from 'moment';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth } from 'firebase/auth';
+import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 
 const RequestToApproveByDonorDetails = ({ route, navigation }) => {
   const { request, donations, users, requesterEmail } = route.params;
@@ -129,6 +133,62 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
     );
   };
 
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    setUser(auth.currentUser);
+
+    registerIndieID(auth.currentUser.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
+      .then(() => console.log("Device registered for notifications"))
+      .catch(err => console.error("Error registering device:", err));
+
+    return () => {
+      unregisterIndieDevice(auth.currentUser.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
+        .then(() => console.log("Device unregistered for notifications"))
+        .catch(err => console.error("Error unregistering device:", err));
+    };
+  }, []);
+
+  const shouldSendNotification = async (email) => {
+    try {
+      const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
+      return sellingNotifications === null || JSON.parse(sellingNotifications);
+    } catch (error) {
+      console.error('Error reading notification settings:', error);
+      return true;
+    }
+  };
+
+  const sendPushNotification = async (subID, title, message) => {
+    if (!(await shouldSendNotification(subID))) {
+      console.log('Notifications are muted for:', subID);
+      return;
+    }
+
+    const notificationData = {
+      subID: subID,
+      appId: 21249,
+      appToken: 'kHrDsgwvsjqsZkDuubGBMU',
+      title: 'ECOMercado',
+      message: message
+    };
+  
+    for (let attempt = 1; attempt <= 3; attempt++) { 
+      try {
+        await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
+        console.log('Push notification sent to:', subID);
+        break; 
+      } catch (error) {
+        console.error(`Attempt ${attempt} - Error sending push notification:`, error);
+        if (attempt === 3) {
+          console.error('Unable to send push notification at this time.'); 
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  };
+
   const approveRequest = async () => {
     
     if (isItemTaken) {
@@ -152,6 +212,38 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
               await updateDoc(requestRef, {
                 status: 'Approved'
               });
+
+              const auth = getAuth();
+              const currentUser = auth.currentUser;
+              const userEmail = currentUser ? currentUser.email : '';
+
+              const requesterNotificationMessage = `Your request #${request.id.toUpperCase()} has been request.`;
+              const donorNotificationMessage = `You approved the #${request.id.toUpperCase()}. Please set for delivery`;
+              try {
+                await sendPushNotification(request.buyerEmail, 'Request Approved', requesterNotificationMessage);
+                await sendPushNotification(userEmail, 'Request Approved', donorNotificationMessage);
+              } catch (error) {
+                console.error("Error sending notifications:", error);
+                Alert.alert("Error", "Could not send notifications.");
+              }
+  
+              const notificationsRef = collection(db, 'notifications');
+              const requesterNotificationData = {
+                email: request.requesterEmail,
+                text: requesterNotificationMessage,
+                timestamp: new Date(),
+                type: 'request_approved',
+                requestId: request.id
+              };
+              const donorNotificationData = {
+                email: userEmail,
+                text: donorNotificationMessage,
+                timestamp: new Date(),
+                type: 'approved_request',
+                requestId: request.id
+              };
+              await addDoc(notificationsRef, requesterNotificationData);
+              await addDoc(notificationsRef, donorNotificationData);
 
               Alert.alert("Request Approved", "The request has been approved successfully.");
               navigation.navigate('RequestManagement');
