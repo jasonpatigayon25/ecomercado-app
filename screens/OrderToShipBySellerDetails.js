@@ -171,40 +171,72 @@ const confirmDeliveryDates = async () => {
   }
 };
 
-  const cancelOrder = async () => {
-    Alert.alert(
-      "Cancel Order",
-      "Are you sure you want to cancel this order?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        { 
-          text: "Yes", 
-          onPress: async () => {
+const cancelOrder = async () => {
+  Alert.alert(
+    "Decline Order",
+    "Are you sure you want to decline this order?",
+    [
+      {
+        text: "No",
+        style: "cancel",
+      },
+      { 
+        text: "Yes", 
+        onPress: async () => {
+          try {
+            const orderRef = doc(db, 'orders', order.id);
+            await updateDoc(orderRef, {
+              status: 'Cancelled',
+            });
+
+            const auth = getAuth();
+            const currentUser = auth.currentUser;
+            const userEmail = currentUser ? currentUser.email : '';
+
+            const buyerNotificationMessage = `Your order #${order.id.toUpperCase()} has been declined.`;
+            const sellerNotificationMessage = `You declined order #${order.id.toUpperCase()}.`;
             try {
-              const orderRef = doc(db, 'orders', order.id);
-              await updateDoc(orderRef, {
-                status: 'Cancelled',
-              });
-  
-              Alert.alert(
-                "Order Cancelled",
-                "Your order has been cancelled successfully.",
-                [
-                  { text: "OK", onPress: () => navigation.navigate('SellerOrderManagement') }
-                ]
-              );
+              await sendPushNotification(order.buyerEmail, 'Order Declined', buyerNotificationMessage);
+              await sendPushNotification(userEmail, 'Order Declined', sellerNotificationMessage);
             } catch (error) {
-              console.error("Error updating order status: ", error);
-              Alert.alert("Error", "Could not cancel the order at this time.");
+              console.error("Error sending notifications:", error);
+              Alert.alert("Error", "Could not send notifications.");
             }
-          },
+
+            const notificationsRef = collection(db, 'notifications');
+            const buyerNotificationData = {
+              email: order.buyerEmail,
+              text: buyerNotificationMessage,
+              timestamp: new Date(),
+              type: 'order_declined',
+              orderId: order.id
+            };
+            const sellerNotificationData = {
+              email: userEmail,
+              text: sellerNotificationMessage,
+              timestamp: new Date(),
+              type: 'declined_order',
+              orderId: order.id
+            };
+            await addDoc(notificationsRef, buyerNotificationData);
+            await addDoc(notificationsRef, sellerNotificationData);
+
+            Alert.alert(
+              "Order Declined",
+              "Order has been declined.",
+              [
+                { text: "OK", onPress: () => navigation.navigate('SellerOrderManagement') }
+              ]
+            );
+          } catch ( error) {
+            console.error("Error updating order status: ", error);
+            Alert.alert("Error", "Could not cancel the order at this time.");
+          }
         },
-      ]
-    );
-  };
+      },
+    ]
+  );
+};
 
   const approveOrder = async () => {
     Alert.alert(

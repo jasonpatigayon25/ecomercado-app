@@ -87,6 +87,7 @@ const Notification = ({ navigation }) => {
       'delivery_scheduled_order': 'Delivered',
       'receive_order': 'Delivered',
       'completed_order': 'Completed',
+      'declined_order': 'Cancelled',
     };
   
     const typeToTabBuyer = {
@@ -95,6 +96,7 @@ const Notification = ({ navigation }) => {
       'order_delivered': 'To Receive',
       'order_receive': 'To Receive',
       'order_completed': 'Completed',
+      'order_declined': 'Cancelled',
     };
       
     const typeToTabDonor = {

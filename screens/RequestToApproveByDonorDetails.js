@@ -98,41 +98,6 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
     fetchDonationDetails();
   }, [request.requesterEmail]);
 
-  const cancelRequest = async () => {
-    Alert.alert(
-      "Decline Requester's Request",
-      "Are you sure you want to decline the request?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        { 
-          text: "Yes", 
-          onPress: async () => {
-            try {
-              const requestRef = doc(db, 'requests', request.id);
-              await updateDoc(requestRef, {
-                status: 'Declined',
-              });
-  
-              Alert.alert(
-                "Request Declined",
-                "You Declined Requester's Request.",
-                [
-                  { text: "OK", onPress: () => navigation.navigate('RequestManagement') }
-                ]
-              );
-            } catch (error) {
-              console.error("Error updating req status: ", error);
-              Alert.alert("Error", "Could not cancel the req at this time.");
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -253,6 +218,74 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
             }
           }
         }
+      ]
+    );
+  };
+
+  const cancelRequest = async () => {
+    Alert.alert(
+      "Decline Request",
+      "Are you sure you want to decline this request?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        { 
+          text: "Yes", 
+          onPress: async () => {
+            try {
+              const requestRef = doc(db, 'requests', request.id);
+              await updateDoc(requestRef, {
+                status: 'Declined',
+              });
+
+              const auth = getAuth();
+              const currentUser = auth.currentUser;
+              const userEmail = currentUser ? currentUser.email : '';
+
+              const requesterNotificationMessage = `Your request #${request.id.toUpperCase()} has been declined.`;
+              const donorNotificationMessage = `You declined request #${request.id.toUpperCase()}.`;
+              
+              try {
+                await sendPushNotification(request.requesterEmail, 'Request Declined', requesterNotificationMessage);
+                await sendPushNotification(userEmail, 'Request Declined', donorNotificationMessage);
+              } catch (error) {
+                console.error("Error sending notifications:", error);
+                Alert.alert("Error", "Could not send notifications.");
+              }
+
+              const notificationsRef = collection(db, 'notifications');
+              const requesterNotificationData = {
+                email: request.requesterEmail,
+                text: requesterNotificationMessage,
+                timestamp: new Date(),
+                type: 'request_declined',
+                requestId: request.id
+              };
+              const donorNotificationData = {
+                email: userEmail,
+                text: donorNotificationMessage,
+                timestamp: new Date(),
+                type: 'declined_request',
+                requestId: request.id
+              };
+              await addDoc(notificationsRef, requesterNotificationData);
+              await addDoc(notificationsRef, donorNotificationData);
+
+              Alert.alert(
+                "Request Declined",
+                "Request has been declined.",
+                [
+                  { text: "OK", onPress: () => navigation.navigate('RequestManagement') }
+                ]
+              );
+            } catch (error) {
+              console.error("Error updating request status: ", error);
+              Alert.alert("Error", "Could not decline the request at this time.");
+            }
+          },
+        },
       ]
     );
   };
