@@ -104,13 +104,16 @@ const Notification = ({ navigation }) => {
       'request_approved': 'To Deliver',
       'delivery_scheduled': 'Receiving',
       'donation_received': 'Completed',
+      'declined_request': 'Taken/Declined',
     };
   
     const typeToTabRequester = {
       'request_submitted': 'To Approve',
       'approved_request': 'To Deliver',
-      'request_delivery_scheduled': 'Receiving',
+      'request_delivery_scheduled': 'To Receive',
+      'request_delivery_confirmation': 'To Receive',
       'donation_confirmed': 'Completed',
+      'request_declined': 'Taken/Declined',
     };
   
     // Navigate to SellerOrderManagement if it's a seller-related notification

@@ -8,16 +8,21 @@ import RequesterTab from '../navbars/RequesterTab';
 
 const windowWidth = Dimensions.get('window').width;
 
-const RequestHistory = ({ navigation }) => {
+const RequestHistory = ({ navigation, route }) => {
   const [requests, setRequests] = useState([]);
   const [donations, setDonations] = useState({});
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState({});
   const auth = getAuth();
   const currentUser = auth.currentUser;
-  const [selectedTab, setSelectedTab] = useState('To Approve');
-
+  const [selectedTab, setSelectedTab] = useState(route.params?.selectedTab || 'To Approve');
   const [activeRequest, setActiveRequest] = useState(null);
+
+  useEffect(() => {
+    if (route.params?.selectedTab) {
+      setSelectedTab(route.params.selectedTab);
+    }
+  }, [route.params?.selectedTab]);
 
   const tabStatusMapping = {
     'To Approve': 'Pending',
