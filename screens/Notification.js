@@ -143,52 +143,83 @@ const Notification = ({ navigation }) => {
   };
 
   const renderNotificationItem = (notification) => {
-    let iconName;
-    let iconColor = "#05652D";
-  
-    switch (notification.type) {
-      case 'order_placed':
-      case 'new_order':
-        iconName = 'shopping-bag';
-        break;
-      case 'order_approved':
-      case 'approved_order':
-        iconName = 'check';
-        break;
-      case 'order_delivered':
-      case 'delivered_order':
-        iconName = 'truck';
-        break;
-      case 'order_received':
-      case 'receive_order':
-        iconName = 'gift';
-        break;
-      default:
-        iconName = 'bell'; // Default icon if needed
-        break;
-    }
-  
+    // Define icons and colors based on notification types
+    const iconMap = {
+        'new_order': 'shopping-cart',
+        'approved_order': 'check-circle',
+        'delivery_scheduled_order': 'calendar',
+        'receive_order': 'inbox',
+        'completed_order': 'check',
+        'declined_order': 'times-circle',
+        'order_placed': 'money',
+        'order_approved': 'truck',
+        'order_delivered': 'package',
+        'order_receive': 'truck',
+        'order_completed': 'check',
+        'order_declined': 'times-circle',
+        'donation_requested': 'heart',
+        'approved_request': 'handshake-o',
+        'delivery_scheduled': 'calendar-o',
+        'delivery_confirmation': 'check-circle',
+        'donation_received': 'heart',
+        'declined_request': 'times-circle',
+        'request_submitted': 'hand-rock-o',
+        'request_approved': 'handshake-o',
+        'request_delivery_scheduled': 'calendar-o',
+        'request_delivery_confirmation': 'check-circle',
+        'donation_confirmed': 'check',
+        'request_declined': 'times-circle',
+    };
+
+    const colorMap = {
+        'new_order': '#32CD32', 
+        'approved_order': '#32CD32', 
+        'delivery_scheduled_order': '#32CD32',
+        'receive_order': '#32CD32',
+        'completed_order': '#32CD32',
+        'declined_order': '#32CD32',
+        'order_placed': '#32CD32', 
+        'order_approved': '#32CD32', 
+        'order_delivered': '#32CD32', 
+        'order_receive': '#32CD32', 
+        'order_completed': '#32CD32', 
+        'order_declined': '#32CD32', 
+        'donation_requested': '#20B2AA', 
+        'approved_request': '#20B2AA',
+        'delivery_scheduled': '#20B2AA', 
+        'delivery_confirmation': '#20B2AA', 
+        'donation_received': '#20B2AA', 
+        'declined_request': '#20B2AA', 
+        'request_submitted': '#4682B4',
+        'request_approved': '#4682B4', 
+        'request_delivery_scheduled': '#4682B4',
+        'request_delivery_confirmation': '#4682B4', 
+        'donation_confirmed': '#4682B4', 
+        'request_declined': '#4682B4', 
+    };
+
     const notificationStyle = notification.isRead
-      ? styles.notificationItem 
-      : { ...styles.notificationItem, ...styles.unreadNotificationItem };
+        ? styles.notificationItem
+        : { ...styles.notificationItem, ...styles.unreadNotificationItem };
 
     return (
-      <TouchableOpacity
-        key={notification.id}
-        style={notificationStyle}
-        onPress={() => handlePress(notification)}
-        onLongPress={() => handleLongPress(notification.id)}
-      >
-        <Icon name={iconName} size={20} color={iconColor} style={styles.notificationIcon} />
-        <View style={styles.notificationContent}>
-          <Text style={styles.notificationText}>{notification.text}</Text>
-          <Text style={styles.notificationTimestamp}>
-            {notification.timestamp.toDate().toLocaleString()}
-          </Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity
+            key={notification.id}
+            style={notificationStyle}
+            onPress={() => handlePress(notification)}
+            onLongPress={() => handleLongPress(notification.id)}
+        >
+            <Icon name={iconMap[notification.type]} size={24} color={colorMap[notification.type]} style={styles.notificationIcon} />
+
+            <View style={styles.notificationContent}>
+                <Text style={styles.notificationText}>{notification.text}</Text>
+                <Text style={styles.notificationTimestamp}>
+                    {notification.timestamp.toDate().toLocaleString()}
+                </Text>
+            </View>
+        </TouchableOpacity>
     );
-  };
+};
 
   const renderEmptyNotification = () => (
     <View style={styles.emptyContainer}>
@@ -244,7 +275,7 @@ const styles = StyleSheet.create({
   },
   sectionContainer: {
     marginVertical: 10,
-    paddingHorizontal: 15,
+    paddingHorizontal: 10,
   },
   divider: {
     height: 1,
@@ -266,8 +297,6 @@ const styles = StyleSheet.create({
   },
   notificationIcon: {
     marginRight: 15,
-    width: 30,
-    textAlign: 'center',
   },
   notificationContent: {
     flex: 1,
@@ -286,9 +315,6 @@ const styles = StyleSheet.create({
     color: 'red',
     padding: 15,
     textAlign: 'center',
-  },
-  refreshControl: {
-    backgroundColor: '#05652D',
   },
   emptyContainer: {
     flex: 1,
