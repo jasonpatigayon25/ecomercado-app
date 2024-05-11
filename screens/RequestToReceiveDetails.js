@@ -162,33 +162,39 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
   };
 
 
-
   const confirmReceipt = async () => {
     if (!selectedImage) {
       Alert.alert('Photo Required', 'Please provide a photo of the donation received.');
       return;
     }
-
+  
     const imageUrl = await uploadImageAsync(selectedImage.uri);
     const requestDocRef = doc(db, 'requests', request.id);
-
+  
     try {
+
       await updateDoc(requestDocRef, {
         receivedPhoto: imageUrl,
         status: 'Completed',
         deliveredStatus: 'Confirmed',
         dateReceived: new Date(),
-        isTaken: true
+        isTaken: true  
       });
-
+  
+      for (const detail of request.donorDetails) {
+        const donationDocRef = doc(db, 'donation', detail.donationId);
+        await updateDoc(donationDocRef, {
+          publicationStatus: 'taken'
+        });
+      }
+  
       const auth = getAuth();
       const currentUser = auth.currentUser;
       const userEmail = currentUser ? currentUser.email : '';
 
-      // Notification messages
       const donorNotificationMessage = `Your donation has been received. Request #${request.id.toUpperCase()} is now completed.`;
       const requesterNotificationMessage = `You have confirmed receipt of the donation. Request #${request.id.toUpperCase()} is now completed.`;
-
+  
       try {
         await sendPushNotification(request.donorEmail, 'Donation Received', donorNotificationMessage);
         await sendPushNotification(userEmail, 'Donation Confirmed', requesterNotificationMessage);
@@ -196,7 +202,7 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
         console.error("Error sending notifications:", error);
         Alert.alert("Error", "Could not send notifications.");
       }
-
+  
       const notificationsRef = collection(db, 'notifications');
       const donorNotificationData = {
         email: request.donorEmail,
@@ -214,7 +220,7 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
       };
       await addDoc(notificationsRef, donorNotificationData);
       await addDoc(notificationsRef, requesterNotificationData);
-
+  
       setModalVisible(false);
       Alert.alert("Confirmation", "Receipt has been confirmed successfully.", [{
         text: "OK",
@@ -225,7 +231,6 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
       Alert.alert("Error", "Failed to update request status.");
     }
   };
-
   
   const uploadImageAsync = async (uri) => {
     const blob = await new Promise((resolve, reject) => {
@@ -291,7 +296,6 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
       },
     ]);
   };
-  
 
   const GroupHeader = ({ donorEmail }) => {
     if (!users || !users[donorEmail]) {

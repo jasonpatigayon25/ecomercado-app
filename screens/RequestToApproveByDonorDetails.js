@@ -182,7 +182,7 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
               const currentUser = auth.currentUser;
               const userEmail = currentUser ? currentUser.email : '';
 
-              const requesterNotificationMessage = `Your request #${request.id.toUpperCase()} has been request.`;
+              const requesterNotificationMessage = `Your request #${request.id.toUpperCase()} has been approved.`;
               const donorNotificationMessage = `You approved the #${request.id.toUpperCase()}. Please set for delivery`;
               try {
                 await sendPushNotification(request.buyerEmail, 'Request Approved', requesterNotificationMessage);

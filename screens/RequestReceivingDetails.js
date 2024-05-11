@@ -50,7 +50,7 @@ const RequestReceivingDetails = ({ route, navigation }) => {
       if (dateDelivered.isBefore(threeDaysAgo)) {
         Alert.alert(
           'Confirmation Reminder',
-          "Requester hasn't confirmed the receipt yet. Did you receive the payment from the buyer? Confirm to complete the order.",
+          "Requester hasn't confirmed the receipt yet. Confirm to complete the request.",
           [
             {
               text: 'No',
@@ -67,7 +67,15 @@ const RequestReceivingDetails = ({ route, navigation }) => {
                     dateReceived: new Date(),
                     isTaken: true 
                   });
-                  Alert.alert("Order Completed!");
+
+                  for (const detail of request.donorDetails) {
+                    const donationRef = doc(db, 'donation', detail.donationId);
+                    await updateDoc(donationRef, { 
+                      publicationStatus: 'taken'
+                    });
+                  }
+
+                  Alert.alert("Request Completed!");
                   navigation.navigate('RequestManagement');
                 } catch (error) {
                   console.error("Error updating request status:", error);

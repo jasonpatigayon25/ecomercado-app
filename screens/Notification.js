@@ -101,43 +101,40 @@ const Notification = ({ navigation }) => {
       
     const typeToTabDonor = {
       'donation_requested': 'To Approve',
-      'request_approved': 'To Deliver',
+      'approved_request': 'To Deliver',
       'delivery_scheduled': 'Receiving',
+      'delivery_confirmation': 'Receiving',
       'donation_received': 'Completed',
       'declined_request': 'Taken/Declined',
     };
   
     const typeToTabRequester = {
       'request_submitted': 'To Approve',
-      'approved_request': 'To Deliver',
+      'request_approved': 'To Deliver',
       'request_delivery_scheduled': 'To Receive',
       'request_delivery_confirmation': 'To Receive',
-      'donation_confirmed': 'Completed',
+      'donation_confirmed': 'Acquired',
       'request_declined': 'Taken/Declined',
     };
   
-    // Navigate to SellerOrderManagement if it's a seller-related notification
     const navigateToTabSeller = typeToTabSeller[notification.type];
     if (navigateToTabSeller) {
       navigation.navigate('SellerOrderManagement', { selectedTab: navigateToTabSeller });
       return;
     }
   
-    // Navigate to OrderHistory if it's a buyer-related notification
     const navigateToTabBuyer = typeToTabBuyer[notification.type];
     if (navigateToTabBuyer) {
       navigation.navigate('OrderHistory', { selectedTab: navigateToTabBuyer });
       return;
     }
   
-    // Navigate to RequestManagement if it's a donor-related notification
     const navigateToTabDonor = typeToTabDonor[notification.type];
     if (navigateToTabDonor) {
       navigation.navigate('RequestManagement', { selectedTab: navigateToTabDonor });
       return;
     }
   
-    // Navigate to RequestHistory if it's a requester-related notification
     const navigateToTabRequester = typeToTabRequester[notification.type];
     if (navigateToTabRequester) {
       navigation.navigate('RequestHistory', { selectedTab: navigateToTabRequester });
