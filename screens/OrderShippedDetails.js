@@ -224,7 +224,7 @@ const OrderShippedDetails = ({ route, navigation }) => {
                             const userEmail = currentUser ? currentUser.email : '';
 
                             const buyerNotificationMessage = `Your order #${order.id.toUpperCase()} has been marked as delivered. Please confirm receipt if you've received it.`
-                            const sellerNotificationMessage = `You've confirmed that order #${order.id.toUpperCase()} has been delivered. Please wait buyer's confirmation.`
+                            const sellerNotificationMessage = `You've confirmed the order #${order.id.toUpperCase()} has been delivered. Please wait buyer's confirmation.`
                             try {
                               await sendPushNotification(order.buyerEmail, 'Order Receive Confirmation', buyerNotificationMessage);
                               await sendPushNotification(userEmail, 'Order Delivered', sellerNotificationMessage);

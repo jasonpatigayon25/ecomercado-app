@@ -360,14 +360,14 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
       email: userEmail,
       text: buyerNotificationMessage,
       timestamp: new Date(),
-      type: 'completed',
+      type: 'order_completed',
       orderId: order.id
     };
     const sellerNotificationData = {
       email: order.sellerEmail,
       text: sellerNotificationMessage,
       timestamp: new Date(),
-      type: 'completed',
+      type: 'completed_order',
       orderId: order.id
     };
     await addDoc(notificationsRef, buyerNotificationData);
