@@ -10,7 +10,10 @@ import CameraIcon from 'react-native-vector-icons/MaterialIcons';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { LinearGradient } from 'expo-linear-gradient'; 
+import { LinearGradient } from 'expo-linear-gradient';  
+import { registerIndieID, unregisterIndieDevice } from 'native-notify';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const RequestToReceiveDetails = ({ route, navigation }) => {
   const { request, donations, users } = route.params;
@@ -98,43 +101,131 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
     outputRange: ['-15deg', '15deg'],
   });
 
+  useEffect(() => {
+    const auth = getAuth();
+    setUser(auth.currentUser);
+
+    registerIndieID(auth.currentUser.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
+      .then(() => console.log("Device registered for notifications"))
+      .catch(err => console.error("Error registering device:", err));
+
+    return () => {
+      unregisterIndieDevice(auth.currentUser.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
+        .then(() => console.log("Device unregistered for notifications"))
+        .catch(err => console.error("Error unregistering device:", err));
+    };
+  }, []);
+
+  const shouldSendNotification = async (email) => {
+    try {
+      const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
+      return sellingNotifications === null || JSON.parse(sellingNotifications);
+    } catch (error) {
+      console.error('Error reading notification settings:', error);
+      return true;
+    }
+  };
+
+  const sendPushNotification = async (subID, title, message) => {
+
+    if (typeof message !== 'string') {
+      console.log('Notification message is not a string:', message);
+      message = String(message);
+    }
+
+    if (!(await shouldSendNotification(subID))) {
+      console.log('Notifications are muted for:', subID);
+      return;
+    }
+
+    const notificationData = {
+      subID: subID,
+      appId: 21249,
+      appToken: 'kHrDsgwvsjqsZkDuubGBMU',
+      title,
+      message,
+    };
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
+        console.log('Push notification sent to:', subID);
+        break;
+      } catch (error) {
+        console.error(`Attempt ${attempt} - Error sending push notification:`, error);
+        if (attempt === 3) {
+          console.error('Unable to send push notification at this time.');
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  };
+
+
+
   const confirmReceipt = async () => {
     if (!selectedImage) {
       Alert.alert('Photo Required', 'Please provide a photo of the donation received.');
       return;
     }
-  
-    const imageUrl = await uploadImageAsync(selectedImage.uri);
-  
-    const requestDocRef = doc(db, 'requests', request.id);
-  
-    await updateDoc(requestDocRef, {
-      receivedPhoto: imageUrl,
-      status: 'Completed',
-      deliveredStatus: 'Confirmed',
-      dateReceived: new Date(),
-      isTaken: true
-    });
 
-    const donationUpdates = request.donorDetails.map(async (detail) => {
-      const donationDocRef = doc(db, 'donation', detail.donationId);
-      return updateDoc(donationDocRef, {
-        publicationStatus: 'taken'
+    const imageUrl = await uploadImageAsync(selectedImage.uri);
+    const requestDocRef = doc(db, 'requests', request.id);
+
+    try {
+      await updateDoc(requestDocRef, {
+        receivedPhoto: imageUrl,
+        status: 'Completed',
+        deliveredStatus: 'Confirmed',
+        dateReceived: new Date(),
+        isTaken: true
       });
-    });
-  
-    await Promise.all(donationUpdates);
-  
-    setModalVisible(false);
-    Alert.alert(
-      "Confirmation",
-      "Receipt has been confirmed successfully.",
-      [{
+
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      const userEmail = currentUser ? currentUser.email : '';
+
+      // Notification messages
+      const donorNotificationMessage = `Your donation has been received. Request #${request.id.toUpperCase()} is now completed.`;
+      const requesterNotificationMessage = `You have confirmed receipt of the donation. Request #${request.id.toUpperCase()} is now completed.`;
+
+      try {
+        await sendPushNotification(request.donorEmail, 'Donation Received', donorNotificationMessage);
+        await sendPushNotification(userEmail, 'Donation Confirmed', requesterNotificationMessage);
+      } catch (error) {
+        console.error("Error sending notifications:", error);
+        Alert.alert("Error", "Could not send notifications.");
+      }
+
+      const notificationsRef = collection(db, 'notifications');
+      const donorNotificationData = {
+        email: request.donorEmail,
+        text: donorNotificationMessage,
+        timestamp: new Date(),
+        type: 'donation_received',
+        requestId: request.id
+      };
+      const requesterNotificationData = {
+        email: userEmail,
+        text: requesterNotificationMessage,
+        timestamp: new Date(),
+        type: 'donation_confirmed',
+        requestId: request.id
+      };
+      await addDoc(notificationsRef, donorNotificationData);
+      await addDoc(notificationsRef, requesterNotificationData);
+
+      setModalVisible(false);
+      Alert.alert("Confirmation", "Receipt has been confirmed successfully.", [{
         text: "OK",
         onPress: () => navigation.navigate('RequestHistory')
-      }]
-    );
+      }]);
+    } catch (error) {
+      console.error("Error updating request status:", error);
+      Alert.alert("Error", "Failed to update request status.");
+    }
   };
+
   
   const uploadImageAsync = async (uri) => {
     const blob = await new Promise((resolve, reject) => {
@@ -200,6 +291,7 @@ const RequestToReceiveDetails = ({ route, navigation }) => {
       },
     ]);
   };
+  
 
   const GroupHeader = ({ donorEmail }) => {
     if (!users || !users[donorEmail]) {

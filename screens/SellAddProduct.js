@@ -99,12 +99,12 @@ const SellAddProduct = ({ navigation }) => {
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
-      registerIndieID(user.email, 21246, 'ARqV6berafqNBzVeBIamZR')
+      registerIndieID(user.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
         .then(() => console.log("Device registered for notifications"))
         .catch(err => console.error("Error registering device:", err));
 
       return () => {
-        unregisterIndieDevice(user.email, 21246, 'ARqV6berafqNBzVeBIamZR')
+        unregisterIndieDevice(user.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
           .then(() => console.log("Device unregistered for notifications"))
           .catch(err => console.error("Error unregistering device:", err));
       };
