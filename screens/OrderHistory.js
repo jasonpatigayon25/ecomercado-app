@@ -12,17 +12,27 @@ import OrderTab from '../navbars/OrderTab';
 
 const windowWidth = Dimensions.get('window').width;
 
-const OrderHistory = ({ navigation }) => {
+const OrderHistory = ({ navigation, route }) => {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState({});
   const [loading, setLoading] = useState(true);
   const auth = getAuth();
   const user = auth.currentUser;
-  const [selectedTab, setSelectedTab] = useState('To Pay');
   const scrollRef = useRef(); 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [activeOrder, setActiveOrder] = useState(null);
+
+  const initialTab = route.params?.selectedTab || 'To Pay';
+  const [selectedTab, setSelectedTab] = useState(initialTab);
+
+  
+  useEffect(() => {
+    if (route.params?.selectedTab) {
+        setSelectedTab(route.params.selectedTab);
+    }
+}, [route.params?.selectedTab]);
+
 
   const tabStatusMapping = {
     'To Pay': 'Pending',
