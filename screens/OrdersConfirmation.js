@@ -10,7 +10,6 @@ import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import Config from 'react-native-config';
 // import * as Permissions from 'expo-permissions';
 
 Notifications.setNotificationHandler({
@@ -72,7 +71,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
       return;
     }
 
-    const token = (await Notifications.getDevicePushTokenAsync()).data;
+    const token = (await Notifications.getExpoPushTokenAsync()).data;
     console.log('Push Notification Token:', token);
   }
 
@@ -286,28 +285,33 @@ const OrdersConfirmation = ({ route, navigation }) => {
     }
   };
   
-  const sendPushNotification = async (token, title, message) => {
+  const sendPushNotification = async (subID, title, message) => {
+    if (!(await shouldSendNotification(subID))) {
+      console.log('Notifications are muted for:', subID);
+      return;
+    }
+
     const notificationData = {
-      to: token, 
-      notification: {
-        title: "ECOMercado",
-        body: message
-      },
-      data: {
-        screen: 'OrderHistory' 
-      }
+      subID: subID,
+      appId: 21249,
+      appToken: 'kHrDsgwvsjqsZkDuubGBMU',
+      title: 'ECOMercado',
+      message: message,
+      data: { screen: 'OrderHistory' } 
     };
   
-    try {
-      const response = await axios.post('https://fcm.googleapis.com/fcm/send', notificationData, {
-        headers: {
-          'Authorization': `key=${Config.FIREBASE_SERVER_KEY}`,
-          'Content-Type': 'application/json'
+    for (let attempt = 1; attempt <= 3; attempt++) { 
+      try {
+        await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
+        console.log('Push notification sent to:', subID);
+        break; 
+      } catch (error) {
+        console.error(`Attempt ${attempt} - Error sending push notification:`, error);
+        if (attempt === 3) {
+          console.error('Unable to send push notification at this time.'); 
         }
-      });
-      console.log('Push notification sent:', response.data);
-    } catch (error) {
-      console.error('Error sending push notification:', error);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
     }
   };
 

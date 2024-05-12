@@ -1,44 +1,26 @@
 {
   "project_info": {
-    "project_number": "828207316801",
-    "project_id": "ecomercado-app-project",
-    "storage_bucket": "ecomercado-app-project.appspot.com"
+    "project_number": "701447751931",
+    "project_id": "ecomercado-app-99021",
+    "storage_bucket": "ecomercado-app-99021.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:828207316801:android:1a0ce2b630a89083d6ebc0",
+        "mobilesdk_app_id": "1:701447751931:android:30173e7ab3579d82a3c85e",
         "android_client_info": {
-          "package_name": "com.ucbanilad.ecomercado"
+          "package_name": "com.uc.ecomercado"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "828207316801-g9qf46pfs8qt3cen8j73d0ne5m5bovoh.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.ucbanilad.ecomercado",
-            "certificate_hash": "fcdd8fbef1a4981e596c8b3a863f09de590cf887"
-          }
-        },
-        {
-          "client_id": "828207316801-rjoujhr3qdsvbkm3j3hcs6v8ki9t48ve.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCl_yW3LhCdzAkT7kqWl5eWvbqv3b56WjE"
+          "current_key": "AIzaSyBsSoRb_ssiPsxcOnFu322vhU6qoNeFujE"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "828207316801-rjoujhr3qdsvbkm3j3hcs6v8ki9t48ve.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
