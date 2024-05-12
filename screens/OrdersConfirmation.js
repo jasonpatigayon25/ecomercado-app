@@ -71,7 +71,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
       return;
     }
 
-    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    const token = (await Notifications.getDevicePushTokenAsync()).data;
     console.log('Push Notification Token:', token);
   }
 
@@ -292,7 +292,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
     }
 
     const notificationData = {
-      subID: subID,
+      to: subID,
       appId: 21249,
       appToken: 'kHrDsgwvsjqsZkDuubGBMU',
       title: 'ECOMercado',
@@ -300,19 +300,17 @@ const OrdersConfirmation = ({ route, navigation }) => {
       data: { screen: 'OrderHistory' } 
     };
   
-    for (let attempt = 1; attempt <= 3; attempt++) { 
-      try {
-        await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
-        console.log('Push notification sent to:', subID);
-        break; 
-      } catch (error) {
-        console.error(`Attempt ${attempt} - Error sending push notification:`, error);
-        if (attempt === 3) {
-          console.error('Unable to send push notification at this time.'); 
-        }
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    }
+    try {
+      const response = await axios.post('https://fcm.googleapis.com/fcm/send', notificationData, {
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'AAAAo1GLSPs:APA91bFe9NfclPcvEo_U_96zmoASd0wAQsrgbXTaOfcFlB56SQMuE41TVGfKWvQjDzcMU-gYaEtpJWCF0Op6rn-HIJoVhIU8KwM7RbeYiTdGMhNkpe7FzLvjPOTZShQVtd3VMr8U2fqi' 
+          }
+      });
+      console.log('Push notification sent:', response.data);
+  } catch (error) {
+      console.error('Error sending push notification:', error);
+  }
   };
 
   return (
