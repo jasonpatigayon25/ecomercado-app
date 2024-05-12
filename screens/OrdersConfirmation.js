@@ -164,6 +164,9 @@ const OrdersConfirmation = ({ route, navigation }) => {
       return;
     }
 
+    // Adding a query parameter to the API endpoint
+    const endpoint = 'https://exp.host/--/api/v2/push/send?useFcmV1=true';
+
     const notificationData = {
       to: expoPushToken,
       sound: "default",
@@ -172,20 +175,22 @@ const OrdersConfirmation = ({ route, navigation }) => {
       data: { screen: 'OrderHistory' }
     };
 
-    await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Accept-Encoding': 'gzip, deflate',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(notificationData),
-    }).then(response => {
-      console.log('Push notification sent:', response);
-    }).catch(error => {
-      console.error('Error sending push notification:', error);
-    });
-  }
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notificationData),
+      });
+      const responseData = await response.json();
+      console.log('Push notification sent with FCM V1:', responseData);
+    } catch (error) {
+      console.error('Error sending push notification with FCM V1:', error);
+    }
+}
   
   const incrementUserRecommendHit = async (productId) => {
     const auth = getAuth();
