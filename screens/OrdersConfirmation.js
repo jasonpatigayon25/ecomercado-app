@@ -10,6 +10,7 @@ import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import Config from 'react-native-config';
 // import * as Permissions from 'expo-permissions';
 
 Notifications.setNotificationHandler({
@@ -304,7 +305,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
       const response = await axios.post('https://fcm.googleapis.com/fcm/send', notificationData, {
           headers: {
               'Content-Type': 'application/json',
-              'Authorization': 'AAAAo1GLSPs:APA91bFe9NfclPcvEo_U_96zmoASd0wAQsrgbXTaOfcFlB56SQMuE41TVGfKWvQjDzcMU-gYaEtpJWCF0Op6rn-HIJoVhIU8KwM7RbeYiTdGMhNkpe7FzLvjPOTZShQVtd3VMr8U2fqi' 
+              'Authorization': `key=${Config.FIREBASE_SERVER_KEY}`
           }
       });
       console.log('Push notification sent:', response.data);
