@@ -41,7 +41,6 @@ const OrdersConfirmation = ({ route, navigation }) => {
   };
 
   useEffect(() => {
-
     const notificationListener = Notifications.addNotificationReceivedListener(notification => {
       console.log('Notification received:', notification);
     });
@@ -125,36 +124,48 @@ const OrdersConfirmation = ({ route, navigation }) => {
   }, []);
 
   async function registerForPushNotificationsAsync() {
+    if (!Device.isDevice) {
+      alert('Must use physical device for Push Notifications');
+      return;
+    }
+    
     let token;
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') {
+      alert('Failed to get push token for push notification!');
+      return;
+    }
+
+    token = (await Notifications.getExpoPushTokenAsync()).data;
+    console.log('Expo Push Token:', token);
+    
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
+      Notifications.setNotificationChannelAsync('default', {
         name: 'default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#FF231F7C',
       });
     }
-    if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== 'granted') {
-        alert('Failed to get push token for push notification!');
-        return;
-      }
-      token = (await Notifications.getExpoPushTokenAsync()).data;
-    } else {
-      alert('Must use physical device for Push Notifications');
-    }
+
     return token;
   }
 
   async function sendPushNotification(email, title, message) {
+    if (!expoPushToken) {
+      console.log('No Expo Push Token found, cannot send notification.');
+      return;
+    }
+
     const notificationData = {
-      to: expoPushToken,  
+      to: expoPushToken,
       sound: "default",
       title: title,
       body: message,
@@ -169,6 +180,10 @@ const OrdersConfirmation = ({ route, navigation }) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(notificationData),
+    }).then(response => {
+      console.log('Push notification sent:', response);
+    }).catch(error => {
+      console.error('Error sending push notification:', error);
     });
   }
   
