@@ -367,11 +367,11 @@ const SellerOrderManagement = ({ navigation, route  }) => {
                             {selectedTab === 'To Deliver' && (
                                 <>
                                     <Text style={styles.hintText}>
-                                        Tap button if items are ready to deliver.
+                                        Tap button to check details.
                                     </Text>
                                     <TouchableOpacity
                                         style={styles.shipButton}
-                                        onPress={() => approveToShipOrder(order.id)}
+                                        onPress={() => navigation.navigate('OrderToShipBySellerDetails', { order, products })}
                                     >
                                         <Text style={styles.shipButtonText}>Ready to Deliver</Text>
                                     </TouchableOpacity>
