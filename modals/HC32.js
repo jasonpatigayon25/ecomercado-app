@@ -24,8 +24,7 @@ const HC32 = ({ visible, onClose }) => {
                   "Enter the product information and details you wish to sell.",
                   "Review your product information and confirm if everything is correct.",
                   "Upon confirmation, your product will be listed for potential buyers.",
-                  "You can view and manage your listed products under 'Seller Management' in the 'My Transactions' section of your Account.",
-                  "You will receive notifications through 'Notification Settings' and updates in 'Seller Management' when there are interested customers."
+                  "You can view and manage your listed products under 'Seller Management' in the 'Orders Management' section of your Account.",
                 ].map((item, index) => (
                   <View key={index} style={styles.listItem}>
                     <Text style={styles.listNumber}>{index + 1}.</Text>

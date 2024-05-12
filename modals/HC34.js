@@ -22,9 +22,7 @@ const HC34 = ({ visible, onClose }) => {
                 {[
                   "Tap the 'Chatbox' icon on the main screen to access your messages.",
                   "Inside the Chatbox, you will find your message threads in 'Contacts'.",
-                  "You can also view any calls made through the app in the 'Calls' tab.",
-                  "To start a new conversation, use the search function to find a seller or select a seller from your existing contacts.",
-                  "Once you've selected a seller, you can begin chatting immediately by typing your message and hitting send."
+                  "Once you've selected a user, you can begin chatting immediately by typing your message and hitting send."
                 ].map((item, index) => (
                   <View key={index} style={styles.listItem}>
                     <Text style={styles.listNumber}>{index + 1}.</Text>

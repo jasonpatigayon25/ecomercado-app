@@ -24,8 +24,7 @@ const HC33 = ({ visible, onClose }) => {
                   "Enter the donation information and details you wish to donate.",
                   "Review the information and confirm if everything is correct.",
                   "Upon confirmation, your donation will be listed.",
-                  "You can view and manage your listed donations under 'Donation Management' in the 'My Transactions' section of your Account.",
-                  "You will receive notifications through 'Notification' and updates in 'Seller Management' when there are interested charity or receivers."
+                  "You can view and manage your listed donations under 'Donation Management' in the 'Donor Management' section of your Account.",
                 ].map((item, index) => (
                   <View key={index} style={styles.listItem}>
                     <Text style={styles.listNumber}>{index + 1}.</Text>

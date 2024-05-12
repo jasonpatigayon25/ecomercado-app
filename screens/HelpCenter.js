@@ -172,7 +172,7 @@ const HelpCenter = ({ navigation }) => {
               <Text style={styles.helpListItemText}>How to donate</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.helpListItem} onPress={() => setHC34Visible(true)}>
-              <Text style={styles.helpListItemText}>How to chat with a seller</Text>
+              <Text style={styles.helpListItemText}>How to chat</Text>
             </TouchableOpacity>
           </View>
         </View>
