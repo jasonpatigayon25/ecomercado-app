@@ -286,32 +286,29 @@ const OrdersConfirmation = ({ route, navigation }) => {
     }
   };
   
-  const sendPushNotification = async (subID, title, message) => {
-    if (!(await shouldSendNotification(subID))) {
-      console.log('Notifications are muted for:', subID);
-      return;
-    }
-
+  const sendPushNotification = async (token, title, message) => {
     const notificationData = {
-      to: subID,
-      appId: 21249,
-      appToken: 'kHrDsgwvsjqsZkDuubGBMU',
-      title: 'ECOMercado',
-      message: message,
-      data: { screen: 'OrderHistory' } 
+      to: token, 
+      notification: {
+        title: "ECOMercado",
+        body: message
+      },
+      data: {
+        screen: 'OrderHistory' 
+      }
     };
   
     try {
       const response = await axios.post('https://fcm.googleapis.com/fcm/send', notificationData, {
-          headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `key=${Config.FIREBASE_SERVER_KEY}`
-          }
+        headers: {
+          'Authorization': `key=${Config.FIREBASE_SERVER_KEY}`,
+          'Content-Type': 'application/json'
+        }
       });
       console.log('Push notification sent:', response.data);
-  } catch (error) {
+    } catch (error) {
       console.error('Error sending push notification:', error);
-  }
+    }
   };
 
   return (
