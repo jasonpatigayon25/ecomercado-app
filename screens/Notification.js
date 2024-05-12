@@ -176,7 +176,7 @@ const Notification = ({ navigation }) => {
 
     const iconMap = {
         'new_order': 'shopping-cart',
-        'approved_order': 'thumbs-up-o',
+        'approved_order': 'thumbs-up',
         'delivery_scheduled_order': 'calendar',
         'receive_order': 'inbox',
         'completed_order': 'flag',
