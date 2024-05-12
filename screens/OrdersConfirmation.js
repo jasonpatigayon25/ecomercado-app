@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert, Platform } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { collection, addDoc, doc, updateDoc, getDoc, runTransaction, writeBatch, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase';
-import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import Config from 'react-native-config';
-// import * as Permissions from 'expo-permissions';
+import * as Device from 'expo-device'; 
+
+
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -98,18 +99,79 @@ const OrdersConfirmation = ({ route, navigation }) => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
 
+  const [expoPushToken, setExpoPushToken] = useState("");
+
   useEffect(() => {
-    registerIndieID(user.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
-      .then(() => console.log("Device registered for notifications"))
-      .catch(err => console.error("Error registering device:", err));
+    registerForPushNotificationsAsync().then(token => {
+      console.log('Push notification token:', token);
+      setExpoPushToken(token);
+    });
+
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
+    });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification response received:', response);
+      if (response.notification.request.content.data.screen === 'OrderHistory') {
+        navigation.navigate('OrderHistory');
+      }
+    });
 
     return () => {
-      unregisterIndieDevice(user.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
-        .then(() => console.log("Device unregistered for notifications"))
-        .catch(err => console.error("Error unregistering device:", err));
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
     };
-  }, [user.email]);
+  }, []);
 
+  async function registerForPushNotificationsAsync() {
+    let token;
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+    if (Device.isDevice) {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        alert('Failed to get push token for push notification!');
+        return;
+      }
+      token = (await Notifications.getExpoPushTokenAsync()).data;
+    } else {
+      alert('Must use physical device for Push Notifications');
+    }
+    return token;
+  }
+
+  async function sendPushNotification(email, title, message) {
+    const notificationData = {
+      to: expoPushToken,  // Ensure this is the correct token to use
+      sound: "default",
+      title: title,
+      body: message,
+      data: { screen: 'OrderHistory' }
+    };
+
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-Encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(notificationData),
+    });
+  }
+  
   const incrementUserRecommendHit = async (productId) => {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -276,40 +338,40 @@ const OrdersConfirmation = ({ route, navigation }) => {
     }
 };
 
-  const shouldSendNotification = async (email) => {
-    try {
-      const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
-      return sellingNotifications === null || JSON.parse(sellingNotifications);
-    } catch (error) {
-      console.error('Error reading notification settings:', error);
-      return true;
-    }
-  };
+  // const shouldSendNotification = async (email) => {
+  //   try {
+  //     const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
+  //     return sellingNotifications === null || JSON.parse(sellingNotifications);
+  //   } catch (error) {
+  //     console.error('Error reading notification settings:', error);
+  //     return true;
+  //   }
+  // };
   
-  const sendPushNotification = async (token, title, message) => {
-    const notificationData = {
-      to: token, 
-      notification: {
-        title: "ECOMercado",
-        body: message
-      },
-      data: {
-        screen: 'OrderHistory' 
-      }
-    };
+  // const sendPushNotification = async (token, title, message) => {
+  //   const notificationData = {
+  //     to: token, 
+  //     notification: {
+  //       title: "ECOMercado",
+  //       body: message
+  //     },
+  //     data: {
+  //       screen: 'OrderHistory' 
+  //     }
+  //   };
   
-    try {
-      const response = await axios.post('https://fcm.googleapis.com/fcm/send', notificationData, {
-        headers: {
-          'Authorization': `key=${Config.FIREBASE_SERVER_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      console.log('Push notification sent:', response.data);
-    } catch (error) {
-      console.error('Error sending push notification:', error);
-    }
-  };
+  //   try {
+  //     const response = await axios.post('https://fcm.googleapis.com/fcm/send', notificationData, {
+  //       headers: {
+  //         'Authorization': `key=${Config.FIREBASE_SERVER_KEY}`,
+  //         'Content-Type': 'application/json'
+  //       }
+  //     });
+  //     console.log('Push notification sent:', response.data);
+  //   } catch (error) {
+  //     console.error('Error sending push notification:', error);
+  //   }
+  // };
 
   return (
     <View style={styles.container}>
