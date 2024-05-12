@@ -154,7 +154,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
 
   async function sendPushNotification(email, title, message) {
     const notificationData = {
-      to: expoPushToken,  // Ensure this is the correct token to use
+      to: expoPushToken,  
       sound: "default",
       title: title,
       body: message,

@@ -24,6 +24,7 @@
     },
     "android": {
       "package": "com.uc.ecomercado",
+      "useNextNotificationsApi": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/ecomercado-icon.png",
         "backgroundColor": "#ffffff"
