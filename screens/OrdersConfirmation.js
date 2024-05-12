@@ -10,7 +10,7 @@ import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import { FCM_SERVER_KEY } from '@env';
+import Config from 'react-native-config';
 // import * as Permissions from 'expo-permissions';
 
 Notifications.setNotificationHandler({
@@ -64,22 +64,17 @@ const OrdersConfirmation = ({ route, navigation }) => {
     requestNotificationPermissions();
   }, []);
   
-  useEffect(() => {
-    requestNotificationPermissions();
-}, []);
-
-async function requestNotificationPermissions() {
+  async function requestNotificationPermissions() {
     const { status } = await Notifications.requestPermissionsAsync();
-
+    
     if (status !== 'granted') {
-        alert('Failed to obtain push notifications permissions!');
-        return;
+      alert('Failed to obtain push notifications permissions!');
+      return;
     }
 
-    const tokenData = await Notifications.getDevicePushTokenAsync();
-    const token = tokenData.data;  
+    const token = (await Notifications.getDevicePushTokenAsync()).data;
     console.log('Push Notification Token:', token);
-}
+  }
 
   const renderProductItem = ({ item }) => {
     return (
@@ -292,23 +287,29 @@ async function requestNotificationPermissions() {
   };
   
   const sendPushNotification = async (token, title, message) => {
-    const messageBody = {
-        to: token,
-        notification: {
-            title: title,
-            body: message,
-            data: { screen: 'OrderHistory' },  
-        },
-        priority: 'high'
+    const notificationData = {
+      to: token, 
+      notification: {
+        title: "ECOMercado",
+        body: message
+      },
+      data: {
+        screen: 'OrderHistory' 
+      }
     };
-
-    await axios.post('https://fcm.googleapis.com/fcm/send', messageBody, {
+  
+    try {
+      const response = await axios.post('https://fcm.googleapis.com/fcm/send', notificationData, {
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `key=${FCM_SERVER_KEY}` 
+          'Authorization': `key=${Config.FIREBASE_SERVER_KEY}`,
+          'Content-Type': 'application/json'
         }
-    });
-}
+      });
+      console.log('Push notification sent:', response.data);
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
