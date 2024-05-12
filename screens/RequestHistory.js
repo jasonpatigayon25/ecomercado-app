@@ -20,8 +20,6 @@ const RequestHistory = ({ navigation, route }) => {
 
   const scrollRef = useRef(); 
 
-
-
   useEffect(() => {
     if (route.params?.selectedTab) {
       setSelectedTab(route.params.selectedTab);

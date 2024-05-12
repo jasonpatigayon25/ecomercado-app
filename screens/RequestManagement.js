@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
@@ -16,6 +16,8 @@ const RequestManagement = ({ navigation, route }) => {
   const auth = getAuth();
   const currentUser = auth.currentUser;
   const [selectedTab, setSelectedTab] = useState('To Approve');
+
+  const scrollRef = useRef(); 
 
   useEffect(() => {
     if (route.params?.selectedTab) {
@@ -63,7 +65,20 @@ const RequestManagement = ({ navigation, route }) => {
     );
 };
 
-useEffect(() => {
+const handleScroll = (event) => {
+  const scrollX = event.nativeEvent.contentOffset.x;
+  const tabIndex = Math.floor(scrollX / windowWidth);
+  const tabNames = Object.keys(tabStatusMapping);
+  const newSelectedTab = tabNames[tabIndex];
+
+  if (newSelectedTab !== selectedTab) {
+      setSelectedTab(newSelectedTab);
+      setLoading(true);
+      fetchRequests(newSelectedTab);
+  }
+};
+
+
   const fetchRequests = async () => {
     setLoading(true);
     try {
@@ -107,6 +122,7 @@ useEffect(() => {
     }
   };
 
+useEffect(() => {
   if (currentUser && currentUser.email) {
     fetchRequests();
   }
@@ -380,17 +396,30 @@ useEffect(() => {
         <Text style={styles.title}>Donation Requests Management</Text>
       </View>
       <DonorTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" style={styles.loadingIndicator} />
-      ) : (
-        <FlatList
-          data={requests}
-          renderItem={renderRequestItem}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={() => renderEmptyListComponent(selectedTab)}
-          style={styles.list}
-        />
-      )}
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        ref={scrollRef}
+        style={styles.scrollView}
+        >
+          {Object.keys(tabStatusMapping).map((tab, index) => (
+            <View key={index} style={{ width: windowWidth }}>
+              {loading ? (
+                <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />
+              ) : (
+              <FlatList
+                data={requests}
+                renderItem={renderRequestItem}
+                keyExtractor={(item) => item.id}
+                ListEmptyComponent={() => renderEmptyListComponent(selectedTab)}
+                style={styles.list}
+              />
+            )}
+            </View>
+        ))}
+      </ScrollView>
     </View>
   );
 };
