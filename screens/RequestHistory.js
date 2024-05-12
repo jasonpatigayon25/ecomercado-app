@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth } from 'firebase/auth';
@@ -17,6 +17,10 @@ const RequestHistory = ({ navigation, route }) => {
   const currentUser = auth.currentUser;
   const [selectedTab, setSelectedTab] = useState(route.params?.selectedTab || 'To Approve');
   const [activeRequest, setActiveRequest] = useState(null);
+
+  const scrollRef = useRef(); 
+
+
 
   useEffect(() => {
     if (route.params?.selectedTab) {
@@ -124,8 +128,19 @@ const handleChatWithDonor = async (request) => {
   }
 };
 
+  const handleScroll = (event) => {
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const tabIndex = Math.floor(scrollX / windowWidth);
+    const tabNames = Object.keys(tabStatusMapping);
+    const newSelectedTab = tabNames[tabIndex];
 
-  useEffect(() => {
+    if (newSelectedTab !== selectedTab) {
+        setSelectedTab(newSelectedTab);
+        setLoading(true);
+        fetchRequests(newSelectedTab);
+    }
+  };
+
     const fetchRequests = async () => {
       setLoading(true);
       const q = query(collection(db, "requests"), where("requesterEmail", "==", currentUser.email), 
@@ -145,6 +160,7 @@ const handleChatWithDonor = async (request) => {
       setLoading(false);
     };
 
+    useEffect(() => {
     fetchRequests();
   }, [selectedTab]);
 
@@ -385,17 +401,30 @@ const handleChatWithDonor = async (request) => {
         <Text style={styles.title}>Request Transactions</Text>
       </View>
       <RequesterTab selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" style={styles.loadingIndicator} />
-      ) : (
-        <FlatList
-          data={requests}
-          renderItem={renderRequestItem}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={() => renderEmptyListComponent(selectedTab)}
-          style={styles.list}
-        />
-      )}
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        ref={scrollRef}
+        style={styles.scrollView}
+        >
+          {Object.keys(tabStatusMapping).map((tab, index) => (
+            <View key={index} style={{ width: windowWidth }}>
+              {loading ? (
+                <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />
+              ) : (
+              <FlatList
+                data={requests}
+                renderItem={renderRequestItem}
+                keyExtractor={(item) => item.id}
+                ListEmptyComponent={() => renderEmptyListComponent(selectedTab)}
+                style={styles.list}
+              />
+            )}
+            </View>
+        ))}
+      </ScrollView>
     </View>
   );
 };
