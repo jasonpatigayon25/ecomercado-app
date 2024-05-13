@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import Config from 'react-native-config';
 import * as Device from 'expo-device'; 
-
+import Constants from 'expo-constants';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -87,71 +87,52 @@ const OrdersConfirmation = ({ route, navigation }) => {
   }, []);
 
   async function registerForPushNotificationsAsync() {
-    let token;
-  
-    if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "default",
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#FF231F7C",
+        lightColor: '#FF231F7C',
       });
     }
   
     if (Device.isDevice) {
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-      if (existingStatus !== "granted") {
+      if (existingStatus !== 'granted') {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-      if (finalStatus !== "granted") {
-        alert("Failed to get push token for push notification!");
+      if (finalStatus !== 'granted') {
+        alert('Permission not granted to receive push notifications!');
         return;
       }
-      token = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId: "c1e91669-b14e-456e-a024-504bad3dc062",
-        })
-      ).data;
+      const token = (await Notifications.getExpoPushTokenAsync()).data;
       console.log(token);
+      return token;
     } else {
-      alert("Must use physical device for Push Notifications");
+      alert('Must use physical device for push notifications');
     }
-  
-    return token;
   }
 
-  async function sendPushNotification(email, title, message) {
-    if (!expoPushToken) {
-      console.log('No Expo Push Token found, cannot send notification.');
-      return;
-    }
-
-    const notificationData = {
+  async function sendPushNotification(expoPushToken, title, body) {
+    const message = {
       to: expoPushToken,
-      sound: "default",
+      sound: 'default',
       title: title,
-      body: message,
-      data: { screen: 'OrderHistory' }
+      body: body,
+      data: { someData: 'goes here' },
     };
-
-    try {
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Accept-Encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(notificationData),
-      });
-      const responseData = await response.json();
-      console.log('Push notification sent:', responseData);
-    } catch (error) {
-      console.error('Error sending push notification:', error);
-    }
+  
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-Encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    });
   }
 
   
