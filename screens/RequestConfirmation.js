@@ -6,7 +6,6 @@ import { getAuth } from 'firebase/auth';
 import { db } from '../config/firebase'
 import axios from 'axios';
 import * as Notifications from 'expo-notifications';
-import Config from 'react-native-config';
 import * as Device from 'expo-device'; 
 
 Notifications.setNotificationHandler({

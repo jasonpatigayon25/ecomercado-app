@@ -246,8 +246,8 @@ const cancelOrder = async () => {
             const buyerNotificationMessage = `Your order #${order.id.toUpperCase()} has been declined.`;
             const sellerNotificationMessage = `You declined order #${order.id.toUpperCase()}.`;
             try {
-              await sendPushNotification(order.buyerEmail, 'Order Declined', buyerNotificationMessage);
-              await sendPushNotification(userEmail, 'Order Declined', sellerNotificationMessage);
+              await sendPushNotification(order.buyerEmail, 'Order Declined', buyerNotificationMessage, 'OrderHistory');
+              await sendPushNotification(userEmail, 'Order Declined', sellerNotificationMessage, 'OrderSellerManagement');
             } catch (error) {
               console.error("Error sending notifications:", error);
               Alert.alert("Error", "Could not send notifications.");
