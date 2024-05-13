@@ -164,7 +164,6 @@ const OrdersConfirmation = ({ route, navigation }) => {
       return;
     }
 
-    // Adding a query parameter to the API endpoint
     const endpoint = 'https://exp.host/--/api/v2/push/send?useFcmV1=true';
 
     const notificationData = {
