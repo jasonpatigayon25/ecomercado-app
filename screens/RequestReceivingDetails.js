@@ -19,6 +19,7 @@ const RequestReceivingDetails = ({ route, navigation }) => {
   const { request, donations, users, requesterEmail } = route.params;
   const [requestStatus, setRequestStatus] = useState(request.status);
   const [deliveredStatus, setDeliveredStatus] = useState(request.deliveredStatus);
+  
   const [expoPushToken, setExpoPushToken] = useState("");
 
   useEffect(() => {
@@ -33,8 +34,8 @@ const RequestReceivingDetails = ({ route, navigation }) => {
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
       console.log('Notification response received:', response);
-      if (response.notification.request.content.data.screen === 'OrderHistory') {
-        navigation.navigate('OrderHistory');
+      if (response.notification.request.content.data.screen === 'RequestManagement') {
+        navigation.navigate('RequestManagement');
       }
     });
 
@@ -57,8 +58,7 @@ const RequestReceivingDetails = ({ route, navigation }) => {
     }
   
     if (Device.isDevice) {
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
@@ -68,11 +68,9 @@ const RequestReceivingDetails = ({ route, navigation }) => {
         alert("Failed to get push token for push notification!");
         return;
       }
-      token = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId: "c1e91669-b14e-456e-a024-504bad3dc062",
-        })
-      ).data;
+      token = (await Notifications.getExpoPushTokenAsync({
+        projectId: "c1e91669-b14e-456e-a024-504bad3dc062",
+      })).data;
       console.log(token);
     } else {
       alert("Must use physical device for Push Notifications");
