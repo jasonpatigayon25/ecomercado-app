@@ -40,42 +40,6 @@ const OrdersConfirmation = ({ route, navigation }) => {
     navigation.goBack();
   };
 
-  useEffect(() => {
-    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification received:', notification);
-    });
-
-    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      const screen = response.notification.request.content.data.screen;
-  
-      if (screen === 'OrderHistory') {
-        navigation.navigate('OrderHistory');
-      }
-      console.log('Notification response received:', response);
-    });
-  
-    return () => {
-      Notifications.removeNotificationSubscription(notificationListener);
-      Notifications.removeNotificationSubscription(responseListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    requestNotificationPermissions();
-  }, []);
-  
-  async function requestNotificationPermissions() {
-    const { status } = await Notifications.requestPermissionsAsync();
-    
-    if (status !== 'granted') {
-      alert('Failed to obtain push notifications permissions!');
-      return;
-    }
-
-    const token = (await Notifications.getDevicePushTokenAsync()).data;
-    console.log('Push Notification Token:', token);
-  }
-
   const renderProductItem = ({ item }) => {
     return (
       <View style={styles.productInfoContainer}>
@@ -164,6 +128,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
       return;
     }
 
+    // Adding a query parameter to the API endpoint
     const endpoint = 'https://exp.host/--/api/v2/push/send?useFcmV1=true';
 
     const notificationData = {
