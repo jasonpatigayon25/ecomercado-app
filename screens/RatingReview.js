@@ -55,7 +55,7 @@ const RatingReview = ({ route, navigation }) => {
         {item.photoUrl ? (
           <Image source={{ uri: item.photoUrl }} style={styles.userIcon} />
         ) : (
-          <Icon name="user-circle" size={24} color="#CCCCCC" style={styles.userIcon} />
+          <Icon name="user-circle" size={40} color="#CCCCCC" style={styles.userIcon} />
         )}
         <View style={styles.reviewHeaderDetails}>
           <Text style={styles.fullName}>{item.fullName}</Text>

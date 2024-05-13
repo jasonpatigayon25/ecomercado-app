@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated, Alert, Modal, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
 import { getDocs, query, collection, where, doc, updateDoc, addDoc, getDoc } from 'firebase/firestore';
@@ -9,65 +9,115 @@ import { getAuth } from 'firebase/auth';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
+import Config from 'react-native-config';
+import * as Device from 'expo-device'; 
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 const OrderToApproveDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
 
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const auth = getAuth();
-    setUser(auth.currentUser);
+  const [expoPushToken, setExpoPushToken] = useState("");
 
-    registerIndieID(auth.currentUser.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
-      .then(() => console.log("Device registered for notifications"))
-      .catch(err => console.error("Error registering device:", err));
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(token => {
+      console.log('Push notification token:', token);
+      setExpoPushToken(token);
+    });
+
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
+    });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification response received:', response);
+      if (response.notification.request.content.data.screen === 'OrderHistory') {
+        navigation.navigate('OrderHistory');
+      }
+    });
 
     return () => {
-      unregisterIndieDevice(auth.currentUser.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
-        .then(() => console.log("Device unregistered for notifications"))
-        .catch(err => console.error("Error unregistering device:", err));
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
     };
   }, []);
 
-  const shouldSendNotification = async (email) => {
-    try {
-      const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
-      return sellingNotifications === null || JSON.parse(sellingNotifications);
-    } catch (error) {
-      console.error('Error reading notification settings:', error);
-      return true;
+  async function registerForPushNotificationsAsync() {
+    let token;
+  
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#FF231F7C",
+      });
     }
-  };
+  
+    if (Device.isDevice) {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") {
+        alert("Failed to get push token for push notification!");
+        return;
+      }
+      token = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId: "c1e91669-b14e-456e-a024-504bad3dc062",
+        })
+      ).data;
+      console.log(token);
+    } else {
+      alert("Must use physical device for Push Notifications");
+    }
+  
+    return token;
+  }
 
-  const sendPushNotification = async (subID, title, message) => {
-    if (!(await shouldSendNotification(subID))) {
-      console.log('Notifications are muted for:', subID);
+  async function sendPushNotification(email, title, message, screen) {
+    if (!expoPushToken) {
+      console.log('No Expo Push Token found, cannot send notification.');
       return;
     }
-
+  
     const notificationData = {
-      subID: subID,
-      appId: 21249,
-      appToken: 'kHrDsgwvsjqsZkDuubGBMU',
-      title: 'ECOMercado',
-      message: message
+      to: expoPushToken,
+      sound: "default",
+      title: title,
+      body: message,
+      data: { screen: screen }
     };
   
-    for (let attempt = 1; attempt <= 3; attempt++) { 
-      try {
-        await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
-        console.log('Push notification sent to:', subID);
-        break; 
-      } catch (error) {
-        console.error(`Attempt ${attempt} - Error sending push notification:`, error);
-        if (attempt === 3) {
-          console.error('Unable to send push notification at this time.'); 
-        }
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+    try {
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notificationData),
+      });
+      const responseData = await response.json();
+      console.log('Push notification sent:', responseData);
+    } catch (error) {
+      console.error('Error sending push notification:', error);
     }
-  };
+  }
 
 
   const approveOrder = async () => {
@@ -95,7 +145,7 @@ const OrderToApproveDetails = ({ route, navigation }) => {
               const buyerNotificationMessage = `Your order #${order.id.toUpperCase()} has been approved.`;
               const sellerNotificationMessage = `You approved the #${order.id.toUpperCase()}. Please set for delivery`;
               try {
-                await sendPushNotification(order.buyerEmail, 'Order Approved', buyerNotificationMessage);
+                await sendPushNotification(order.buyerEmail, 'Order Approved', buyerNotificationMessage, 'OrderHistory');
                 await sendPushNotification(userEmail, 'Order Approved', sellerNotificationMessage);
               } catch (error) {
                 console.error("Error sending notifications:", error);
@@ -157,8 +207,8 @@ const OrderToApproveDetails = ({ route, navigation }) => {
               const buyerNotificationMessage = `Your order #${order.id.toUpperCase()} has been declined.`;
               const sellerNotificationMessage = `You declined order #${order.id.toUpperCase()}.`;
               try {
-                await sendPushNotification(order.buyerEmail, 'Order Declined', buyerNotificationMessage);
-                await sendPushNotification(userEmail, 'Order Declined', sellerNotificationMessage);
+                await sendPushNotification(order.buyerEmail, 'Order Declined', buyerNotificationMessage, 'OrderHistory');
+                await sendPushNotification(userEmail, 'Order Declined', sellerNotificationMessage, 'SellerOrderManagement');
               } catch (error) {
                 console.error("Error sending notifications:", error);
                 Alert.alert("Error", "Could not send notifications.");
