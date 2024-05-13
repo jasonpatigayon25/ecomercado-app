@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert, Platform, Button } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -61,98 +61,30 @@ const OrdersConfirmation = ({ route, navigation }) => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
 
+  const notificationListener = useRef();
+  const responseListener = useRef();
+
   const [expoPushToken, setExpoPushToken] = useState("");
 
   useEffect(() => {
     registerForPushNotificationsAsync().then(token => {
-      console.log('Push notification token:', token);
-      setExpoPushToken(token);
+      if (token) setExpoPushToken(token);
     });
 
-    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      setNotification(notification);
       console.log('Notification received:', notification);
     });
 
-    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       console.log('Notification response received:', response);
-      if (response.notification.request.content.data.screen === 'OrderHistory') {
-        navigation.navigate('OrderHistory');
-      }
     });
 
     return () => {
-      Notifications.removeNotificationSubscription(notificationListener);
-      Notifications.removeNotificationSubscription(responseListener);
+      notificationListener.current && Notifications.removeNotificationSubscription(notificationListener.current);
+      responseListener.current && Notifications.removeNotificationSubscription(responseListener.current);
     };
   }, []);
-
-  async function registerForPushNotificationsAsync() {
-    let token;
-  
-    if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "default",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#FF231F7C",
-      });
-    }
-  
-    if (Device.isDevice) {
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== "granted") {
-        alert("Failed to get push token for push notification!");
-        return;
-      }
-      token = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId: "c1e91669-b14e-456e-a024-504bad3dc062",
-        })
-      ).data;
-      console.log(token);
-    } else {
-      alert("Must use physical device for Push Notifications");
-    }
-  
-    return token;
-  }
-
-  async function sendPushNotification(email, title, message, screen) {
-    if (!expoPushToken) {
-      console.log('No Expo Push Token found, cannot send notification.');
-      return;
-    }
-  
-    const notificationData = {
-      to: expoPushToken,
-      sound: "default",
-      title: title,
-      body: message,
-      data: { screen: screen }
-    };
-  
-    try {
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Accept-Encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(notificationData),
-      });
-      const responseData = await response.json();
-      console.log('Push notification sent:', responseData);
-    } catch (error) {
-      console.error('Error sending push notification:', error);
-    }
-  }
   
   const incrementUserRecommendHit = async (productId) => {
     const auth = getAuth();
@@ -275,8 +207,9 @@ const OrdersConfirmation = ({ route, navigation }) => {
                 orderId: orderDocRef.id
             };
             await addDoc(collection(db, 'notifications'), buyerNotificationData);
+            if (expoPushToken) {
             sendPushNotification(user.email, 'Order Placed', buyerNotificationMessage, 'OrderHistory');
-
+          }
             // Notification for the seller
             for (const product of products) {
               const sellerNotificationMessage = `${user.email} has placed an order. Order #${orderDocRef.id.toUpperCase()}, please review and approve.`;
@@ -290,8 +223,9 @@ const OrdersConfirmation = ({ route, navigation }) => {
                     productName: product.name
                 };
                 await addDoc(collection(db, 'notifications'), sellerNotificationData);
+                if (expoPushToken) {
                 sendPushNotification(product.seller_email, 'New Order Received', sellerNotificationMessage, 'SellerOrderManagement');
-
+                 }
                 await incrementUserRecommendHit(product.productId);
             }
         }
@@ -514,6 +448,56 @@ const OrdersConfirmation = ({ route, navigation }) => {
     </View>
   );
 };
+
+async function sendPushNotification(expoPushToken, title, message) {
+  const notificationData = {
+    to: expoPushToken,
+    sound: 'default',
+    title: title,
+    body: message,
+    data: { message },
+  };
+
+  await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Accept-Encoding': 'gzip, deflate',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(notificationData),
+  });
+}
+
+async function registerForPushNotificationsAsync() {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+
+  if (!Device.isDevice) {
+    alert('Must use physical device for push notifications');
+    return;
+  }
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  if (finalStatus !== 'granted') {
+    alert('Failed to get push token for push notification!');
+    return;
+  }
+  const token = (await Notifications.getExpoPushTokenAsync()).data;
+  return token;
+}
+
 
 const styles = StyleSheet.create({
   container: {
