@@ -12,6 +12,7 @@ import * as Notifications from 'expo-notifications';
 import Config from 'react-native-config';
 import * as Device from 'expo-device'; 
 
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -63,18 +64,31 @@ const OrdersConfirmation = ({ route, navigation }) => {
   const [expoPushToken, setExpoPushToken] = useState("");
 
   useEffect(() => {
-    console.log("Registering for push notifications...");
-    registerForPushNotificationsAsync()
-      .then((token) => {
-        console.log("token: ", token);
-        setExpoPushToken(token);
-      })
-      .catch((err) => console.log(err));
+    registerForPushNotificationsAsync().then(token => {
+      console.log('Push notification token:', token);
+      setExpoPushToken(token);
+    });
+
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
+    });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification response received:', response);
+      if (response.notification.request.content.data.screen === 'OrderHistory') {
+        navigation.navigate('OrderHistory');
+      }
+    });
+
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
+    };
   }, []);
 
   async function registerForPushNotificationsAsync() {
     let token;
-
+  
     if (Platform.OS === "android") {
       await Notifications.setNotificationChannelAsync("default", {
         name: "default",
@@ -83,7 +97,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
         lightColor: "#FF231F7C",
       });
     }
-
+  
     if (Device.isDevice) {
       const { status: existingStatus } =
         await Notifications.getPermissionsAsync();
@@ -96,7 +110,6 @@ const OrdersConfirmation = ({ route, navigation }) => {
         alert("Failed to get push token for push notification!");
         return;
       }
-      
       token = (
         await Notifications.getExpoPushTokenAsync({
           projectId: "c1e91669-b14e-456e-a024-504bad3dc062",
@@ -106,41 +119,40 @@ const OrdersConfirmation = ({ route, navigation }) => {
     } else {
       alert("Must use physical device for Push Notifications");
     }
-
+  
     return token;
   }
 
-  const sendPushNotification = async (recipientEmail, title, message) => {
-    console.log("Sending push notification...");
-  
-    let notificationMessage;
-    if (recipientEmail === user.email) {
-      notificationMessage = message; 
-    } else {
-      notificationMessage = `New order received.`; 
+  async function sendPushNotification(email, title, message, screen) {
+    if (!expoPushToken) {
+      console.log('No Expo Push Token found, cannot send notification.');
+      return;
     }
   
     const notificationData = {
       to: expoPushToken,
       sound: "default",
-      title: "ECOMercado",
-      body: notificationMessage,
-      // body: "notificationMessage",
-      data: { screen: 'OrderHistory' }
+      title: title,
+      body: message,
+      data: { screen: screen }
     };
   
-    await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: {
-        host: "exp.host",
-        accept: "application/json",
-        "accept-encoding": "gzip, deflate",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(notificationData),
-    });
-  };
-
+    try {
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notificationData),
+      });
+      const responseData = await response.json();
+      console.log('Push notification sent:', responseData);
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+    }
+  }
   
   const incrementUserRecommendHit = async (productId) => {
     const auth = getAuth();
@@ -263,7 +275,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
                 orderId: orderDocRef.id
             };
             await addDoc(collection(db, 'notifications'), buyerNotificationData);
-            sendPushNotification(user.email, 'Order Placed', buyerNotificationMessage);
+            sendPushNotification(user.email, 'Order Placed', buyerNotificationMessage, 'OrderHistory');
 
             // Notification for the seller
             for (const product of products) {
@@ -278,7 +290,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
                     productName: product.name
                 };
                 await addDoc(collection(db, 'notifications'), sellerNotificationData);
-                sendPushNotification(product.seller_email, 'New Order Received', sellerNotificationMessage);
+                sendPushNotification(product.seller_email, 'New Order Received', sellerNotificationMessage, 'SellerOrderManagement');
 
                 await incrementUserRecommendHit(product.productId);
             }
