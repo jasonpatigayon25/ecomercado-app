@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert, Platform, Button } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon5 from 'react-native-vector-icons/FontAwesome5';
@@ -11,7 +11,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import Config from 'react-native-config';
 import * as Device from 'expo-device'; 
-
 
 
 Notifications.setNotificationHandler({
@@ -88,37 +87,39 @@ const OrdersConfirmation = ({ route, navigation }) => {
   }, []);
 
   async function registerForPushNotificationsAsync() {
-    if (!Device.isDevice) {
-      alert('Must use physical device for Push Notifications');
-      return;
-    }
-    
     let token;
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-
-    if (finalStatus !== 'granted') {
-      alert('Failed to get push token for push notification!');
-      return;
-    }
-
-    token = (await Notifications.getExpoPushTokenAsync()).data;
-    console.log('Expo Push Token:', token);
-    
-    if (Platform.OS === 'android') {
-      Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
+  
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
+        lightColor: "#FF231F7C",
       });
     }
-
+  
+    if (Device.isDevice) {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") {
+        alert("Failed to get push token for push notification!");
+        return;
+      }
+      token = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId: "c1e91669-b14e-456e-a024-504bad3dc062",
+        })
+      ).data;
+      console.log(token);
+    } else {
+      alert("Must use physical device for Push Notifications");
+    }
+  
     return token;
   }
 
@@ -127,9 +128,6 @@ const OrdersConfirmation = ({ route, navigation }) => {
       console.log('No Expo Push Token found, cannot send notification.');
       return;
     }
-
-    // Adding a query parameter to the API endpoint
-    const endpoint = 'https://exp.host/--/api/v2/push/send?useFcmV1=true';
 
     const notificationData = {
       to: expoPushToken,
@@ -140,7 +138,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
     };
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -150,11 +148,12 @@ const OrdersConfirmation = ({ route, navigation }) => {
         body: JSON.stringify(notificationData),
       });
       const responseData = await response.json();
-      console.log('Push notification sent with FCM V1:', responseData);
+      console.log('Push notification sent:', responseData);
     } catch (error) {
-      console.error('Error sending push notification with FCM V1:', error);
+      console.error('Error sending push notification:', error);
     }
-}
+  }
+
   
   const incrementUserRecommendHit = async (productId) => {
     const auth = getAuth();
