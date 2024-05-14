@@ -401,6 +401,11 @@ const ProductDetail = ({ navigation, route }) => {
       Alert.alert("Error", "You must be logged in to make a purchase.");
       return;
     }
+
+    if (product.seller_email === user.email) {
+      Alert.alert("You cannot buy your own product.");
+      return;
+    }
   
     if (product.quantity < 1) {
       Alert.alert("Out of Stock", "This item is currently out of stock.");

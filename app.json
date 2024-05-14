@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ecomercado-app",
-    "slug": "jason-patz",
+    "slug": "patigayonmobileapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/ecomercado-icon.png",
@@ -43,9 +43,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "c1e91669-b14e-456e-a024-504bad3dc062"
+        "projectId": "9c6726c2-1c49-48e9-8467-40c38c0776ee"
       }
     },
-    "owner": "jasonpatz"
+    "owner": "jasonpatigayon25"
   }
 }

@@ -34,8 +34,8 @@ const RequestReceivingDetails = ({ route, navigation }) => {
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
       console.log('Notification response received:', response);
-      if (response.notification.request.content.data.screen === 'RequestManagement') {
-        navigation.navigate('RequestManagement');
+      if (response.notification.request.content.data.screen === 'OrderHistory') {
+        navigation.navigate('OrderHistory');
       }
     });
 
@@ -58,7 +58,8 @@ const RequestReceivingDetails = ({ route, navigation }) => {
     }
   
     if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
@@ -68,15 +69,48 @@ const RequestReceivingDetails = ({ route, navigation }) => {
         alert("Failed to get push token for push notification!");
         return;
       }
-      token = (await Notifications.getExpoPushTokenAsync({
-        projectId: "c1e91669-b14e-456e-a024-504bad3dc062",
-      })).data;
+      token = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId: "c1e91669-b14e-456e-a024-504bad3dc062",
+        })
+      ).data;
       console.log(token);
     } else {
       alert("Must use physical device for Push Notifications");
     }
   
     return token;
+  }
+
+  async function sendPushNotification(email, title, message, screen) {
+    if (!expoPushToken) {
+      console.log('No Expo Push Token found, cannot send notification.');
+      return;
+    }
+  
+    const notificationData = {
+      to: expoPushToken,
+      sound: "default",
+      title: title,
+      body: message,
+      data: { screen: screen }
+    };
+  
+    try {
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notificationData),
+      });
+      const responseData = await response.json();
+      console.log('Push notification sent:', responseData);
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+    }
   }
 
   async function sendPushNotification(email, title, message, screen) {
@@ -249,8 +283,8 @@ const RequestReceivingDetails = ({ route, navigation }) => {
             const donorNotificationMessage = `You've confirmed that request #${request.id.toUpperCase()} has been delivered. Please wait for the requester's confirmation.`;
 
             try {
-              await sendPushNotification(request.requesterEmail, 'Request Delivery Confirmation', requesterNotificationMessage);
-              await sendPushNotification(userEmail, 'Request Delivered', donorNotificationMessage);
+              await sendPushNotification(request.requesterEmail, 'Request Delivery Confirmation', requesterNotificationMessage, 'RequestManagement');
+              await sendPushNotification(userEmail, 'Request Delivered', donorNotificationMessage, 'RequestManagement');
             } catch (error) {
               console.error("Error sending notifications:", error);
               Alert.alert("Error", "Could not send notifications.");

@@ -62,61 +62,98 @@ const OrdersConfirmation = ({ route, navigation }) => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
 
-  const notificationListener = useRef();
-  const responseListener = useRef();
+  const [expoPushToken, setExpoPushToken] = useState("");
 
   useEffect(() => {
-    registerIndieID(user.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
-      .then(() => console.log("Device registered for notifications"))
-      .catch(err => console.error("Error registering device:", err));
+    registerForPushNotificationsAsync().then(token => {
+      console.log('Push notification token:', token);
+      setExpoPushToken(token);
+    });
+
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
+    });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification response received:', response);
+      if (response.notification.request.content.data.screen === 'OrderHistory') {
+        navigation.navigate('OrderHistory');
+      }
+    });
 
     return () => {
-      unregisterIndieDevice(user.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
-        .then(() => console.log("Device unregistered for notifications"))
-        .catch(err => console.error("Error unregistering device:", err));
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
     };
-  }, [user.email]);
+  }, []);
 
-
-  const shouldSendNotification = async (email) => {
-    try {
-      const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
-      return sellingNotifications === null || JSON.parse(sellingNotifications);
-    } catch (error) {
-      console.error('Error reading notification settings:', error);
-      return true;
-    }
-  };
+  async function registerForPushNotificationsAsync() {
+    let token;
   
-  const sendPushNotification = async (subID, title, message) => {
-    if (!(await shouldSendNotification(subID))) {
-      console.log('Notifications are muted for:', subID);
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#FF231F7C",
+      });
+    }
+  
+    if (Device.isDevice) {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") {
+        alert("Failed to get push token for push notification!");
+        return;
+      }
+      token = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId: "9c6726c2-1c49-48e9-8467-40c38c0776ee",
+        })
+      ).data;
+      console.log(token);
+    } else {
+      alert("Must use physical device for Push Notifications");
+    }
+  
+    return token;
+  }
+
+  async function sendPushNotification(email, title, message, screen) {
+    if (!expoPushToken) {
+      console.log('No Expo Push Token found, cannot send notification.');
       return;
     }
-
+  
     const notificationData = {
-      subID: subID,
-      appId: 21249,
-      appToken: 'kHrDsgwvsjqsZkDuubGBMU',
-      title: 'ECOMercado',
-      message: message,
-      data: { screen: 'OrderHistory' } 
+      to: expoPushToken,
+      sound: "default",
+      title: title,
+      body: message,
+      data: { screen: screen }
     };
   
-    for (let attempt = 1; attempt <= 3; attempt++) { 
-      try {
-        await axios.post('https://app.nativenotify.com/api/indie/notification', notificationData);
-        console.log('Push notification sent to:', subID);
-        break; 
-      } catch (error) {
-        console.error(`Attempt ${attempt} - Error sending push notification:`, error);
-        if (attempt === 3) {
-          console.error('Unable to send push notification at this time.'); 
-        }
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+    try {
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notificationData),
+      });
+      const responseData = await response.json();
+      console.log('Push notification sent:', responseData);
+    } catch (error) {
+      console.error('Error sending push notification:', error);
     }
-  };
+  }
 
   
   const incrementUserRecommendHit = async (productId) => {

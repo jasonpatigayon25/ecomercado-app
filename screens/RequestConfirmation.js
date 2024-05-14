@@ -75,7 +75,7 @@ const RequestConfirmation = ({ navigation, route }) => {
       }
       token = (
         await Notifications.getExpoPushTokenAsync({
-          projectId: "c1e91669-b14e-456e-a024-504bad3dc062",
+          projectId: "9c6726c2-1c49-48e9-8467-40c38c0776ee",
         })
       ).data;
       console.log(token);
