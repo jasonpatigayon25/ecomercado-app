@@ -8,7 +8,8 @@
     "notification": {
       "icon": "./assets/ecomercado-icon.png",
       "color": "#ffffff", 
-      "iosDisplayInForeground": true 
+      "androidMode": "default",
+      "androidCollapsedTitle": "#{unread_notifications} new interactions"
     },
     "userInterfaceStyle": "light",
     "splash": {

@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import Config from 'react-native-config';
 import * as Device from 'expo-device'; 
-
+import Constants from 'expo-constants';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -67,22 +67,19 @@ const OrdersConfirmation = ({ route, navigation }) => {
   const [expoPushToken, setExpoPushToken] = useState("");
 
   useEffect(() => {
-    registerForPushNotificationsAsync().then(token => {
-      if (token) setExpoPushToken(token);
+    registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+  
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification Received:', notification);
     });
-
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      setNotification(notification);
-      console.log('Notification received:', notification);
+  
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification Response Received:', response);
     });
-
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('Notification response received:', response);
-    });
-
+  
     return () => {
-      notificationListener.current && Notifications.removeNotificationSubscription(notificationListener.current);
-      responseListener.current && Notifications.removeNotificationSubscription(responseListener.current);
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
     };
   }, []);
   
@@ -450,28 +447,45 @@ const OrdersConfirmation = ({ route, navigation }) => {
 };
 
 async function sendPushNotification(expoPushToken, title, message) {
-  const notificationData = {
+  const messagePayload = {
     to: expoPushToken,
     sound: 'default',
     title: title,
     body: message,
-    data: { message },
+    data: { title, message },
   };
 
   await fetch('https://exp.host/--/api/v2/push/send', {
     method: 'POST',
     headers: {
-      Accept: 'application/json',
-      'Accept-Encoding': 'gzip, deflate',
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(notificationData),
+    body: JSON.stringify(messagePayload),
   });
 }
 
 async function registerForPushNotificationsAsync() {
+  let token;
+  if (Constants.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      alert('Failed to get push token for push notification!');
+      return;
+    }
+    token = (await Notifications.getExpoPushTokenAsync()).data;
+    console.log(token);
+  } else {
+    console.log('Must use physical device for Push Notifications');
+  }
+
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
+    Notifications.setNotificationChannelAsync('default', {
       name: 'default',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
@@ -479,25 +493,8 @@ async function registerForPushNotificationsAsync() {
     });
   }
 
-  if (!Device.isDevice) {
-    alert('Must use physical device for push notifications');
-    return;
-  }
-
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-  if (finalStatus !== 'granted') {
-    alert('Failed to get push token for push notification!');
-    return;
-  }
-  const token = (await Notifications.getExpoPushTokenAsync()).data;
   return token;
 }
-
 
 const styles = StyleSheet.create({
   container: {
