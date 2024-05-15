@@ -63,9 +63,12 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
     outputRange: ['-15deg', '15deg'],
   });
 
-  const contactSeller = () => {
-    // 
-  };
+  const handleFeesNotePress = () => {
+    Alert.alert(
+      "Note",
+      "This fee covers the courier fee for the requested donations."
+    );
+  }
 
   useEffect(() => {
     const fetchRequesterName = async () => {
@@ -408,7 +411,10 @@ const RequestToApproveByDonorDetails = ({ route, navigation }) => {
               <Text style={styles.paymentMethodValue}>{request.paymentMethod}</Text>
             </View>
             <View style={styles.orderTotalSection}>
-              <Text style={styles.orderTotalLabel}>FEES</Text>
+            <TouchableOpacity style={styles.feeContainer} onPress={handleFeesNotePress}>
+              <Text style={styles.feeLabel}>FEES</Text>
+              <Icon name="info-circle" size={20} color="#666" />
+            </TouchableOpacity>
               <View style={styles.orderTotalDetails}>
                 <View style={styles.orderTotalRow}>
                   <Text style={styles.orderTotalText}>
@@ -797,6 +803,11 @@ approveButtonMain: {
     height: 50,
     marginRight: 5,
     borderRadius: 25,
+  },
+  totalLabelHeader: {
+    fontSize: 15,
+    marginHorizontal: 10,
+    fontWeight: 'bold',
   },
 });
 
