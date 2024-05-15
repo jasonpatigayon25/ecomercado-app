@@ -291,8 +291,16 @@ const OrderToReceiveDetails = ({ route, navigation }) => {
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
       console.log('Notification response received:', response);
-      if (response.notification.request.content.data.screen === 'OrderHistory') {
-        navigation.navigate('OrderHistory');
+      const screen = response.notification.request.content.data.screen;
+      switch(screen) {
+        case 'OrderHistory':
+          navigation.navigate('OrderHistory');
+          break;
+        case 'SellerOrderManagement':
+          navigation.navigate('SellerOrderManagement');
+          break;
+        default:
+          break;
       }
     });
 

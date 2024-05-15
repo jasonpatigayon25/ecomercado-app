@@ -40,8 +40,16 @@ const OrderToApproveDetails = ({ route, navigation }) => {
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
       console.log('Notification response received:', response);
-      if (response.notification.request.content.data.screen === 'OrderHistory') {
-        navigation.navigate('OrderHistory');
+      const screen = response.notification.request.content.data.screen;
+      switch(screen) {
+        case 'OrderHistory':
+          navigation.navigate('OrderHistory');
+          break;
+        case 'SellerOrderManagement':
+          navigation.navigate('SellerOrderManagement');
+          break;
+        default:
+          break;
       }
     });
 
@@ -146,7 +154,7 @@ const OrderToApproveDetails = ({ route, navigation }) => {
               const sellerNotificationMessage = `You approved the #${order.id.toUpperCase()}. Please set for delivery`;
               try {
                 await sendPushNotification(order.buyerEmail, 'Order Approved', buyerNotificationMessage, 'OrderHistory');
-                await sendPushNotification(userEmail, 'Order Approved', sellerNotificationMessage);
+                await sendPushNotification(userEmail, 'Order Approved', sellerNotificationMessage, 'SellerOrderManagement');
               } catch (error) {
                 console.error("Error sending notifications:", error);
                 Alert.alert("Error", "Could not send notifications.");
