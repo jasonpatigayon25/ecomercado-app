@@ -366,6 +366,13 @@ const RequestReceivingDetails = ({ route, navigation }) => {
     return () => unsubscribe(); 
   }, [request.id]);
 
+  const handleFeesNotePress = () => {
+    Alert.alert(
+      "Note",
+      "This fee covers the courier fee for the requested donations."
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
@@ -427,7 +434,10 @@ const RequestReceivingDetails = ({ route, navigation }) => {
               <Text style={styles.paymentMethodValue}>{request.paymentMethod}</Text>
             </View>
             <View style={styles.orderTotalSection}>
-              <Text style={styles.orderTotalLabel}>FEES</Text>
+            <TouchableOpacity style={styles.feeContainer} onPress={handleFeesNotePress}>
+              <Text style={styles.feeLabel}>FEES</Text>
+              <Icon name="info-circle" size={20} color="#666" />
+            </TouchableOpacity>
               <View style={styles.orderTotalDetails}>
                 <View style={styles.orderTotalRow}>
                   <Text style={styles.orderTotalText}>

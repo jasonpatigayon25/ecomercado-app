@@ -94,16 +94,21 @@ const OrderCancelledBySellerDetails = ({ route, navigation }) => {
                 </Text>
             </View>
             </View>
-        <View style={styles.totalPriceContainer}>
-          <Text style={styles.orderTotalLabel}>Total Payment:</Text>
-          <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
-        </View>
-        {order.receivedPhoto && (
-          <View style={styles.receivedPhotoContainer}>
-            <Text style={styles.receivedPhotoLabel}>Confirmation Received:</Text>
-            <Image source={{ uri: order.receivedPhoto }} style={styles.receivedPhoto} />
+            <View style={styles.totalPriceContainer}>
+            <Text style={styles.totalLabelHeader}>PAYMENT</Text>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalValue}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+            </View>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Deducted Delivery Fee</Text>
+              <Text style={[styles.totalValue, styles.deliveryFeeValue]}>- ₱{order.shippingFee.toFixed(2)}</Text>
+            </View>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabelFinal}>Final Payment</Text>
+              <Text style={[ styles.youReceiveValue]}>₱{(order.orderTotalPrice - order.shippingFee).toFixed(2)}</Text>
+            </View>
           </View>
-        )}
       </View>
     </ScrollView>
     </SafeAreaView>
@@ -581,6 +586,49 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     resizeMode: 'contain',
+  },
+  totalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 5,
+  },
+  totalLabel: {
+    fontSize: 15,
+    color: '#808080', 
+    textDecorationLine: 'line-through',
+  },
+  totalValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textDecorationLine: 'line-through',
+  },
+  totalLabelFinal: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textDecorationLine: 'line-through',
+  },
+  totalValueFinal: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textDecorationLine: 'line-through',
+  },
+  deliveryFeeValue: {
+    color: '#666',
+    textDecorationLine: 'line-through',
+  },
+  youReceiveValue: {
+    color: '#05652D', 
+    fontSize: 18,
+    fontWeight: 'bold',
+    textDecorationLine: 'line-through',
+  },
+  totalLabelHeader: {
+    fontSize: 15,
+    marginHorizontal: 10,
+    fontWeight: 'bold',
+    
   },
 });
 
