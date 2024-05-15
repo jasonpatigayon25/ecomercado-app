@@ -118,10 +118,21 @@ const OrderCompletedBySellerDetails = ({ route, navigation }) => {
                 </Text>
             </View>
             </View>
-        <View style={styles.totalPriceContainer}>
-          <Text style={styles.orderTotalLabel}>Total Payment:</Text>
-          <Text style={styles.orderTotalPrice}>₱{order.orderTotalPrice.toFixed(2)}</Text>
-        </View>
+            <View style={styles.totalPriceContainer}>
+            <Text style={styles.totalLabelHeader}>PAYMENT</Text>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalValue}>₱{order.orderTotalPrice.toFixed(2)}</Text>
+            </View>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Deducted Delivery Fee</Text>
+              <Text style={[styles.totalValue, styles.deliveryFeeValue]}>- ₱{order.shippingFee.toFixed(2)}</Text>
+            </View>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabelFinal}>Final Payment</Text>
+              <Text style={[ styles.youReceiveValue]}>₱{(order.orderTotalPrice - order.shippingFee).toFixed(2)}</Text>
+            </View>
+          </View>
         {order.receivedPhoto && (
           <View style={styles.receivedPhotoContainer}>
             <Text style={styles.receivedPhotoLabel}>Confirmation Received:</Text>
@@ -605,6 +616,42 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     resizeMode: 'contain',
+  },
+  totalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 5,
+  },
+  totalLabel: {
+    fontSize: 15,
+    color: '#808080', 
+  },
+  totalValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  totalLabelFinal: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  totalValueFinal: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  deliveryFeeValue: {
+    color: '#666',
+  },
+  youReceiveValue: {
+    color: '#05652D', 
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  totalLabelHeader: {
+    fontSize: 15,
+    marginHorizontal: 10,
+    fontWeight: 'bold',
   },
 });
 

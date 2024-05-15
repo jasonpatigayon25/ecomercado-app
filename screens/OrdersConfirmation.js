@@ -47,12 +47,33 @@ const OrdersConfirmation = ({ route, navigation }) => {
 
   const auth = getAuth();
   const user = auth.currentUser;
-
+  
   useEffect(() => {
+    console.log("Current user:", user);
     if (user) {
-      registerIndieID(user.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU');
+      registerIndieID(user.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
+        .then(() => console.log("Device registered for notifications"))
+        .catch(err => console.error("Error registering device:", err));
     }
   }, [user]);
+
+  useEffect(() => {
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
+    });
+  
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification response received:', response);
+      if (response.notification.request.content.data.screen === 'OrderHistory') {
+        navigation.navigate('OrderHistory');
+      }
+    });
+  
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
+    };
+  }, []);
   
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);  
