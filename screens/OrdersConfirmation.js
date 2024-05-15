@@ -10,17 +10,15 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
-import Config from 'react-native-config';
-import * as Device from 'expo-device'; 
-import Constants from 'expo-constants';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
+
 
 const OrdersConfirmation = ({ route, navigation }) => {
   const {
@@ -59,16 +57,42 @@ const OrdersConfirmation = ({ route, navigation }) => {
   const auth = getAuth();
   const user = auth.currentUser;
   
-  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-  const [successModalVisible, setSuccessModalVisible] = useState(false);
-
-  const [expoPushToken, setExpoPushToken] = useState("");
-
   useEffect(() => {
-    registerForPushNotificationsAsync().then(token => {
-      console.log('Push notification token:', token);
-      setExpoPushToken(token);
-    });
+    const registerForPushNotificationsAsync = async () => {
+      let token;
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'default',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#FF231F7C',
+        });
+      }
+
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== 'granted') {
+        Alert.alert('Failed to get push token for push notification!');
+        return;
+      }
+
+      token = (await Notifications.getExpoPushTokenAsync()).data;
+      console.log(token);
+
+      if (user) {
+        registerIndieID(user.email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
+          .then(() => console.log("Device registered for notifications"))
+          .catch(err => console.error("Error registering device:", err));
+      }
+    };
+
+    registerForPushNotificationsAsync();
 
     const notificationListener = Notifications.addNotificationReceivedListener(notification => {
       console.log('Notification received:', notification);
@@ -85,76 +109,10 @@ const OrdersConfirmation = ({ route, navigation }) => {
       Notifications.removeNotificationSubscription(notificationListener);
       Notifications.removeNotificationSubscription(responseListener);
     };
-  }, []);
-
-  async function registerForPushNotificationsAsync() {
-    let token;
+  }, [user]);
   
-    if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "default",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#FF231F7C",
-      });
-    }
-  
-    if (Device.isDevice) {
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== "granted") {
-        alert("Failed to get push token for push notification!");
-        return;
-      }
-      token = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId: "9c6726c2-1c49-48e9-8467-40c38c0776ee",
-        })
-      ).data;
-      console.log(token);
-    } else {
-      alert("Must use physical device for Push Notifications");
-    }
-  
-    return token;
-  }
-
-  async function sendPushNotification(email, title, message, screen) {
-    if (!expoPushToken) {
-      console.log('No Expo Push Token found, cannot send notification.');
-      return;
-    }
-  
-    const notificationData = {
-      to: expoPushToken,
-      sound: "default",
-      title: title,
-      body: message,
-      data: { screen: screen }
-    };
-  
-    try {
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Accept-Encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(notificationData),
-      });
-      const responseData = await response.json();
-      console.log('Push notification sent:', responseData);
-    } catch (error) {
-      console.error('Error sending push notification:', error);
-    }
-  }
-
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);  
   
   const incrementUserRecommendHit = async (productId) => {
     const auth = getAuth();
@@ -216,6 +174,22 @@ const OrdersConfirmation = ({ route, navigation }) => {
       console.error("Error updating product count in userRecommend: ", error);
     }
   };
+
+  const sendPushNotification = async (subID, title, message) => {
+    try {
+      const response = await axios.post('https://app.nativenotify.com/api/indie/notification', {
+        subID: subID,
+        appId: 21249,
+        appToken: 'kHrDsgwvsjqsZkDuubGBMU',
+        title: title,
+        message: message
+      });
+      console.log('Push notification sent:', response.data);
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+    }
+  };
+
 
   const handleProceed = async () => {
     if (orderPlaced) {
@@ -320,41 +294,6 @@ const OrdersConfirmation = ({ route, navigation }) => {
         setOrderPlaced(false);
     }
 };
-
-  // const shouldSendNotification = async (email) => {
-  //   try {
-  //     const sellingNotifications = await AsyncStorage.getItem(`${email}_sellingNotifications`);
-  //     return sellingNotifications === null || JSON.parse(sellingNotifications);
-  //   } catch (error) {
-  //     console.error('Error reading notification settings:', error);
-  //     return true;
-  //   }
-  // };
-  
-  // const sendPushNotification = async (token, title, message) => {
-  //   const notificationData = {
-  //     to: token, 
-  //     notification: {
-  //       title: "ECOMercado",
-  //       body: message
-  //     },
-  //     data: {
-  //       screen: 'OrderHistory' 
-  //     }
-  //   };
-  
-  //   try {
-  //     const response = await axios.post('https://fcm.googleapis.com/fcm/send', notificationData, {
-  //       headers: {
-  //         'Authorization': `key=${Config.FIREBASE_SERVER_KEY}`,
-  //         'Content-Type': 'application/json'
-  //       }
-  //     });
-  //     console.log('Push notification sent:', response.data);
-  //   } catch (error) {
-  //     console.error('Error sending push notification:', error);
-  //   }
-  // };
 
   return (
     <View style={styles.container}>
