@@ -38,8 +38,16 @@ const RequestConfirmation = ({ navigation, route }) => {
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
       console.log('Notification response received:', response);
-      if (response.notification.request.content.data.screen === 'OrderHistory') {
-        navigation.navigate('OrderHistory');
+      const screen = response.notification.request.content.data.screen;
+      switch(screen) {
+        case 'RequestHistory':
+          navigation.navigate('RequestHistory');
+          break;
+        case 'RequestManagement':
+          navigation.navigate('RequestManagement');
+          break;
+        default:
+          break;
       }
     });
 

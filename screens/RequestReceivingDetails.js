@@ -34,8 +34,16 @@ const RequestReceivingDetails = ({ route, navigation }) => {
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
       console.log('Notification response received:', response);
-      if (response.notification.request.content.data.screen === 'OrderHistory') {
-        navigation.navigate('OrderHistory');
+      const screen = response.notification.request.content.data.screen;
+      switch(screen) {
+        case 'RequestHistory':
+          navigation.navigate('RequestHistory');
+          break;
+        case 'RequestManagement':
+          navigation.navigate('RequestManagement');
+          break;
+        default:
+          break;
       }
     });
 
@@ -283,7 +291,7 @@ const RequestReceivingDetails = ({ route, navigation }) => {
             const donorNotificationMessage = `You've confirmed that request #${request.id.toUpperCase()} has been delivered. Please wait for the requester's confirmation.`;
 
             try {
-              await sendPushNotification(request.requesterEmail, 'Request Delivery Confirmation', requesterNotificationMessage, 'RequestManagement');
+              await sendPushNotification(request.requesterEmail, 'Request Delivery Confirmation', requesterNotificationMessage, 'RequestHistory');
               await sendPushNotification(userEmail, 'Request Delivered', donorNotificationMessage, 'RequestManagement');
             } catch (error) {
               console.error("Error sending notifications:", error);
