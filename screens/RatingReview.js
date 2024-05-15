@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, FlatList, StyleSheet, SafeAreaView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Rating } from 'react-native-ratings';
@@ -10,15 +10,17 @@ const RatingReview = ({ route, navigation }) => {
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchReviews = async () => {
+      setLoading(true);
       const reviewsRef = collection(db, 'productRatings');
       const q = query(reviewsRef, where('prodId', '==', prodId));
 
       const querySnapshot = await getDocs(q);
       if (querySnapshot.docs.length === 0) {
-        setReviews([]); // No reviews fetched
+        setReviews([]); 
         setReviewCount(0);
         setAverageRating(0);
       } else {
@@ -44,6 +46,7 @@ const RatingReview = ({ route, navigation }) => {
         setReviewCount(querySnapshot.docs.length);
         setAverageRating(totalRating / querySnapshot.docs.length);
       }
+      setLoading(false);
     };
 
     fetchReviews();
@@ -52,20 +55,22 @@ const RatingReview = ({ route, navigation }) => {
   const renderItem = ({ item }) => (
     <View style={styles.reviewCard}>
       <View style={styles.reviewHeader}>
-        {item.photoUrl ? (
-          <Image source={{ uri: item.photoUrl }} style={styles.userIcon} />
-        ) : (
-          <Icon name="user-circle" size={40} color="#CCCCCC" style={styles.userIcon} />
-        )}
-        <View style={styles.reviewHeaderDetails}>
-          <Text style={styles.fullName}>{item.fullName}</Text>
-          <Text style={styles.date}>{item.ratedAt}</Text>
+        <View style={styles.userInfo}>
+          {item.photoUrl ? (
+            <Image source={{ uri: item.photoUrl }} style={styles.userIcon} />
+          ) : (
+            <Icon name="user-circle" size={40} color="#CCCCCC" style={styles.userIcon} />
+          )}
+          <View style={styles.reviewHeaderDetails}>
+            <Text style={styles.fullName}>{item.fullName}</Text>
+          </View>
         </View>
+        <Text style={styles.date}>{item.ratedAt}</Text>
       </View>
       <Rating
         type="star"
         ratingCount={5}
-        imageSize={20}
+        imageSize={25}
         readonly
         startingValue={Number(item.rating)}
         style={styles.rating}
@@ -87,13 +92,15 @@ const RatingReview = ({ route, navigation }) => {
       </View>
       <View style={styles.overallRating}>
         <Text style={styles.overallRatingText}>Overall Rating</Text>
-        {reviewCount > 0 ? (
+        {loading ? (
+          <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator} />
+        ) : reviewCount > 0 ? (
           <>
             <Text style={styles.overallRatingValue}>{averageRating.toFixed(1)}</Text>
             <Rating
               type="star"
               ratingCount={5}
-              imageSize={20}
+              imageSize={30}
               readonly
               startingValue={averageRating}
               style={styles.ratingAverage}
@@ -104,11 +111,13 @@ const RatingReview = ({ route, navigation }) => {
           <Text style={styles.noReviews}>No reviews yet for this product.</Text>
         )}
       </View>
-      <FlatList
-        data={reviews}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-      />
+      {!loading && (
+        <FlatList
+          data={reviews}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -156,12 +165,17 @@ const styles = StyleSheet.create({
   },
   reviewHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   reviewHeaderDetails: {
     marginLeft: 12,
-    flexShrink: 1, 
+    flexShrink: 1,
   },
   fullName: {
     fontWeight: 'bold',
@@ -173,23 +187,18 @@ const styles = StyleSheet.create({
   },
   rating: {
     alignSelf: 'flex-start',
-    marginVertical: 8, 
-  },
-  rating: {
-    alignSelf: 'center',
-    marginVertical: 8, 
-    backgroundColor: '#ccc'
+    marginVertical: 8,
   },
   comment: {
     fontSize: 14,
     color: 'grey',
-    marginTop: 4, 
+    marginTop: 4,
   },
   userIcon: {
-    width: 40, 
+    width: 40,
     height: 40,
-    borderRadius: 20, 
-    backgroundColor: '#f0f0f0',  
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
     marginRight: 8,
   },
   helpfulCount: {
@@ -201,6 +210,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 8,
+  },
+  loadingIndicator: {
+    flex: 1,
+    justifyContent: 'center',
   },
 });
 
