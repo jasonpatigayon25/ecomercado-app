@@ -192,7 +192,7 @@ const Notification = ({ navigation }) => {
         'approved_request': 'handshake-o',
         'delivery_scheduled': 'calendar-o',
         'delivery_confirmation': 'check-circle',
-        'donation_received': 'heart',
+        'donation_received': 'flag',
         'declined_request': 'times-circle',
         'request_submitted': 'hand-rock-o',
         'request_approved': 'handshake-o',
