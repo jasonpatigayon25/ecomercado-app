@@ -269,45 +269,45 @@ const UserVisit = ({ route, navigation }) => {
     }
   };
 
-    useEffect(() => {
-      const fetchProducts = async () => {
-          setIsProductsLoading(true);
-          const baseQuery = collection(db, 'products');
-          let queryRef = query(
-              baseQuery, 
-              where('seller_email', '==', email),
-              where('publicationStatus', '==', 'approved')
-          );
-
-          if (productTab === 'Latest') {
-              queryRef = query(queryRef, orderBy('createdAt', 'desc'));
-          } else if (productTab === 'Price') {
-              const direction = priceSort === 'Low' ? 'asc' : 'desc'; 
-              queryRef = query(queryRef, orderBy('price', direction));
-          }
-
-          const querySnapshot = await getDocs(queryRef);
-          const productList = querySnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data(),
-              price: parseFloat(doc.data().price)
-          }));
-
-          if (productTab === 'Price') {
-              productList.sort((a, b) => {
-                  if (priceSort === 'Low') {
-                      return a.price - b.price;
-                  } else {
-                      return b.price - a.price;
-                  }
-              });
-          }
-
-          setProducts(productList);
-          setIsProductsLoading(false);
-      };
-
-      fetchProducts();
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsProductsLoading(true);
+      const baseQuery = collection(db, 'products');
+      let queryRef = query(
+          baseQuery, 
+          where('seller_email', '==', email),
+          where('publicationStatus', '==', 'approved')
+      );
+  
+      if (productTab === 'Latest') {
+          queryRef = query(queryRef, orderBy('createdAt', 'desc'));
+      } else if (productTab === 'Price') {
+          const direction = priceSort === 'Low' ? 'asc' : 'desc'; 
+          queryRef = query(queryRef, orderBy('price', direction));
+      }
+  
+      const querySnapshot = await getDocs(queryRef);
+      const productList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          price: parseFloat(doc.data().price)
+      }));
+  
+      if (productTab === 'Price') {
+          productList.sort((a, b) => {
+              if (priceSort === 'Low') {
+                  return a.price - b.price;
+              } else {
+                  return b.price - a.price;
+              }
+          });
+      }
+  
+      setProducts(productList);
+      setIsProductsLoading(false);
+    };
+  
+    fetchProducts();
   }, [email, productTab, priceSort]);
 
   const togglePriceSort = () => {

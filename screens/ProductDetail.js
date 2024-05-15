@@ -12,6 +12,30 @@ import moment from 'moment';
 
 const ProductDetail = ({ navigation, route }) => {
 
+  useEffect(() => {
+    if (route.params.product) {
+      setProduct(route.params.product);
+      setDisplayPhoto(route.params.product.photo || 'default_image_url_here');
+    }
+  }, [route.params.product]);
+
+  useEffect(() => {
+    let unsubscribeProduct = () => {};
+  
+    if (product && product.id) {
+      const productRef = doc(db, 'products', product.id);
+      unsubscribeProduct = onSnapshot(productRef, (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const updatedProduct = { ...docSnapshot.data(), id: docSnapshot.id };
+          setProduct(updatedProduct);
+          setDisplayPhoto(updatedProduct.photo);
+        }
+      });
+    }
+  
+    return () => unsubscribeProduct(); 
+  }, [product?.id]);
+
   const [isBuyModalVisible, setIsBuyModalVisible] = useState(false);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [totalPrice, setTotalPrice] = useState(0);
