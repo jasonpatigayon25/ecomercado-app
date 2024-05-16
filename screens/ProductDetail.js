@@ -535,14 +535,18 @@ const ProductDetail = ({ navigation, route }) => {
         <View style={styles.ratingCard}>
           <Text style={styles.ratingLabel}>Rating</Text>
           <View style={styles.ratingContainer}>
-            <Rating
-              type="star"
-              ratingCount={5}
-              imageSize={30}
-              readonly
-              startingValue={averageRating}
-              style={styles.rating}
-            />
+            {totalRatings === 0 ? (
+              <Text style={styles.notRatedText}>Not Rated Yet</Text>
+            ) : (
+              <Rating
+                type="star"
+                ratingCount={5}
+                imageSize={30}
+                readonly
+                startingValue={averageRating}
+                style={styles.rating}
+              />
+            )}
             <Text
               onPress={() => navigation.navigate('RatingReview', { prodId: product.id })}
               style={styles.viewReviewText}>
@@ -1092,6 +1096,10 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+   notRatedText: {
+    fontSize: 16,
+    color: '#666',
   },
 });
 

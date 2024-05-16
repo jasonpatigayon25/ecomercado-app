@@ -65,10 +65,7 @@ const OrdersConfirmation = ({ route, navigation }) => {
   const [expoPushToken, setExpoPushToken] = useState("");
 
   useEffect(() => {
-    registerForPushNotificationsAsync().then(token => {
-      console.log('Push notification token:', token);
-      setExpoPushToken(token);
-    });
+    fetchPushToken();
 
     const notificationListener = Notifications.addNotificationReceivedListener(notification => {
       console.log('Notification received:', notification);
@@ -95,57 +92,30 @@ const OrdersConfirmation = ({ route, navigation }) => {
     };
   }, []);
 
-  async function registerForPushNotificationsAsync() {
-    let token;
-  
-    if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "default",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#FF231F7C",
-      });
+  const fetchPushToken = async () => {
+    const userRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userRef);
+    if (userDoc.exists()) {
+      const token = userDoc.data().expoPushToken;
+      setExpoPushToken(token);
+      console.log('Fetched Expo Push Token:', token);  
     }
-  
-    if (Device.isDevice) {
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== "granted") {
-        alert("Failed to get push token for push notification!");
-        return;
-      }
-      token = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId: "9c6726c2-1c49-48e9-8467-40c38c0776ee",
-        })
-      ).data;
-      console.log(token);
-    } else {
-      alert("Must use physical device for Push Notifications");
-    }
-  
-    return token;
-  }
+  };
 
-  async function sendPushNotification(email, title, message, screen) {
-    if (!expoPushToken) {
+  const sendPushNotification = async (token, title, message, screen) => {
+    if (!token) {
       console.log('No Expo Push Token found, cannot send notification.');
       return;
     }
-  
+
     const notificationData = {
-      to: expoPushToken,
+      to: token,
       sound: "default",
       title: title,
       body: message,
       data: { screen: screen }
     };
-  
+
     try {
       const response = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST',
@@ -157,11 +127,11 @@ const OrdersConfirmation = ({ route, navigation }) => {
         body: JSON.stringify(notificationData),
       });
       const responseData = await response.json();
-      console.log('Push notification sent:', responseData);
+      console.log('Push notification sent:', responseData); 
     } catch (error) {
       console.error('Error sending push notification:', error);
     }
-  }
+  };
 
   
   const incrementUserRecommendHit = async (productId) => {
