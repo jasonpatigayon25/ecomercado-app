@@ -238,6 +238,10 @@ const SellerManagement = ({ navigation }) => {
             <Text style={styles.sellerName}>{sellerInfo.sellerName}</Text>
             <Text style={styles.fullName}>{sellerInfo.registeredName}</Text>
             <View style={styles.infoRow}>
+              <MaterialIcons name="store" size={20} color="#05652D" />
+              <Text style={styles.subText}>{sellerInfo.type}</Text>
+            </View>
+            <View style={styles.infoRow}>
               <MaterialIcons name="email" size={20} color="#05652D" />
               <Text style={styles.subText}>{sellerInfo.email}</Text>
             </View>

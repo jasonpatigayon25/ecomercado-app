@@ -136,7 +136,7 @@ const UserVisit = ({ route, navigation }) => {
         const registeredSellerSnapshot = await getDocs(registeredSellerQuery);
         if (!registeredSellerSnapshot.empty) {
           const registeredSellerData = registeredSellerSnapshot.docs[0].data();
-          setProfile({ ...userData, sellerName: registeredSellerData.sellerName });
+          setProfile({ ...userData, sellerName: registeredSellerData.sellerName, sellerType: registeredSellerData.type });
           if (registeredSellerData.backgroundPhotoUri) {
             setBackgroundImage({ uri: registeredSellerData.backgroundPhotoUri });
           }
@@ -410,6 +410,7 @@ const UserVisit = ({ route, navigation }) => {
             <Icon5 name="store" size={24} color="#05652D" style={styles.marketIcon} />
             <Text style={styles.sellerName}>{profile.sellerName}</Text>
           </View>
+          <Text style={styles.userType}>{profile.sellerType}</Text>
         <Text style={styles.userName}>{profile.firstName} {profile.lastName}</Text>
         <Text style={styles.userEmail}>{profile.email}</Text>
         <View style={styles.followContainer}>
@@ -437,6 +438,10 @@ const UserVisit = ({ route, navigation }) => {
           {productTab === 'Popular' ? (
                 isProductsLoading ? (
                   <ActivityIndicator size="large" color="#05652D" />
+                ) : products.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>No Products Yet</Text>
+                  </View>
                 ) : (
                   <View style={styles.productsContainer}>
                     {products.map((product) => (
@@ -456,6 +461,10 @@ const UserVisit = ({ route, navigation }) => {
               ) : productTab === 'Latest' ? (
                 isProductsLoading ? (
                   <ActivityIndicator size="large" color="#05652D" />
+                ) : products.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>No Products Yet</Text>
+                  </View>
                 ) : (
                   <View style={styles.productsContainer}>
                     {products.filter(product => product.publicationStatus === 'approved').map((product) => (
@@ -475,6 +484,10 @@ const UserVisit = ({ route, navigation }) => {
               ) : (
                 isProductsLoading ? (
                   <ActivityIndicator size="large" color="#05652D" />
+                ) : products.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>No Products Yet</Text>
+                  </View>
                 ) : (
                   <View style={styles.productsContainer}>
                     {products.sort((a, b) => (priceSort === 'Low' ? a.price - b.price : b.price - a.price)).map((product) => (
@@ -577,7 +590,7 @@ const UserVisit = ({ route, navigation }) => {
       {showSubscriptionMessage && (
       <View style={styles.subscriptionMessage}>
         <Text style={styles.subscriptionMessageText}>
-          You subscribed to {profile.firstName} {profile.lastName}
+          You followed to {profile.firstName} {profile.lastName}
         </Text>
       </View>
     )}
@@ -585,7 +598,7 @@ const UserVisit = ({ route, navigation }) => {
     {showUnsubscribeMessage && (
       <View style={styles.subscriptionMessage}>
         <Text style={styles.subscriptionMessageText}>
-          You unsubscribed from {profile.firstName} {profile.lastName}
+          You unfollowed from {profile.firstName} {profile.lastName}
         </Text>
       </View>
     )}
@@ -813,6 +826,10 @@ userName: {
 },
 userEmail: {
   fontSize: 16,
+  color: '#666666',
+},
+userType: {
+
   color: '#666666',
 },
 followContainer: {
