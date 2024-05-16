@@ -137,12 +137,12 @@ const RequestCompletedByDonorDetails = ({ route, navigation }) => {
               <View style={styles.orderTotalDetails}>
                 <View style={styles.orderTotalRow}>
                   <Text style={styles.orderTotalText}>
-                    Delivery Fee Subtotal:
+                    Disposal Fee Subtotal:
                   </Text>
                   <Text style={styles.orderTotalValue}>₱{request.disposalFee.toFixed(2)}</Text>
                 </View>
                 <View style={styles.orderTotalRow}>
-                  <Text style={styles.orderTotalText}>Disposal Fee Subtotal:</Text>
+                  <Text style={styles.orderTotalText}>Delivery Fee Subtotal:</Text>
                   <Text style={styles.orderTotalValue}>₱{request.deliveryFee.toFixed(2)}</Text>
                 </View>
                 <View style={styles.orderTotalRow}>
