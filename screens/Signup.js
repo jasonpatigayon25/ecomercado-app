@@ -18,6 +18,7 @@ const Signup = ({ navigation, route }) => {
   const [email, setEmail] = useState('');
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
   const [termsChecked, setTermsChecked] = useState(false);
@@ -77,7 +78,7 @@ const Signup = ({ navigation, route }) => {
   const handleButtonPress = async () => {
     const auth = getAuth();
 
-    const isAnyInputMissing = !email.trim() || !firstname.trim() || !lastname.trim() || !address.trim() || !password.trim() || !repeatPassword.trim();
+    const isAnyInputMissing = !email.trim() || !firstname.trim() || !lastname.trim() || !contactNumber.trim() || !address.trim() || !password.trim() || !repeatPassword.trim();
 
     if (isAnyInputMissing) {
       Alert.alert('Missing inputs. Please provide the missing information.');
@@ -145,6 +146,7 @@ const Signup = ({ navigation, route }) => {
           email: email,
           firstName: firstname,
           lastName: lastname,
+          contactNumber: `+63${contactNumber}`,
           address: address,
           dateRegistered: Timestamp.fromDate(currentDate), 
           uid: user.uid  
@@ -217,7 +219,19 @@ const Signup = ({ navigation, route }) => {
           value={lastname}
           onChangeText={setLastname}
         />
-        </View>
+         </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.prefix}>PH +63</Text>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Enter Contact Number"
+            value={contactNumber}
+            onChangeText={setContactNumber}
+            keyboardType="number-pad"
+            maxLength={10}
+          />
+          </View>
+       
         <View style={styles.inputContainer}>
           <TouchableOpacity 
               style={styles.inputTouchable}
@@ -482,6 +496,11 @@ const styles = StyleSheet.create({
     borderColor: '#05652D',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  prefix: {
+    marginRight: 10,
+    fontSize: 16,
+    color: '#333333',
   },
 });
 
