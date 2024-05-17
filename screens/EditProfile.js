@@ -59,6 +59,7 @@ const EditProfile = ({ route, navigation }) => {
     firstName: '',
     lastName: '',
     email: '',
+    contactNumber: '',
     photoUrl: '',
   });
 
@@ -86,12 +87,14 @@ const EditProfile = ({ route, navigation }) => {
               firstName: userData.firstName || '',
               lastName: userData.lastName || '',
               email: userData.email,
+              contactNumber: userData.contactNumber || '',
               photoUrl: userData.photoUrl || '',
             });
             setInitialUserProfile({
               firstName: userData.firstName || '',
               lastName: userData.lastName || '',
               email: userData.email,
+              contactNumber: userData.contactNumber || '',
               photoUrl: userData.photoUrl || '',
               address: userData.address || ''
             });  // Ensure this is set before trying to access it
@@ -114,7 +117,8 @@ const EditProfile = ({ route, navigation }) => {
       userProfile?.firstName !== initialUserProfile?.firstName ||
       userProfile?.lastName !== initialUserProfile?.lastName ||
       profilePhotoUrl !== initialUserProfile?.photoUrl ||
-      address !== initialUserProfile?.address
+      address !== initialUserProfile?.address ||
+      userProfile?.contactNumber !== initialUserProfile?.contactNumber
     );
   };
 
@@ -152,6 +156,7 @@ const EditProfile = ({ route, navigation }) => {
             firstName: userProfile.firstName.trim(),
             lastName: userProfile.lastName.trim(),
             address: address.trim(),
+            contactNumber: userProfile.contactNumber.trim(),
           });
   
           if (profilePhotoUrl) {
@@ -317,6 +322,20 @@ const [isPhotoPickerModalVisible, setIsPhotoPickerModalVisible] = useState(false
             onChangeText={(text) => handleInputChange('lastName', text)}
           />
            </View>
+           <View style={styles.formItem}>
+         <Text style={styles.label}>Contact Number</Text>
+          <View style={styles.contactNumberContainer}>
+            <Text style={styles.prefix}>PH +63</Text>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Enter Contact Number"
+              value={userProfile.contactNumber}
+              onChangeText={(text) => handleInputChange('contactNumber', text)}
+              keyboardType="number-pad"
+              maxLength={10}
+            />
+          </View>
+        </View>
           <View style={styles.formItem}>
             <Text style={styles.label}>Address</Text>
             <TouchableOpacity
@@ -551,6 +570,14 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginRight: 10,
     marginTop: 4,
+  },
+  contactNumberContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  prefix: {
+    fontSize: 16,
+    marginRight: 5,
   },
 });
 
