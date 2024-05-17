@@ -146,7 +146,7 @@ const Signup = ({ navigation, route }) => {
           email: email,
           firstName: firstname,
           lastName: lastname,
-          contactNumber: `+63${contactNumber}`,
+          contactNumber: contactNumber,
           address: address,
           dateRegistered: Timestamp.fromDate(currentDate), 
           uid: user.uid  

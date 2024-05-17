@@ -18,6 +18,7 @@ const EditSellerInfo = ({ navigation }) => {
   const [type, setType] = useState('Individual');
   const [sellerAddress, setSellerAddress] = useState(''); 
   const [email, setEmail] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [profilePhotoUri, setProfilePhotoUri] = useState(null);
   const [backgroundPhotoUri, setBackgroundPhotoUri] = useState(null);
 
@@ -76,6 +77,7 @@ const EditSellerInfo = ({ navigation }) => {
           setSellerAddress(userData.sellerAddress);
           setProfilePhotoUri(userData.profilePhotoUri);
           setBackgroundPhotoUri(userData.backgroundPhotoUri);
+          setContactNumber(userData.contactNumber);
           setSellerDocId(querySnapshot.docs[0].id);
         }
       }
@@ -93,6 +95,7 @@ const EditSellerInfo = ({ navigation }) => {
           registeredName,
           type,
           sellerAddress,
+          contactNumber,
           profilePhotoUri,
           backgroundPhotoUri,
         });
@@ -238,6 +241,19 @@ const EditSellerInfo = ({ navigation }) => {
           onChangeText={setEmail}
           style={styles.inputEmail}
           editable={false}
+        />
+        <Text style={styles.label}>Contact Number:</Text>
+        <TextInput
+          placeholder="Contact Number"
+          value={contactNumber}
+          onChangeText={(text) => {
+            if (text.length <= 10) {
+              setContactNumber(text);
+            }
+          }}
+          style={styles.input}
+          maxLength={10}
+          keyboardType="number-pad"
         />
         <View>
           <Text style={styles.label}>

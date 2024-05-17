@@ -18,6 +18,7 @@ const SellerRegistration = ({ navigation }) => {
   const [type, setType] = useState('Individual');
   const [sellerAddress, setSellerAddress] = useState(''); 
   const [email, setEmail] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [profilePhotoUri, setProfilePhotoUri] = useState(null);
   const [backgroundPhotoUri, setBackgroundPhotoUri] = useState(null);
 
@@ -71,6 +72,7 @@ const SellerRegistration = ({ navigation }) => {
         setRegisteredName(`${userData.firstName} ${userData.lastName}`);
         setSellerAddress(userData.address); 
         setEmail(userData.email);
+        setContactNumber(userData.contactNumber);
       }
     };
 
@@ -92,6 +94,7 @@ const SellerRegistration = ({ navigation }) => {
         type,
         sellerAddress,
         email,
+        contactNumber,
         profilePhotoUri,
         backgroundPhotoUri,
         status: 'pending',
@@ -237,6 +240,20 @@ const SellerRegistration = ({ navigation }) => {
           onChangeText={setEmail}
           style={styles.inputEmail}
           editable={false}
+        />
+
+      <Text style={styles.label}>Contact Number:</Text>
+        <TextInput
+          placeholder="Contact Number"
+          value={contactNumber}
+          onChangeText={(text) => {
+            if (text.length <= 10) {
+              setContactNumber(text);
+            }
+          }}
+          style={styles.input}
+          maxLength={10}
+          keyboardType="number-pad"
         />
         <View>
           <Text style={styles.label}>

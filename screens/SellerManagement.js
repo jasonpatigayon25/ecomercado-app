@@ -242,6 +242,10 @@ const SellerManagement = ({ navigation }) => {
               <Text style={styles.subText}>{sellerInfo.type}</Text>
             </View>
             <View style={styles.infoRow}>
+              <MaterialIcons name="phone" size={20} color="#05652D" />
+              <Text style={styles.subText}>{sellerInfo.contactNumber}</Text>
+            </View>
+            <View style={styles.infoRow}>
               <MaterialIcons name="email" size={20} color="#05652D" />
               <Text style={styles.subText}>{sellerInfo.email}</Text>
             </View>
