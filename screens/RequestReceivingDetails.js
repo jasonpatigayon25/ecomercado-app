@@ -19,6 +19,15 @@ const RequestReceivingDetails = ({ route, navigation }) => {
   const { request, donations, users, requesterEmail } = route.params;
   const [requestStatus, setRequestStatus] = useState(request.status);
   const [deliveredStatus, setDeliveredStatus] = useState(request.deliveredStatus);
+  const [user, setUser] = useState(null); 
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
   
   const [expoPushToken, setExpoPushToken] = useState("");
 
@@ -328,6 +337,52 @@ const RequestReceivingDetails = ({ route, navigation }) => {
     );
   };
 
+  const handleChatWithRequester = async () => {
+    if (!user) {
+      console.log('User not authenticated');
+      return;
+    }
+  
+    const requesterEmail = request.requesterEmail;
+    const currentUserEmail = user.email;
+  
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('users', 'array-contains', currentUserEmail));
+      const querySnapshot = await getDocs(q);
+  
+      let existingChatId = null;
+  
+      querySnapshot.forEach((doc) => {
+        const chatData = doc.data();
+        if (chatData.users.includes(requesterEmail)) {
+          existingChatId = doc.id;
+        }
+      });
+  
+      if (existingChatId) {
+        navigation.navigate('Chat', {
+          chatId: existingChatId,
+          receiverEmail: requesterEmail,
+        });
+      } else {
+        const newChatRef = collection(db, 'chats');
+        const newChat = {
+          users: [currentUserEmail, requesterEmail],
+          messages: [],
+        };
+  
+        const docRef = await addDoc(newChatRef, newChat);
+        navigation.navigate('Chat', {
+          chatId: docRef.id,
+          receiverEmail: requesterEmail,
+        });
+      }
+    } catch (error) {
+      console.error('Error handling chat with requester:', error);
+    }
+  };
+
   const handleConfirm = async () => {
     try {
       const requestRef = doc(db, 'requests', request.id);
@@ -474,6 +529,11 @@ const RequestReceivingDetails = ({ route, navigation }) => {
                   {moment(request.dateRequested.toDate()).format('DD-MM-YYYY HH:mm')}
                 </Text>
               </View>
+            </View>
+            <View style={styles.actionButtons}>
+                <TouchableOpacity style={styles.contactButton} onPress={handleChatWithRequester}>
+                    <Text style={styles.contactbuttonText}>Contact Requester</Text>
+                </TouchableOpacity>
             </View>
       </View>
         </ScrollView>

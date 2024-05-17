@@ -26,6 +26,17 @@ Notifications.setNotificationHandler({
 const OrderShippedDetails = ({ route, navigation }) => {
   const { order, products } = route.params;
 
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+  
+
   useEffect(() => {
     checkIfTimeExceeded();
   }, []);  
@@ -317,6 +328,57 @@ const OrderShippedDetails = ({ route, navigation }) => {
     );
   };
 
+  const handleChatWithBuyer = async () => {
+    if (!user) {
+      console.log('User not authenticated');
+      return;
+    }
+  
+    if (order.buyerEmail === user.email) {
+      Alert.alert("You are trying to chat with yourself.");
+      return;
+    }
+  
+    const buyerEmail = order.buyerEmail;
+    const sellerEmail = user.email;
+  
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('users', 'array-contains', sellerEmail));
+      const querySnapshot = await getDocs(q);
+  
+      let existingChatId = null;
+  
+      querySnapshot.forEach((doc) => {
+        const chatData = doc.data();
+        if (chatData.users.includes(buyerEmail)) {
+          existingChatId = doc.id;
+        }
+      });
+  
+      if (existingChatId) {
+        navigation.navigate('Chat', {
+          chatId: existingChatId,
+          receiverEmail: buyerEmail,
+        });
+      } else {
+        const newChatRef = collection(db, 'chats');
+        const newChat = {
+          users: [sellerEmail, buyerEmail],
+          messages: [],
+        };
+  
+        const docRef = await addDoc(newChatRef, newChat);
+        navigation.navigate('Chat', {
+          chatId: docRef.id,
+          receiverEmail: buyerEmail,
+        });
+      }
+    } catch (error) {
+      console.error('Error handling chat with buyer:', error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
     
@@ -420,7 +482,11 @@ const OrderShippedDetails = ({ route, navigation }) => {
               <Text style={[ styles.youReceiveValue]}>₱{(order.orderTotalPrice - order.shippingFee).toFixed(2)}</Text>
             </View>
           </View>
+
         <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.contactButton} onPress={handleChatWithBuyer}>
+            <Text style={styles.buttonText}>Contact Buyer</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -967,6 +1033,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginHorizontal: 10,
     fontWeight: 'bold',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
   },
 });
 
