@@ -1,17 +1,13 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Image, StyleSheet, Platform } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, TouchableOpacity, TextInput, Image, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { Alert } from 'react-native';
 import UserContext from '../contexts/UserContext';
-import { collection, query, where, getDocs, getFirestore, setDoc, doc} from 'firebase/firestore';
+import { collection, query, where, getDocs, getFirestore} from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerIndieID, unregisterIndieDevice } from 'native-notify';
 import axios from 'axios';
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
-// import * as Permissions from 'expo-permissions';
-import Constants from 'expo-constants';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -19,47 +15,6 @@ const Login = ({ navigation }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const { setUser } = useContext(UserContext);
-
-  const [expoPushToken, setExpoPushToken] = useState('');
-
-  useEffect(() => {
-    registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
-  }, []);
-
-  // Function to register for push notifications
-  const registerForPushNotificationsAsync = async () => {
-    let token;
-    if (Device.isDevice) {
-      // Check for existing notification permissions
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        // Request permission to send notifications
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== 'granted') {
-        alert('Failed to get push token for push notification!');
-        return;
-      }
-      // Get the push notification token
-      token = (await Notifications.getExpoPushTokenAsync()).data;
-      console.log('Push notification token:', token);
-
-      if (Platform.OS === 'android') {
-        Notifications.setNotificationChannelAsync('default', {
-          name: 'default',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#FF231F7C',
-        });
-      }
-    } else {
-      alert('Must use physical device for Push Notifications');
-    }
-
-    return token;
-  };
 
   const handleForgotPassword = () => {
     navigation.navigate('ForgotPassword');
@@ -74,17 +29,17 @@ const Login = ({ navigation }) => {
       Alert.alert("Missing Fields", "Please enter both email and password.", [{ text: "OK" }]);
       return;
     }
-
+  
     const auth = getAuth();
     const db = getFirestore();
-
+  
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
+  
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("email", "==", email));
       const querySnapshot = await getDocs(q);
-
+  
       if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
         if (userDoc.data().banned) {
@@ -92,16 +47,16 @@ const Login = ({ navigation }) => {
           Alert.alert("Account Banned", "Your account has been banned permanently.", [{ text: "OK" }]);
           return;
         }
-
+  
         await AsyncStorage.setItem('userEmail', email);
         setUser({ email: email });
         navigation.navigate('Main', { username: email });
         setPassword('');
-
+  
         registerIndieID(email, 21249, 'kHrDsgwvsjqsZkDuubGBMU')
           .then(() => {
             console.log('Device registered for notifications with subID:', email);
-
+  
             const notificationData = {
               subID: email,
               appId: 21249,
@@ -109,7 +64,7 @@ const Login = ({ navigation }) => {
               title: 'Welcome!',
               message: 'You have successfully logged in.'
             };
-
+  
             axios.post('https://app.nativenotify.com/api/indie/notification', notificationData, { timeout: 30000 })
               .then(response => {
                 console.log("Push notification sent successfully", response.data);
@@ -121,14 +76,13 @@ const Login = ({ navigation }) => {
           .catch((error) => {
             console.error('Error registering device for notifications:', error);
           });
-
-
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          email: email,
-          expoPushToken: expoPushToken,
-        }, { merge: true });
       } else {
-        throw new Error("No user found with the provided email.");
+        console.error(`No user found with email: ${email}`);
+        Alert.alert(
+          "Incorrect Credentials",
+          "Incorrect email or password. Please check your credentials and try again.",
+          [{ text: "OK" }]
+        );
       }
     } catch (error) {
       Alert.alert(
@@ -138,7 +92,6 @@ const Login = ({ navigation }) => {
       );
     }
   };
-
   
   const handleBackPress = () => {
     if (navigation.canGoBack()) {
