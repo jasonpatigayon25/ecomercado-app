@@ -19,11 +19,11 @@
             <Text style={styles.paragraph}>●	EcoMercado reserves the right to refuse items that do not meet our quality standards.</Text>
 
             <Text style={styles.subheader}>Weight Limitations:</Text>
-            <Text style={styles.paragraph}>●	The maximum weight for a single transaction of general items is capped at 50 kilos.</Text>
+            <Text style={styles.paragraph}>●	The maximum weight for a single transaction of general items is capped at 30 kilos.</Text>
             <Text style={styles.paragraph}>●	Users are advised to communicate with EcoMercado's support team if they are unsure about the weight of their items before scheduling a pickup.</Text>
 
             <Text style={styles.subheader}>Heavy Items and Furniture:</Text>
-            <Text style={styles.paragraph}>●	For heavy items, especially furniture, the maximum acceptable weight is 50 kilos.</Text>
+            <Text style={styles.paragraph}>●	For heavy items, especially furniture, the maximum acceptable weight is 30 kilos.</Text>
             <Text style={styles.paragraph}>●	It is the user’s responsibility to inform EcoMercado in advance about any items that might exceed this weight limit.</Text>
 
             {/* <Text style={styles.header}>Donation Weight-Based Fee:</Text>
