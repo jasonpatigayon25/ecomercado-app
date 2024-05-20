@@ -9,6 +9,7 @@ const MapLocationBased = () => {
   const [city, setCity] = useState('Cebu');
   const [radius, setRadius] = useState(5000); // Default radius in meters
   const [radiusLabel, setRadiusLabel] = useState('Small');
+  const [selectedAreas, setSelectedAreas] = useState(['Cebu']);
   const [menuVisible, setMenuVisible] = useState(false);
   const [radiusMenuVisible, setRadiusMenuVisible] = useState(false);
   const navigation = useNavigation();
@@ -87,6 +88,10 @@ const MapLocationBased = () => {
     `);
   }, [location, city, radius]);
 
+  useEffect(() => {
+    updateSelectedAreas({ lat: location.lat, lng: location.lng, name: city });
+  }, [radius]);
+
   const onMessage = (event) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
@@ -94,9 +99,37 @@ const MapLocationBased = () => {
       const selectedCity = cities.find(c => c.name === data.city);
       if (selectedCity) {
         setLocation({ lat: selectedCity.lat, lng: selectedCity.lng });
+        updateSelectedAreas(selectedCity);
       }
     } catch (e) {
       console.error("Failed to parse message from webview:", e);
+    }
+  };
+
+  const calculateDistance = (lat1, lng1, lat2, lng2) => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLng = (lng2 - lng1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c * 1000; // Distance in meters
+    return distance;
+  };
+
+  const updateSelectedAreas = (selectedCity) => {
+    const newSelectedAreas = cities.filter(city => {
+      const distance = calculateDistance(selectedCity.lat, selectedCity.lng, city.lat, city.lng);
+      return distance <= radius && city.name !== selectedCity.name;
+    }).map(city => city.name);
+
+    // If radius is small, select only the current city
+    if (radiusLabel === 'Small') {
+      setSelectedAreas([selectedCity.name]);
+    } else {
+      setSelectedAreas([selectedCity.name, ...newSelectedAreas]);
     }
   };
 
@@ -214,7 +247,7 @@ const MapLocationBased = () => {
   </body>
   </html>
   `;
-  
+
   return (
     <Provider>
       <View style={{ flex: 1 }}>
@@ -247,7 +280,7 @@ const MapLocationBased = () => {
           ))}
         </Menu>
         <TouchableOpacity onPress={() => setMenuVisible(true)}>
-          <Text style={styles.infoText}>Selected Area: {city}</Text>
+          <Text style={styles.infoText}>Targeted Area: {city}</Text>
         </TouchableOpacity>
         <Menu
           visible={radiusMenuVisible}
@@ -271,6 +304,7 @@ const MapLocationBased = () => {
                     updateMap(${location.lat}, ${location.lng}, '${city}', ${r.value});
                   `);
                 }, 100);
+                updateSelectedAreas({ lat: location.lat, lng: location.lng, name: city });
                 setRadiusMenuVisible(false);
               }}
               title={r.label}
@@ -286,6 +320,9 @@ const MapLocationBased = () => {
           domStorageEnabled={true}
           onMessage={onMessage}
         />
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoText}>Selected Area/s: {selectedAreas.join(', ')}</Text>
+        </View>
         <View style={styles.buttonContainer}>
           <Button
             title="Confirm"
@@ -316,6 +353,6 @@ const styles = StyleSheet.create({
     margin: 10, 
     marginHorizontal: 40,
   },
-})
+});
 
 export default MapLocationBased;
