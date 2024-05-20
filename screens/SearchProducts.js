@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView, Animated, ActivityIndicator  } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView, Animated, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { query, where, getDocs, collection, limit, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
@@ -273,6 +273,10 @@ const SearchProducts = () => {
     </TouchableOpacity>
   );
 
+  const showSelectedAreas = () => {
+    Alert.alert('Selected Area/s', selectedAreas.join(', '));
+  };
+
   const clearSearch = () => {
     setSearchQuery('');
     if (searchInputRef.current) {
@@ -309,11 +313,14 @@ const SearchProducts = () => {
           <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Donation</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBased')}>
-        <Text style={styles.filterText} numberOfLines={1} ellipsizeMode="tail">
-          {selectedAreas.join(', ').length > 15 ? `${selectedAreas.join(', ').substring(0, 15)}...` : selectedAreas.join(', ')}
-          <Icon name="filter" size={20} color="#666" />
-        </Text>
-      </TouchableOpacity>
+          <Text style={styles.filterText} numberOfLines={1} ellipsizeMode="tail">
+            {selectedAreas.join(', ').length > 15 ? `${selectedAreas.join(', ').substring(0, 15)}...` : selectedAreas.join(', ')}
+          </Text>
+          <Icon name="filter" size={20} color="#666" style={styles.filterIcon} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={showSelectedAreas} style={styles.showAllButton}>
+          <Text style={styles.showAllButtonText}>View</Text>
+        </TouchableOpacity>
       </View>
   
       <View style={styles.textContainer}>
@@ -570,6 +577,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     marginVertical: 10,
+    alignItems: 'center',
   },
   switchContainer: {
     backgroundColor: '#088F8F',
@@ -584,6 +592,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 5,
     paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   filterText: {
     color: '#05652D',
@@ -605,8 +615,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  }
-  
+  },
+  showAllButton: {
+    position: 'absolute',
+    top: -15,
+    right: 10,
+    padding: 5,
+    backgroundColor: '#05652D',
+    borderRadius: 10,
+  },
+  showAllButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 9,
+  },
 });
 
 export default SearchProducts;
