@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { WebView } from 'react-native-webview';
 import { View, Button, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Menu, Provider } from 'react-native-paper';
@@ -7,8 +7,12 @@ import { useNavigation } from '@react-navigation/native';
 const MapLocationBased = () => {
   const [location, setLocation] = useState({ lat: 10.3157, lng: 123.8854 });
   const [city, setCity] = useState('Cebu');
+  const [radius, setRadius] = useState(5000); // Default radius in meters
+  const [radiusLabel, setRadiusLabel] = useState('Small');
   const [menuVisible, setMenuVisible] = useState(false);
+  const [radiusMenuVisible, setRadiusMenuVisible] = useState(false);
   const navigation = useNavigation();
+  const webViewRef = useRef(null);
 
   const confirmSelection = () => {
     navigation.navigate('SearchProducts', { selectedCity: city });
@@ -66,13 +70,22 @@ const MapLocationBased = () => {
     { name: 'Tudela', lat: 10.6172, lng: 124.4133 },
   ];
 
+  const radii = [
+    { label: 'Small', value: 5000 },
+    { label: 'Medium', value: 10000 },
+    { label: 'Large', value: 15000 },
+    { label: 'Extra Large', value: 20000 },
+    { label: 'Huge', value: 25000 },
+    { label: 'Gigantic', value: 30000 },
+  ];
+
   useEffect(() => {
     webViewRef.current?.injectJavaScript(`
       if(window.updateMap) {
-        updateMap(${location.lat}, ${location.lng}, '${city}');
+        updateMap(${location.lat}, ${location.lng}, '${city}', ${radius});
       }
     `);
-  }, [location, city]);
+  }, [location, city, radius]);
 
   const onMessage = (event) => {
     try {
@@ -86,8 +99,6 @@ const MapLocationBased = () => {
       console.error("Failed to parse message from webview:", e);
     }
   };
-
-  const webViewRef = React.useRef(null);
 
   const htmlContent = `
   <!DOCTYPE html>
@@ -117,7 +128,7 @@ const MapLocationBased = () => {
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g"></script>
     <script>
       var map, marker, circle, infoWindow;
-      function initMap(latitude, longitude, name) {
+      function initMap(latitude, longitude, name, radius) {
         var position = { lat: latitude, lng: longitude };
         map = new google.maps.Map(document.getElementById('map'), {
             zoom: 12,
@@ -137,7 +148,7 @@ const MapLocationBased = () => {
             fillOpacity: 0.35,
             map: map,
             center: position,
-            radius: 5000 // 5 kilometers
+            radius: radius // Use the radius parameter
         });
     
         infoWindow = new google.maps.InfoWindow({
@@ -159,12 +170,13 @@ const MapLocationBased = () => {
         geocodeLatLng(latLng);
     }
   
-    function updateMap(latitude, longitude, name) {
-        console.log("Updating map to: ", latitude, longitude, name); // Add this line
+    function updateMap(latitude, longitude, name, radius) {
+        console.log("Updating map to: ", latitude, longitude, name, radius); // Add this line
         var newPosition = {lat: latitude, lng: longitude};
         map.setCenter(newPosition);
         marker.setPosition(newPosition);
         circle.setCenter(newPosition);
+        circle.setRadius(radius); // Update the radius
         marker.setTitle(name);
         infoWindow.setContent(name);
         infoWindow.open(map, marker);
@@ -196,14 +208,13 @@ const MapLocationBased = () => {
       }
     </script>
   </head>
-  <body onload="initMap(${location.lat}, ${location.lng}, '${city}')">
+  <body onload="initMap(${location.lat}, ${location.lng}, '${city}', ${radius})">
     <div id="map"></div>
     <div id="label">${city}</div>
   </body>
   </html>
   `;
   
-
   return (
     <Provider>
       <View style={{ flex: 1 }}>
@@ -226,7 +237,7 @@ const MapLocationBased = () => {
                 setLocation({ lat: c.lat, lng: c.lng });
                 setTimeout(() => {
                   webViewRef.current?.injectJavaScript(`
-                    updateMap(${c.lat}, ${c.lng}, '${c.name}');
+                    updateMap(${c.lat}, ${c.lng}, '${c.name}', ${radius});
                   `);
                 }, 100); 
                 setMenuVisible(false);
@@ -236,8 +247,36 @@ const MapLocationBased = () => {
           ))}
         </Menu>
         <TouchableOpacity onPress={() => setMenuVisible(true)}>
-        <Text style={styles.infoText}>Selected Area: {city}</Text>
+          <Text style={styles.infoText}>Selected Area: {city}</Text>
         </TouchableOpacity>
+        <Menu
+          visible={radiusMenuVisible}
+          onDismiss={() => setRadiusMenuVisible(false)}
+          anchor={
+            <Button
+              onPress={() => setRadiusMenuVisible(true)}
+              title={`Radius: ${radiusLabel}`}
+              color="#008000"
+            />
+          }
+        >
+          {radii.map((r, index) => (
+            <Menu.Item
+              key={index}
+              onPress={() => {
+                setRadius(r.value);
+                setRadiusLabel(r.label);
+                setTimeout(() => {
+                  webViewRef.current?.injectJavaScript(`
+                    updateMap(${location.lat}, ${location.lng}, '${city}', ${r.value});
+                  `);
+                }, 100);
+                setRadiusMenuVisible(false);
+              }}
+              title={r.label}
+            />
+          ))}
+        </Menu>
         <WebView
           ref={webViewRef}
           originWhitelist={['*']}
@@ -248,11 +287,11 @@ const MapLocationBased = () => {
           onMessage={onMessage}
         />
         <View style={styles.buttonContainer}>
-        <Button
-          title="Confirm"
-          color="#05652D"
-          onPress={confirmSelection}
-        />
+          <Button
+            title="Confirm"
+            color="#05652D"
+            onPress={confirmSelection}
+          />
         </View>
       </View>
     </Provider>
@@ -260,23 +299,23 @@ const MapLocationBased = () => {
 };
 
 const styles = StyleSheet.create({
-    menuStyle: {
-      //
-    },
-    infoContainer: {
-        padding: 10,
-        backgroundColor: '#ffffff', 
-      },
-      infoText: {
-        padding: 10,
-        fontSize: 16,
-        color: '#000000',
-        backgroundColor: '#ffffff',
-      },
-      buttonContainer: {
-        margin: 10, 
-        marginHorizontal: 40,
-      },
-  })
+  menuStyle: {
+    //
+  },
+  infoContainer: {
+    padding: 10,
+    backgroundColor: '#ffffff', 
+  },
+  infoText: {
+    padding: 10,
+    fontSize: 16,
+    color: '#000000',
+    backgroundColor: '#ffffff',
+  },
+  buttonContainer: {
+    margin: 10, 
+    marginHorizontal: 40,
+  },
+})
 
 export default MapLocationBased;
