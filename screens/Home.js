@@ -33,14 +33,14 @@ const Home = ({ navigation, route }) => {
 
   const [categoryType, setCategoryType] = useState('productCategories');
 
-  const [selectedCity, setSelectedCity] = useState('Cebu'); 
+  const [selectedAreas, setSelectedAreas] = useState(['Cebu']);
 
   useFocusEffect(
     React.useCallback(() => {
-      if (route.params?.selectedCity) {
-        setSelectedCity(route.params.selectedCity);
+      if (route.params?.selectedAreas) {
+        setSelectedAreas(route.params.selectedAreas);
       }
-    }, [route.params?.selectedCity])
+    }, [route.params?.selectedAreas])
   );
 
   useEffect(() => {
@@ -89,22 +89,22 @@ const Home = ({ navigation, route }) => {
   useEffect(() => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
-    try {
-      const collectionName = categoryType === 'productCategories' ? "categories" : "donationCategories";
-      const querySnapshot = await getDocs(collection(db, collectionName));
-      let categories = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      categories.sort((a, b) => a.title.localeCompare(b.title));
-      setFirestoreCategories(categories);
-      setLoadingCategories(false); 
-    } catch (error) {
-      console.error("Error fetching categories: ", error);
-      setLoadingCategories(false); 
-    }
-  };
-  
+      try {
+        const collectionName = categoryType === 'productCategories' ? "categories" : "donationCategories";
+        const querySnapshot = await getDocs(collection(db, collectionName));
+        let categories = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        categories.sort((a, b) => a.title.localeCompare(b.title));
+        setFirestoreCategories(categories);
+        setLoadingCategories(false); 
+      } catch (error) {
+        console.error("Error fetching categories: ", error);
+        setLoadingCategories(false); 
+      }
+    };
+    
     fetchCategories();
   }, [categoryType]);
 
@@ -176,12 +176,12 @@ const Home = ({ navigation, route }) => {
       const allProductsSnapshot = await getDocs(allProductsQuery);
       let allProducts = allProductsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   
-      const currentLocation = selectedCity.toLowerCase();
+      const lowerCaseSelectedAreas = selectedAreas.map(area => area.toLowerCase());
   
       allProducts = allProducts
         .filter(product => 
           product.seller_email !== user.email && 
-          product.location.toLowerCase().includes(currentLocation)
+          lowerCaseSelectedAreas.some(area => product.location.toLowerCase().includes(area))
         )
         .sort((a, b) => (productHits[b.id] || 0) - (productHits[a.id] || 0));
   
@@ -192,13 +192,13 @@ const Home = ({ navigation, route }) => {
       const relatedCategoryProducts = allProducts.filter(product =>
         product.category === topCategory &&
         !topProducts.includes(product) &&
-        product.location.toLowerCase().includes(currentLocation)
+        lowerCaseSelectedAreas.some(area => product.location.toLowerCase().includes(area))
       ).slice(0, 5);
   
       const remainingProducts = allProducts.filter(product => 
         !topProducts.includes(product) &&
         !relatedCategoryProducts.includes(product) &&
-        product.location.toLowerCase().includes(currentLocation)
+        lowerCaseSelectedAreas.some(area => product.location.toLowerCase().includes(area))
       );
   
       const combinedRecommendedProducts = [...topProducts, ...relatedCategoryProducts, ...remainingProducts];
@@ -213,7 +213,7 @@ const Home = ({ navigation, route }) => {
   
   useEffect(() => {
     fetchRecommendedProducts();
-  }, [selectedCity]);
+  }, [selectedAreas]);
   
   const handleSearchFocus = () => {
     navigation.navigate('SearchProducts', { searchText });
@@ -246,8 +246,6 @@ const Home = ({ navigation, route }) => {
         <Image source={{ uri: item.photo }} style={styles.carouselImage} />
         <View style={styles.carouselOverlay}>
           <Text style={styles.carouselName} numberOfLines={1} ellipsizeMode='tail'>{item.name}</Text>
-          {/* <Text style={styles.carouselCategory}>{item.category}</Text>
-          <Text style={styles.carouselPrice}>₱{item.price}</Text> */}
         </View>
       </View>
     </TouchableOpacity>
@@ -337,7 +335,7 @@ const Home = ({ navigation, route }) => {
           return;
         }
     
-        const currentLocation = selectedCity.toLowerCase();
+        const lowerCaseSelectedAreas = selectedAreas.map(area => area.toLowerCase());
         const userRecommendRef = doc(db, 'userRecommendDonation', user.uid);
         const userRecommendSnapshot = await getDoc(userRecommendRef);
         const donationHits = userRecommendSnapshot.exists() ? userRecommendSnapshot.data().donationHits || {} : {};
@@ -364,7 +362,7 @@ const Home = ({ navigation, route }) => {
         const recommendedDonations = [...topDonations, ...donorDonations, ...remainingDonations];
     
         let filteredRecommendedDonations = recommendedDonations.filter(donation =>
-          donation.location.toLowerCase().includes(currentLocation) &&
+          lowerCaseSelectedAreas.some(area => donation.location.toLowerCase().includes(area)) &&
           donation.isDonated !== true &&
           donation.isDisabled !== true &&
           donation.donor_email !== user.email
@@ -379,7 +377,7 @@ const Home = ({ navigation, route }) => {
     };
     
     fetchDonations();
-  }, [selectedCity]);
+  }, [selectedAreas]);
 
   const shuffleDonations = () => {
     let shuffled = [...donations];
@@ -452,29 +450,33 @@ const Home = ({ navigation, route }) => {
     fetchUnreadCount();
   }, []);
 
+  const showSelectedAreas = () => {
+    Alert.alert('Selected Area/s', selectedAreas.join(', '));
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.mainHeader}>  
         <View style={styles.searchContainer}>
-        <View style={styles.inputIconContainer}>
-          <Icon name="search" size={20} color="#A9A9A9" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search Products"
-            value={searchText}
-            onChangeText={setSearchText}
-            onFocus={handleSearchFocus}
-          />
-        </View>
+          <View style={styles.inputIconContainer}>
+            <Icon name="search" size={20} color="#A9A9A9" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search Products"
+              value={searchText}
+              onChangeText={setSearchText}
+              onFocus={handleSearchFocus}
+            />
+          </View>
           <View style={styles.iconsContainer}>
             <TouchableOpacity onPress={() => navigation.navigate('CCC')}>
-            <View style={{ position: 'relative' }}>
-              <Icon name="comments" size={24} color="#05652D" style={styles.icon} />
-              {unreadCount > 0 && (
-                <View style={styles.cartCountContainer}>
-                  <Text style={styles.cartCountText}>{unreadCount}</Text>
-                </View>
-              )}
+              <View style={{ position: 'relative' }}>
+                <Icon name="comments" size={24} color="#05652D" style={styles.icon} />
+                {unreadCount > 0 && (
+                  <View style={styles.cartCountContainer}>
+                    <Text style={styles.cartCountText}>{unreadCount}</Text>
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
@@ -488,110 +490,109 @@ const Home = ({ navigation, route }) => {
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.wishlistContainer} onPress={() => navigation.navigate('DonationWishlist')}>
-            <View style={{ position: 'relative' }}>
-              <Image source={wishlistIcon} style={styles.wishlistIcon} />
-              {wishlistCount > 0 && (
-                <View style={styles.cartCountContainer}>
-                  <Text style={styles.cartCountText}>{wishlistCount}</Text>
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
+              <View style={{ position: 'relative' }}>
+                <Image source={wishlistIcon} style={styles.wishlistIcon} />
+                {wishlistCount > 0 && (
+                  <View style={styles.cartCountContainer}>
+                    <Text style={styles.cartCountText}>{wishlistCount}</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
       <ScrollView>
-      <View style={styles.categoryHeader}>
-      <View style={styles.switchContainer}>
-      <Button
-            title="Product Categories"
-            onPress={() => setCategoryType('productCategories')}
-            color={categoryType === 'productCategories' ? '#05652D' : '#D3D3D3'}
-          />
-          <Button
-            title="Donation Categories"
-            onPress={() => setCategoryType('donationCategories')}
-            color={categoryType === 'donationCategories' ? '#05652D' : '#D3D3D3'}
-          />
-      </View>
-        <View style={styles.viewAllIconContainer}>
-          <TouchableOpacity onPress={toggleModal}>
-            <View style={styles.viewAllIconBackground}>
-              <Icon name="th-list" size={20} color="#FFF" />
-            </View>
-          </TouchableOpacity>
-        </View>
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isModalVisible}
-          onRequestClose={toggleModal}
-        >
-          <View style={styles.modalContainer}>
-            <TouchableOpacity style={styles.closeModalIconContainer} onPress={toggleModal}>
-              <Icon name="times-circle" size={30} color="#05652D" />
+        <View style={styles.categoryHeader}>
+          <View style={styles.switchContainer}>
+            <Button
+              title="Product Categories"
+              onPress={() => setCategoryType('productCategories')}
+              color={categoryType === 'productCategories' ? '#05652D' : '#D3D3D3'}
+            />
+            <Button
+              title="Donation Categories"
+              onPress={() => setCategoryType('donationCategories')}
+              color={categoryType === 'donationCategories' ? '#05652D' : '#D3D3D3'}
+            />
+          </View>
+          <View style={styles.viewAllIconContainer}>
+            <TouchableOpacity onPress={toggleModal}>
+              <View style={styles.viewAllIconBackground}>
+                <Icon name="th-list" size={20} color="#FFF" />
+              </View>
             </TouchableOpacity>
-            <TextInput
-              style={styles.modalSearchInput}
-              placeholder="Search Categories"
-              value={categorySearchText}
-              onChangeText={setCategorySearchText}
-            />
-            {categorySearchText !== '' && (
-              <Text style={styles.searchingText}>Searching '{categorySearchText}'...</Text>
-            )}
-            <ScrollView contentContainerStyle={styles.modalGrid}>
-              {firestoreCategories.filter(category => 
-                category.title.toLowerCase().includes(categorySearchText.toLowerCase())
-              ).length > 0 ? (
-                firestoreCategories.filter(category => 
-                  category.title.toLowerCase().includes(categorySearchText.toLowerCase())
-                ).map((category) => (
-                  <Category key={category.id} id={category.id} image={category.image} title={category.title} />
-                ))
-              ) : (
-                <View style={styles.notFoundContainer}>
-                  <Text style={styles.notFoundText}>Category not found.</Text>
-                </View>
+          </View>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isModalVisible}
+            onRequestClose={toggleModal}
+          >
+            <View style={styles.modalContainer}>
+              <TouchableOpacity style={styles.closeModalIconContainer} onPress={toggleModal}>
+                <Icon name="times-circle" size={30} color="#05652D" />
+              </TouchableOpacity>
+              <TextInput
+                style={styles.modalSearchInput}
+                placeholder="Search Categories"
+                value={categorySearchText}
+                onChangeText={setCategorySearchText}
+              />
+              {categorySearchText !== '' && (
+                <Text style={styles.searchingText}>Searching '{categorySearchText}'...</Text>
               )}
-            </ScrollView>
-          </View>
-        </Modal>
-        
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContainer}>
-          {firestoreCategories.map((category) => (
-            <Category
-              key={category.id}
-              id={category.id}
-              image={category.image}
-              title={category.title}
-              type={categoryType} 
-            />
-          ))}
-        </ScrollView>
-      </View>
+              <ScrollView contentContainerStyle={styles.modalGrid}>
+                {firestoreCategories.filter(category => 
+                  category.title.toLowerCase().includes(categorySearchText.toLowerCase())
+                ).length > 0 ? (
+                  firestoreCategories.filter(category => 
+                    category.title.toLowerCase().includes(categorySearchText.toLowerCase())
+                  ).map((category) => (
+                    <Category key={category.id} id={category.id} image={category.image} title={category.title} />
+                  ))
+                ) : (
+                  <View style={styles.notFoundContainer}>
+                    <Text style={styles.notFoundText}>Category not found.</Text>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </Modal>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContainer}>
+            {firestoreCategories.map((category) => (
+              <Category
+                key={category.id}
+                id={category.id}
+                image={category.image}
+                title={category.title}
+                type={categoryType} 
+              />
+            ))}
+          </ScrollView>
+        </View>
         <View style={[styles.carouselContainer, styles.sectionContainer]}>
-        {loadingMostPopular ? (
+          {loadingMostPopular ? (
             <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
-          </View>
-        ) : (
-        <FlatList
-          ref={carouselRef}
-          data={mostPopularProducts}
-          renderItem={renderProductItem}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          pagingEnabled
-          onScrollToIndexFailed={(info) => {
-            const wait = new Promise((resolve) => setTimeout(resolve, 500));
-            wait.then(() => {
-              carouselRef.current?.scrollToIndex({ index: info.index, animated: true });
-            });
-          }}
-        />
-      )}
+              <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
+            </View>
+          ) : (
+            <FlatList
+              ref={carouselRef}
+              data={mostPopularProducts}
+              renderItem={renderProductItem}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              pagingEnabled
+              onScrollToIndexFailed={(info) => {
+                const wait = new Promise((resolve) => setTimeout(resolve, 500));
+                wait.then(() => {
+                  carouselRef.current?.scrollToIndex({ index: info.index, animated: true });
+                });
+              }}
+            />
+          )}
           <View style={styles.carouselTitleContainer}>
             <Text style={styles.carouselTitle}>{selectedHeader}</Text>
           </View>
@@ -600,19 +601,25 @@ const Home = ({ navigation, route }) => {
           <View style={styles.locationHeader}>
             <Text style={styles.sectionTitle}>Recommended for You</Text>
             <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBasedHome')}>
-              <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
-            </TouchableOpacity>
+            <Text style={styles.filterText} numberOfLines={1} ellipsizeMode="tail">
+            {selectedAreas.join(', ').length > 15 ? `${selectedAreas.join(', ').substring(0, 10)}...` : selectedAreas.join(', ')}
+          </Text>
+          <Icon name="filter" size={20} color="#666" style={styles.filterIcon} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={showSelectedAreas} style={styles.showAllButton}>
+          <Text style={styles.showAllButtonText}>View</Text>
+        </TouchableOpacity>
           </View>
           {loadingRecommended ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
-                    </View>
-                ) : recommendedProducts.length === 0 ? (
-                    <View style={styles.emptyProductIcon}>
-                        <Icon name="shopping-bag" size={50} color="#D3D3D3" />
-                        <Text style={styles.notFoundText}>No products found in {selectedCity}</Text>
-                    </View>
-                ) : (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
+            </View>
+          ) : recommendedProducts.length === 0 ? (
+            <View style={styles.emptyProductIcon}>
+              <Icon name="shopping-bag" size={50} color="#D3D3D3" />
+              <Text style={styles.notFoundText}>No products found in {selectedAreas.join(', ')}</Text>
+            </View>
+          ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {recommendedProducts.map((product) => (
                 <View key={product.id}>
@@ -623,31 +630,31 @@ const Home = ({ navigation, route }) => {
           )}
         </View>
         <View style={[styles.donationsContainer, styles.sectionContainer]}>
-                <View style={styles.donationsHeader}>
-                    <Text style={styles.sectionTitle}>Donations You Can Request</Text>
-                    <TouchableOpacity onPress={shuffleDonations} style={styles.shuffleButton}>
-                        <Icon name="random" size={20} color="#05652D" />
-                    </TouchableOpacity>
+          <View style={styles.donationsHeader}>
+            <Text style={styles.sectionTitle}>Donations You Can Request</Text>
+            <TouchableOpacity onPress={shuffleDonations} style={styles.shuffleButton}>
+              <Icon name="random" size={20} color="#05652D" />
+            </TouchableOpacity>
+          </View>
+          {loadingDonations ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
+            </View>
+          ) : donations.length === 0 ? (
+            <View style={styles.emptyProductIcon}>
+              <Icon2 name="hand-heart" size={50} color="#D3D3D3" />
+              <Text style={styles.notFoundText}>No donations found in {selectedAreas.join(', ')}</Text>
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {donations.map((donation) => (
+                <View key={donation.id}>
+                  <DonationItem item={donation} />
                 </View>
-                {loadingDonations ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#05652D" style={styles.loadingIndicator}/>
-                    </View>
-                ) : donations.length === 0 ? (
-                    <View style={styles.emptyProductIcon}>
-                        <Icon2 name="hand-heart" size={50} color="#D3D3D3" />
-                        <Text style={styles.notFoundText}>No donations found in {selectedCity}</Text>
-                    </View>
-                ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {donations.map((donation) => (
-              <View key={donation.id}>
-                <DonationItem item={donation} />
-              </View>
-            ))}
-          </ScrollView>
-        )}
-      </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -1116,7 +1123,8 @@ searchSuggestions: {
     borderRadius: 20,
     paddingVertical: 5,
     paddingHorizontal: 10,
-    top: -10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   filterText: {
     color: '#05652D',
@@ -1267,6 +1275,19 @@ searchSuggestions: {
     color: '#FFF', 
     marginLeft: 5,
     fontWeight: 'bold',
+  },
+  showAllButton: {
+    position: 'absolute',
+    top: -15,
+    right: 0,
+    padding: 5,
+    backgroundColor: '#05652D',
+    borderRadius: 10,
+  },
+  showAllButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 9,
   },
 });
 
