@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { WebView } from 'react-native-webview';
 import { View, Button, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Menu, Provider } from 'react-native-paper';
@@ -7,11 +7,20 @@ import { useNavigation } from '@react-navigation/native';
 const MapLocationBasedDonation = () => {
   const [location, setLocation] = useState({ lat: 10.3157, lng: 123.8854 });
   const [city, setCity] = useState('Cebu');
+  const [radius, setRadius] = useState(5000); 
+  const [radiusLabel, setRadiusLabel] = useState('Small');
+  const [selectedAreas, setSelectedAreas] = useState(['Cebu']);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [radiusMenuVisible, setRadiusMenuVisible] = useState(false);
   const navigation = useNavigation();
+  const webViewRef = useRef(null);
+
+  // const confirmSelection = () => {
+  //   navigation.navigate('SearchDonations', { selectedCity: city });
+  // };
 
   const confirmSelection = () => {
-    navigation.navigate('SearchDonations', { selectedCity: city });
+    navigation.navigate('SearchDonations', { selectedAreas });
   };
 
   const cities = [
@@ -66,13 +75,26 @@ const MapLocationBasedDonation = () => {
     { name: 'Tudela', lat: 10.6172, lng: 124.4133 },
   ];
 
+  const radii = [
+    { label: 'Small', value: 5000 },
+    { label: 'Medium', value: 10000 },
+    { label: 'Large', value: 15000 },
+    { label: 'Extra Large', value: 20000 },
+    { label: 'Huge', value: 25000 },
+    { label: 'Gigantic', value: 30000 },
+  ];
+
   useEffect(() => {
     webViewRef.current?.injectJavaScript(`
       if(window.updateMap) {
-        updateMap(${location.lat}, ${location.lng}, '${city}');
+        updateMap(${location.lat}, ${location.lng}, '${city}', ${radius});
       }
     `);
-  }, [location, city]);
+  }, [location, city, radius]);
+
+  useEffect(() => {
+    updateSelectedAreas({ lat: location.lat, lng: location.lng, name: city });
+  }, [radius]);
 
   const onMessage = (event) => {
     try {
@@ -81,13 +103,38 @@ const MapLocationBasedDonation = () => {
       const selectedCity = cities.find(c => c.name === data.city);
       if (selectedCity) {
         setLocation({ lat: selectedCity.lat, lng: selectedCity.lng });
+        updateSelectedAreas(selectedCity);
       }
     } catch (e) {
       console.error("Failed to parse message from webview:", e);
     }
   };
 
-  const webViewRef = React.useRef(null);
+  const calculateDistance = (lat1, lng1, lat2, lng2) => {
+    const R = 6371; 
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLng = (lng2 - lng1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c * 1000; 
+    return distance;
+  };
+
+  const updateSelectedAreas = (selectedCity) => {
+    const newSelectedAreas = cities.filter(city => {
+      const distance = calculateDistance(selectedCity.lat, selectedCity.lng, city.lat, city.lng);
+      return distance <= radius && city.name !== selectedCity.name;
+    }).map(city => city.name);
+
+    if (radiusLabel === 'Small') {
+      setSelectedAreas([selectedCity.name]);
+    } else {
+      setSelectedAreas([selectedCity.name, ...newSelectedAreas]);
+    }
+  };
 
   const htmlContent = `
   <!DOCTYPE html>
@@ -117,7 +164,7 @@ const MapLocationBasedDonation = () => {
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g"></script>
     <script>
       var map, marker, circle, infoWindow;
-      function initMap(latitude, longitude, name) {
+      function initMap(latitude, longitude, name, radius) {
         var position = { lat: latitude, lng: longitude };
         map = new google.maps.Map(document.getElementById('map'), {
             zoom: 12,
@@ -137,7 +184,7 @@ const MapLocationBasedDonation = () => {
             fillOpacity: 0.35,
             map: map,
             center: position,
-            radius: 5000 // 5 kilometers
+            radius: radius // Use the radius parameter
         });
     
         infoWindow = new google.maps.InfoWindow({
@@ -159,12 +206,13 @@ const MapLocationBasedDonation = () => {
         geocodeLatLng(latLng);
     }
   
-    function updateMap(latitude, longitude, name) {
-        console.log("Updating map to: ", latitude, longitude, name); // Add this line
+    function updateMap(latitude, longitude, name, radius) {
+        console.log("Updating map to: ", latitude, longitude, name, radius); // Add this line
         var newPosition = {lat: latitude, lng: longitude};
         map.setCenter(newPosition);
         marker.setPosition(newPosition);
         circle.setCenter(newPosition);
+        circle.setRadius(radius); // Update the radius
         marker.setTitle(name);
         infoWindow.setContent(name);
         infoWindow.open(map, marker);
@@ -196,13 +244,12 @@ const MapLocationBasedDonation = () => {
       }
     </script>
   </head>
-  <body onload="initMap(${location.lat}, ${location.lng}, '${city}')">
+  <body onload="initMap(${location.lat}, ${location.lng}, '${city}', ${radius})">
     <div id="map"></div>
     <div id="label">${city}</div>
   </body>
   </html>
   `;
-  
 
   return (
     <Provider>
@@ -226,7 +273,7 @@ const MapLocationBasedDonation = () => {
                 setLocation({ lat: c.lat, lng: c.lng });
                 setTimeout(() => {
                   webViewRef.current?.injectJavaScript(`
-                    updateMap(${c.lat}, ${c.lng}, '${c.name}');
+                    updateMap(${c.lat}, ${c.lng}, '${c.name}', ${radius});
                   `);
                 }, 100); 
                 setMenuVisible(false);
@@ -236,8 +283,37 @@ const MapLocationBasedDonation = () => {
           ))}
         </Menu>
         <TouchableOpacity onPress={() => setMenuVisible(true)}>
-        <Text style={styles.infoText}>Selected Area: {city}</Text>
+          <Text style={styles.infoText}>Targeted Area: {city}</Text>
         </TouchableOpacity>
+        <Menu
+          visible={radiusMenuVisible}
+          onDismiss={() => setRadiusMenuVisible(false)}
+          anchor={
+            <Button
+              onPress={() => setRadiusMenuVisible(true)}
+              title={`Radius: ${radiusLabel}`}
+              color="#008000"
+            />
+          }
+        >
+          {radii.map((r, index) => (
+            <Menu.Item
+              key={index}
+              onPress={() => {
+                setRadius(r.value);
+                setRadiusLabel(r.label);
+                setTimeout(() => {
+                  webViewRef.current?.injectJavaScript(`
+                    updateMap(${location.lat}, ${location.lng}, '${city}', ${r.value});
+                  `);
+                }, 100);
+                updateSelectedAreas({ lat: location.lat, lng: location.lng, name: city });
+                setRadiusMenuVisible(false);
+              }}
+              title={r.label}
+            />
+          ))}
+        </Menu>
         <WebView
           ref={webViewRef}
           originWhitelist={['*']}
@@ -247,12 +323,15 @@ const MapLocationBasedDonation = () => {
           domStorageEnabled={true}
           onMessage={onMessage}
         />
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoText}>Selected Area/s: {selectedAreas.join(', ')}</Text>
+        </View>
         <View style={styles.buttonContainer}>
-        <Button
-          title="Confirm"
-          color="#05652D"
-          onPress={confirmSelection}
-        />
+          <Button
+            title="Confirm"
+            color="#05652D"
+            onPress={confirmSelection}
+          />
         </View>
       </View>
     </Provider>
@@ -260,23 +339,23 @@ const MapLocationBasedDonation = () => {
 };
 
 const styles = StyleSheet.create({
-    menuStyle: {
-      //
-    },
-    infoContainer: {
-        padding: 10,
-        backgroundColor: '#ffffff', 
-      },
-      infoText: {
-        padding: 10,
-        fontSize: 16,
-        color: '#000000',
-        backgroundColor: '#ffffff',
-      },
-      buttonContainer: {
-        margin: 10, 
-        marginHorizontal: 40,
-      },
-  })
+  menuStyle: {
+    //
+  },
+  infoContainer: {
+    padding: 10,
+    backgroundColor: '#ffffff', 
+  },
+  infoText: {
+    padding: 10,
+    fontSize: 16,
+    color: '#000000',
+    backgroundColor: '#ffffff',
+  },
+  buttonContainer: {
+    margin: 10, 
+    marginHorizontal: 40,
+  },
+});
 
 export default MapLocationBasedDonation;

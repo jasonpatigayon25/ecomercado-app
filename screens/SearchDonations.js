@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView, ActivityIndicator } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, FlatList, Image, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { query, where, getDocs, collection, limit, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
@@ -19,12 +19,12 @@ const SearchDonations = () => {
   const [loadingRecommended, setLoadingRecommended] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
   
-  const [selectedCity, setSelectedCity] = useState('Cebu');
+  const [selectedAreas, setSelectedAreas] = useState(['Cebu']);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      if (navigation.getState().routes.slice(-1)[0].params?.selectedCity) {
-        setSelectedCity(navigation.getState().routes.slice(-1)[0].params.selectedCity);
+      if (navigation.getState().routes.slice(-1)[0].params?.selectedAreas) {
+        setSelectedAreas(navigation.getState().routes.slice(-1)[0].params.selectedAreas);
       }
       if (searchInputRef.current) {
         searchInputRef.current.focus();
@@ -45,16 +45,16 @@ const SearchDonations = () => {
         );
   
         const donationsResults = await getDocs(donationsQuery);
-        const currentLocation = selectedCity.toLowerCase();
+        const lowerCaseSelectedAreas = selectedAreas.map(area => area.toLowerCase());
         const searchLower = searchQuery.toLowerCase();
   
         const filteredData = donationsResults.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
           .filter(donation => 
-            donation.location && donation.location.toLowerCase().includes(currentLocation) &&
+            donation.location && lowerCaseSelectedAreas.some(area => donation.location.toLowerCase().includes(area)) &&
             ((donation.name && donation.name.toLowerCase().includes(searchLower)) ||
             (donation.itemNames && donation.itemNames.some(name => name.toLowerCase().includes(searchLower))) ||
-            (donation.category && donation.category.toLowerCase() === searchLower)) // Filter by complete category name
+            (donation.category && donation.category.toLowerCase() === searchLower)) 
           );
   
         setSearchResults(filteredData);
@@ -70,8 +70,7 @@ const SearchDonations = () => {
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery, selectedCity]);
-  
+  }, [searchQuery, selectedAreas]);
 
   useEffect(() => {
     const fetchRecommendedDonations = async () => {
@@ -96,11 +95,11 @@ const SearchDonations = () => {
         const allDonationsSnapshot = await getDocs(allDonationsQuery);
         let allDonations = allDonationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
-        const currentLocation = selectedCity.toLowerCase();
+        const lowerCaseSelectedAreas = selectedAreas.map(area => area.toLowerCase());
         allDonations = allDonations
           .filter(donation => 
             donation.donor_email !== user.email &&
-            donation.location && donation.location.toLowerCase().includes(currentLocation)
+            donation.location && lowerCaseSelectedAreas.some(area => donation.location.toLowerCase().includes(area))
           )
           .sort((a, b) => (donationHits[b.id] || 0) - (donationHits[a.id] || 0));
   
@@ -124,7 +123,7 @@ const SearchDonations = () => {
     };
   
     fetchRecommendedDonations();
-  }, [selectedCity]);
+  }, [selectedAreas]);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -256,7 +255,10 @@ const SearchDonations = () => {
     </TouchableOpacity>
   );
 
-  
+  const showSelectedAreas = () => {
+    Alert.alert('Selected Area/s', selectedAreas.join(', '));
+  };
+
   const clearSearch = () => {
     setSearchQuery('');
     if (searchInputRef.current) {
@@ -293,7 +295,13 @@ const SearchDonations = () => {
           <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Products</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBasedDonation')}>
-          <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
+        <Text style={styles.filterText} numberOfLines={1} ellipsizeMode="tail">
+            {selectedAreas.join(', ').length > 15 ? `${selectedAreas.join(', ').substring(0, 15)}...` : selectedAreas.join(', ')}
+          </Text>
+          <Icon name="filter" size={20} color="#666" style={styles.filterIcon} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={showSelectedAreas} style={styles.showAllButton}>
+          <Text style={styles.showAllButtonText}>View</Text>
         </TouchableOpacity>
       </View>
   
@@ -325,7 +333,7 @@ const SearchDonations = () => {
         <View style={styles.noResultsContainer}>
           <Icon name="search" size={20} color="#ccc" />
           <Text style={styles.noResultsText}>No donations found for '{searchQuery}'
-          {selectedCity && selectedCity !== 'Cebu' && ` in ${selectedCity}`}</Text>
+          {selectedAreas.length > 0 && ` in ${selectedAreas.join(', ')}`}</Text>
         </View>
       )}
   
@@ -381,7 +389,7 @@ const SearchDonations = () => {
         ) : (
           <View style={styles.noResultsContainer}>
             <Icon name="search" size={20} color="#ccc" />
-            <Text style={styles.noResultsText}>No donations found in {selectedCity}</Text>
+            <Text style={styles.noResultsText}>No donations found in {selectedAreas.join(', ')}</Text>
           </View>
         )}
       </>
@@ -592,23 +600,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 5,
     paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   switchText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
     paddingHorizontal: 5,
-  },
-  noResultsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  noResultsText: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 10,
   },
   noResultsContainer: {
     flex: 1,
@@ -637,6 +636,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+  },
+  showAllButton: {
+    position: 'absolute',
+    top: -15,
+    right: 10,
+    padding: 5,
+    backgroundColor: '#05652D',
+    borderRadius: 10,
+  },
+  showAllButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 9,
   },
 });
 
