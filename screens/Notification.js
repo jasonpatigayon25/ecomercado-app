@@ -107,7 +107,24 @@ const Notification = ({ navigation }) => {
       'donation_confirmed': 'Acquired',
       'request_declined': 'Taken/Declined',
     };
-  
+
+    const typeToTabProductApproved = {
+      'approved_product': 'Approved Posts',
+    };
+
+    const typeToTabProductDeclined = {
+      'declined_product': 'Suspended Products',
+    };
+
+    const typeToTabDonationApproved = {
+      'approved_donation': 'Approved Posts',
+    };
+
+    const typeToTabDonationDeclined = {
+      'declined_donation': 'Suspended Donations',
+    };
+
+
     const navigateToTabSeller = typeToTabSeller[notification.type];
     if (navigateToTabSeller) {
       navigation.navigate('SellerOrderManagement', { selectedTab: navigateToTabSeller });
@@ -131,7 +148,34 @@ const Notification = ({ navigation }) => {
       navigation.navigate('RequestHistory', { selectedTab: navigateToTabRequester });
       return;
     }
+
+    const navigateToTabProductApproved = typeToTabProductApproved[notification.type];
+    if (navigateToTabProductApproved) {
+      navigation.navigate('ProductPosts', { selectedTab: navigateToTabProductApproved });
+      return;
+    }
+
+    const navigateToTabProductDeclined = typeToTabProductDeclined[notification.type];
+    if (navigateToTabProductDeclined) {
+      navigation.navigate('SuspendedProducts', { selectedTab: navigateToTabProductDeclined });
+      return;
+    }
+
+    const navigateToTabDonationApproved = typeToTabDonationApproved[notification.type];
+    if (navigateToTabDonationApproved) {
+      navigation.navigate('DonationPosts', { selectedTab: navigateToTabDonationApproved });
+      return;
+    }
+
+    const navigateToTabDonationDeclined = typeToTabDonationDeclined[notification.type];
+    if (navigateToTabDonationDeclined) {
+      navigation.navigate('SuspendedDonation', { selectedTab: navigateToTabDonationDeclined });
+      return;
+    }
+
   };
+
+  
 
   const handleDeleteSelectedNotifications = async () => {
     if (selectedNotifications.length === 0) {
@@ -200,7 +244,19 @@ const Notification = ({ navigation }) => {
         'request_delivery_confirmation': 'check-circle',
         'donation_confirmed': 'flag',
         'request_declined': 'times-circle',
+        'approved_product': 'shopping-bag',
+        'declined_product': 'shopping-bag',
+        'approved_donation': 'heart',
+        'declined_donation': 'heart',
     };
+
+    const overlayIconMap = {
+      'approved_product': { icon: 'check-circle', color: 'darkgreen' },
+      'declined_product': { icon: 'times-circle', color: 'red' },
+      'approved_donation': { icon: 'check-circle', color: 'darkgreen' },
+      'declined_donation': { icon: 'times-circle', color: 'red' },
+    };
+  
 
     const colorMap = {
         'new_order': '#32CD32', 
@@ -228,6 +284,10 @@ const Notification = ({ navigation }) => {
         'request_delivery_confirmation': '#4682B4', 
         'donation_confirmed': '#4682B4', 
         'request_declined': '#4682B4', 
+        'approved_product': '#32CD32',
+        'declined_product': '#32CD32',
+        'approved_donation': '#4682B4',
+        'declined_donation': '#4682B4',
     };
 
     const notificationStyle = notification.isRead
@@ -242,25 +302,34 @@ const Notification = ({ navigation }) => {
     );
 
     return (
-        <TouchableOpacity
-            key={notification.id}
-            style={notificationStyle}
-            onPress={() => handlePress(notification)}
-            onLongPress={() => handleLongPress(notification.id)}
-        >
-           {checkbox}
-            <Icon name={iconMap[notification.type]} size={24} color={colorMap[notification.type]} style={styles.notificationIcon} />
-
-            <View style={styles.notificationContent}>
-                <Text style={styles.notificationText}>{notification.text}</Text>
-                <Text style={styles.notificationTimestamp}>
-                    {notification.timestamp.toDate().toLocaleString()}
-                </Text>
-            </View>
-        </TouchableOpacity>
+      <TouchableOpacity
+        key={notification.id}
+        style={notificationStyle}
+        onPress={() => handlePress(notification)}
+        onLongPress={() => handleLongPress(notification.id)}
+      >
+        {checkbox}
+        <View style={styles.iconContainer}>
+          <Icon name={iconMap[notification.type]} size={24} color={colorMap[notification.type]} style={styles.notificationIcon} />
+          {overlayIconMap[notification.type] && (
+            <Icon
+              name={overlayIconMap[notification.type].icon}
+              size={14}
+              color={overlayIconMap[notification.type].color}
+              style={styles.overlayIcon}
+            />
+          )}
+        </View>
+        <View style={styles.notificationContent}>
+          <Text style={styles.notificationText}>{notification.text}</Text>
+          <Text style={styles.notificationTimestamp}>
+            {notification.timestamp.toDate().toLocaleString()}
+          </Text>
+        </View>
+      </TouchableOpacity>
     );
-};
-
+  };
+  
   const renderEmptyNotification = () => (
     <View style={styles.emptyContainer}>
       <Icon name="bell-o" size={40} color="#888888" />
@@ -413,6 +482,20 @@ const styles = StyleSheet.create({
     color: 'red',
     padding: 15,
     textAlign: 'center',
+  },
+  iconContainer: {
+    position: 'relative',
+    marginRight: 15,
+  },
+  overlayIcon: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FFF',
+    borderRadius: 7,  
+  },
+  notificationIcon: {
+    position: 'relative',
   },
 });
 
