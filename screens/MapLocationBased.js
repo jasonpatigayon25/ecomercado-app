@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 const MapLocationBased = () => {
   const [location, setLocation] = useState({ lat: 10.3157, lng: 123.8854 });
   const [city, setCity] = useState('Cebu');
-  const [radius, setRadius] = useState(5000); // Default radius in meters
+  const [radius, setRadius] = useState(5000); 
   const [radiusLabel, setRadiusLabel] = useState('Small');
   const [selectedAreas, setSelectedAreas] = useState(['Cebu']);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -15,8 +15,12 @@ const MapLocationBased = () => {
   const navigation = useNavigation();
   const webViewRef = useRef(null);
 
+  // const confirmSelection = () => {
+  //   navigation.navigate('SearchProducts', { selectedCity: city });
+  // };
+
   const confirmSelection = () => {
-    navigation.navigate('SearchProducts', { selectedCity: city });
+    navigation.navigate('SearchProducts', { selectedAreas });
   };
 
   const cities = [
@@ -107,7 +111,7 @@ const MapLocationBased = () => {
   };
 
   const calculateDistance = (lat1, lng1, lat2, lng2) => {
-    const R = 6371; // Radius of the Earth in kilometers
+    const R = 6371; 
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLng = (lng2 - lng1) * (Math.PI / 180);
     const a =
@@ -115,7 +119,7 @@ const MapLocationBased = () => {
       Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
       Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c * 1000; // Distance in meters
+    const distance = R * c * 1000; 
     return distance;
   };
 
@@ -125,7 +129,6 @@ const MapLocationBased = () => {
       return distance <= radius && city.name !== selectedCity.name;
     }).map(city => city.name);
 
-    // If radius is small, select only the current city
     if (radiusLabel === 'Small') {
       setSelectedAreas([selectedCity.name]);
     } else {

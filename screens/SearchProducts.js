@@ -19,12 +19,12 @@ const SearchProducts = () => {
   const [loadingRecommended, setLoadingRecommended] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
-  const [selectedCity, setSelectedCity] = useState('Cebu'); 
+  const [selectedAreas, setSelectedAreas] = useState(['Cebu']); 
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      if (navigation.getState().routes.slice(-1)[0].params?.selectedCity) {
-        setSelectedCity(navigation.getState().routes.slice(-1)[0].params.selectedCity);
+      if (navigation.getState().routes.slice(-1)[0].params?.selectedAreas) {
+        setSelectedAreas(navigation.getState().routes.slice(-1)[0].params.selectedAreas);
       }
       if (searchInputRef.current) {
         searchInputRef.current.focus();
@@ -45,13 +45,13 @@ const SearchProducts = () => {
         );
 
         const productsResults = await getDocs(productsQuery);
-        const currentLocation = selectedCity.toLowerCase();
+        const lowerCaseSelectedAreas = selectedAreas.map(area => area.toLowerCase());
         const searchLower = searchQuery.toLowerCase();
 
         const filteredData = productsResults.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
           .filter(product => 
-            product.location && product.location.toLowerCase().includes(currentLocation) &&
+            product.location && lowerCaseSelectedAreas.some(area => product.location.toLowerCase().includes(area)) &&
             ((product.name && product.name.toLowerCase().includes(searchLower)) ||
             (product.category && product.category.toLowerCase() === searchLower)) 
           );
@@ -69,7 +69,7 @@ const SearchProducts = () => {
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery, selectedCity]);
+  }, [searchQuery, selectedAreas]);
 
   const fetchRecommendedProducts = async () => {
     setLoadingRecommended(true);
@@ -92,12 +92,12 @@ const SearchProducts = () => {
       const allProductsSnapshot = await getDocs(allProductsQuery);
       let allProducts = allProductsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   
-      const currentLocation = selectedCity.toLowerCase();
+      const lowerCaseSelectedAreas = selectedAreas.map(area => area.toLowerCase());
   
       allProducts = allProducts
         .filter(product =>
           product.seller_email !== user.email && 
-          product.location && product.location.toLowerCase().includes(currentLocation)
+          product.location && lowerCaseSelectedAreas.some(area => product.location.toLowerCase().includes(area))
         )
         .sort((a, b) => (productHits[b.id] || 0) - (productHits[a.id] || 0));
   
@@ -107,13 +107,13 @@ const SearchProducts = () => {
       const relatedCategoryProducts = allProducts.filter(product =>
         product.category === topCategory &&
         !topProducts.includes(product) &&
-        product.location.toLowerCase().includes(currentLocation)
+        lowerCaseSelectedAreas.some(area => product.location.toLowerCase().includes(area))
       ).slice(0, 5);
   
       const remainingProducts = allProducts.filter(product => 
         !topProducts.includes(product) &&
         !relatedCategoryProducts.includes(product) &&
-        product.location.toLowerCase().includes(currentLocation)
+        lowerCaseSelectedAreas.some(area => product.location.toLowerCase().includes(area))
       );
   
       const combinedRecommendedProducts = [...topProducts, ...relatedCategoryProducts, ...remainingProducts];
@@ -128,7 +128,7 @@ const SearchProducts = () => {
   
   useEffect(() => {
     fetchRecommendedProducts();
-  }, [selectedCity]);
+  }, [selectedAreas]);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -309,8 +309,11 @@ const SearchProducts = () => {
           <Text style={styles.switchText}><Icon name="search" size={16} color="#fff" /> Search Donation</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.filterContainer} onPress={() => navigation.navigate('MapLocationBased')}>
-          <Text style={styles.filterText}>{selectedCity} <Icon name="filter" size={20} color="#666" /></Text>
-        </TouchableOpacity>
+        <Text style={styles.filterText} numberOfLines={1} ellipsizeMode="tail">
+          {selectedAreas.join(', ').length > 15 ? `${selectedAreas.join(', ').substring(0, 15)}...` : selectedAreas.join(', ')}
+          <Icon name="filter" size={20} color="#666" />
+        </Text>
+      </TouchableOpacity>
       </View>
   
       <View style={styles.textContainer}>
@@ -343,7 +346,7 @@ const SearchProducts = () => {
           <Icon name="search" size={20} color="#ccc" />
           <Text style={styles.noResultsText}>
             No products found for '{searchQuery}'
-            {selectedCity && selectedCity !== 'Cebu' && ` in ${selectedCity}`}
+            {selectedAreas.length > 0 && ` in ${selectedAreas.join(', ')}`}
           </Text>
         </View>
       )}
@@ -397,7 +400,7 @@ const SearchProducts = () => {
     ) : (
       <View style={styles.noResultsContainer}>
         <Icon name="search" size={50} color="#ccc" />
-        <Text style={styles.noResultsText}>No products found in {selectedCity}.</Text>
+        <Text style={styles.noResultsText}>No products found in {selectedAreas.join(', ')}.</Text>
       </View>
     )}
   </>
