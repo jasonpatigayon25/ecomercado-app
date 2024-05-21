@@ -17,7 +17,7 @@ const Wish = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [hasNoMatch, setHasNoMatch] = useState(false);
 
-  const CLARIFAI_PAT = '95126a1b714d4dbc92f898b1cae857d7';
+  const CLARIFAI_PAT = '7f42f6c08c0c4ca582dc8897524500b8';
   const USER_ID = 'clarifai';
   const APP_ID = 'main';
   const MODEL_ID = 'general-image-recognition';
@@ -132,6 +132,23 @@ const Wish = ({ navigation, route }) => {
       await uploadBytes(imageRef, blob);
 
       const imageUrl = await getDownloadURL(imageRef);
+      console.log('Uploaded Image URL:', imageUrl);
+
+      const raw = JSON.stringify({
+        "user_app_id": {
+          "user_id": USER_ID,
+          "app_id": APP_ID
+        },
+        "inputs": [
+          {
+            "data": {
+              "image": {
+                "url": imageUrl
+              }
+            }
+          }
+        ]
+      });
 
       const requestOptions = {
         method: 'POST',
@@ -139,25 +156,17 @@ const Wish = ({ navigation, route }) => {
           'Accept': 'application/json',
           'Authorization': 'Key ' + CLARIFAI_PAT
         },
-        body: JSON.stringify({
-          "user_app_id": {
-            "user_id": USER_ID,
-            "app_id": APP_ID
-          },
-          "inputs": [
-            {
-              "data": {
-                "image": {
-                  "url": imageUrl
-                }
-              }
-            }
-          ]
-        })
+        body: raw
       };
 
       const clarifaiResponse = await fetch(`https://api.clarifai.com/v2/models/${MODEL_ID}/versions/${MODEL_VERSION_ID}/outputs`, requestOptions);
       const clarifaiResult = await clarifaiResponse.json();
+
+      console.log('Clarifai Response:', JSON.stringify(clarifaiResult, null, 2));
+
+      if (!clarifaiResult.outputs || !clarifaiResult.outputs[0].data.concepts) {
+        throw new Error('No concepts found in the Clarifai response');
+      }
 
       const clarifaiConcepts = clarifaiResult.outputs[0].data.concepts.map(concept => concept.name.toLowerCase());
 
