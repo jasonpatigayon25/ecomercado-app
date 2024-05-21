@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, StyleSheet, FlatList, ScrollView  } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import axios from 'axios';
 import { db } from '../config/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getDocs, collection } from 'firebase/firestore';
@@ -13,11 +12,16 @@ const Wish = ({ navigation, route }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [matchedProducts, setMatchedProducts] = useState([]);
   const [error, setError] = useState('');
-  const [matchedImages, setMatchedImages] = useState([]);
   const [matchedProductsDetails, setMatchedProductsDetails] = useState([]);
   const [photoChosen, setPhotoChosen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hasNoMatch, setHasNoMatch] = useState(false);
+
+  const CLARIFAI_PAT = '95126a1b714d4dbc92f898b1cae857d7';
+  const USER_ID = 'clarifai';
+  const APP_ID = 'main';
+  const MODEL_ID = 'general-image-recognition';
+  const MODEL_VERSION_ID = 'aa7f35c01e0642fda5cf400f543e7c40';
 
   useEffect(() => {
     if (route.params?.shouldOpenConfirmModal) {
@@ -46,7 +50,7 @@ const Wish = ({ navigation, route }) => {
 
   useEffect(() => {
     startAnimation();
-  }, []);  
+  }, []);
 
   const handleChoosePhoto = async () => {
     let options = {
@@ -55,7 +59,7 @@ const Wish = ({ navigation, route }) => {
       aspect: [4, 3],
       quality: 1,
     };
-  
+
     Alert.alert(
       "Search Via Image",
       "Choose an option",
@@ -82,36 +86,32 @@ const Wish = ({ navigation, route }) => {
       { cancelable: true }
     );
   };
-  
-  
+
   const processImageResult = (result) => {
     if (!result.canceled) {
-        const imageUri = result.assets[0].uri;
-        setSelectedImage(imageUri);
-        saveImageToFolder(imageUri, 'taken_images');
-        detectProductsInImage(imageUri);
-        setPhotoChosen(true);
+      const imageUri = result.assets[0].uri;
+      setSelectedImage(imageUri);
+      saveImageToFolder(imageUri, 'taken_images');
+      detectProductsInImage(imageUri);
+      setPhotoChosen(true);
     }
-};
+  };
 
   const handleChooseAgain = () => {
     setHasNoMatch(false);
     setSelectedImage(null);
     setMatchedProducts([]);
-    setMatchedImages([]);
     setMatchedProductsDetails([]);
     setError('');
     setPhotoChosen(false);
-  
-    if (matchedProducts.length > 0) {
-      handleChoosePhoto();
-    }
+    handleChoosePhoto();
   };
+
   const saveImageToFolder = async (imageUri, folderName) => {
     try {
       const storage = getStorage();
       const imageRef = ref(storage, `${folderName}/${Date.now()}`);
-  
+
       const response = await fetch(imageUri);
       const blob = await response.blob();
       await uploadBytes(imageRef, blob);
@@ -126,75 +126,72 @@ const Wish = ({ navigation, route }) => {
       setLoading(true);
       const storage = getStorage();
       const imageRef = ref(storage, 'images/' + Date.now());
-  
+
       const response = await fetch(imageUri);
       const blob = await response.blob();
       await uploadBytes(imageRef, blob);
-  
+
       const imageUrl = await getDownloadURL(imageRef);
-  
-      const visionApiEndpoint = 'https://vision.googleapis.com/v1/images:annotate';
-      const apiKey = 'AIzaSyA6bqssrv5NTEf2lr6aZMSh_4hGrnjr32g';
-      const requestBody = {
-        requests: [
-          {
-            image: {
-              source: {
-                imageUri: imageUrl,
-              },
-            },
-            features: [
-              {
-                type: 'LABEL_DETECTION',
-                maxResults: 10,
-              },
-            ],
+
+      const requestOptions = {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Key ' + CLARIFAI_PAT
+        },
+        body: JSON.stringify({
+          "user_app_id": {
+            "user_id": USER_ID,
+            "app_id": APP_ID
           },
-        ],
+          "inputs": [
+            {
+              "data": {
+                "image": {
+                  "url": imageUrl
+                }
+              }
+            }
+          ]
+        })
       };
-  
-      const visionResponse = await axios.post(`${visionApiEndpoint}?key=${apiKey}`, requestBody);
-  
-      const labels = visionResponse.data.responses[0]?.labelAnnotations || [];
-      const detectedLabels = labels.map((label) => label.description.toLowerCase());
-  
+
+      const clarifaiResponse = await fetch(`https://api.clarifai.com/v2/models/${MODEL_ID}/versions/${MODEL_VERSION_ID}/outputs`, requestOptions);
+      const clarifaiResult = await clarifaiResponse.json();
+
+      const clarifaiConcepts = clarifaiResult.outputs[0].data.concepts.map(concept => concept.name.toLowerCase());
+
+      console.log('Clarifai Concepts:', clarifaiConcepts);
+
       const productsSnapshot = await getDocs(collection(db, 'products'));
       const matchedProductsData = [];
-  
+
       productsSnapshot.forEach((doc) => {
         const product = doc.data();
-        if (product.publicationStatus === 'approved' && detectedLabels.some((label) => product.name.toLowerCase().includes(label))) {
-          matchedProductsData.push({
-            id: doc.id,
-            ...product
-            // name: product.name,
-            // photo: product.photo,
-            // price: product.price,
-            // category: product.category,
-            // description: product.description,
-            // location: product.location,
-            // seller_email: product.seller_email,
-            // quantity: product.quantity
-          });
+        if (product.publicationStatus === 'approved') {
+          console.log('Product Name:', product.name);
+          console.log('Product Photo URL:', product.photo);
+          console.log('Product Categories:', product.category);
+          const isMatched = clarifaiConcepts.some(concept => product.name.toLowerCase().includes(concept) || product.category.toLowerCase().includes(concept));
+          if (isMatched) {
+            matchedProductsData.push({
+              id: doc.id,
+              ...product
+            });
+          }
         }
       });
-  
+
+      console.log('Matched Products Data:', matchedProductsData);
+
       const matchedProductNames = matchedProductsData.map(product => product.name);
       setMatchedProducts(matchedProductNames);
-      setMatchedImages(matchedProductsData.map(product => product.imageUrl));
       setMatchedProductsDetails(matchedProductsData);
 
       if (matchedProductNames.length === 0) {
-        setMatchedProducts(['No product found']);
-        setMatchedImages([]);
-      }
-
-      if (matchedProductsData.length === 0) {
         setHasNoMatch(true);
-        setMatchedProductsDetails([]); 
       } else {
-        setHasNoMatch(false); 
-        setMatchedProductsDetails(matchedProductsData); 
+        setHasNoMatch(false);
       }
       setLoading(false);
     } catch (error) {
@@ -210,7 +207,7 @@ const Wish = ({ navigation, route }) => {
       console.error("Product is undefined");
       return null;
     }
-  
+
     const isEvenIndex = index % 2 === 0;
 
     if (isEvenIndex) {
@@ -282,7 +279,7 @@ const Wish = ({ navigation, route }) => {
             </Text>
           </TouchableOpacity>
         </Animated.View>
-        
+
         {selectedImage && (
           <View style={styles.imageContainer}>
             <Text style={styles.matchedImagesSearch}>Searched Image:</Text>
@@ -318,7 +315,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF', 
+    backgroundColor: '#FFF',
     paddingVertical: 15,
     paddingHorizontal: 10,
   },
@@ -326,7 +323,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   headerTitle: {
-    color: '#000', 
+    color: '#000',
     fontSize: 22,
     fontWeight: 'bold',
     marginLeft: 20,
@@ -335,26 +332,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   imageContainer: {
-    flexDirection: 'row', 
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between', 
+    justifyContent: 'space-between',
     marginVertical: 20,
-    paddingHorizontal: 10, 
+    paddingHorizontal: 10,
   },
   image: {
     width: 80,
     height: 80,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#D3D3D3', 
+    borderColor: '#D3D3D3',
   },
   matchedImagesContainer: {
-    flexDirection: 'row', 
+    flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between', 
+    justifyContent: 'space-between',
     alignItems: 'center',
-    // paddingBottom: 20,
-    // paddingHorizontal: 10, 
   },
   matchedImagesSearch: {
     fontSize: 20,
@@ -381,7 +376,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   circleButton: {
-    backgroundColor: '#05652D', 
+    backgroundColor: '#05652D',
     padding: 20,
     borderRadius: 100,
     justifyContent: 'center',
@@ -404,7 +399,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   matchedProductCard: {
-    width: '50%', 
+    width: '50%',
     backgroundColor: '#FFF',
     padding: 10,
     marginVertical: 5,
@@ -418,7 +413,7 @@ const styles = StyleSheet.create({
   matchedProductTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333', 
+    color: '#333',
     marginBottom: 5,
   },
   matchedProductText: {
@@ -464,47 +459,41 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   matchedProductsList: {
-  marginTop: 10,
-  paddingHorizontal: 20,
-},
-matchedProductName: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  color: '#333',
-  marginBottom: 5,
-},
-searchImageButton: {
-  marginLeft: 50,
-},
-loadingIndicator: {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-loadingText: {
-  fontSize: 18,
-  fontWeight: 'bold',
-  marginTop: 10,
-  color: '#05652D',
-},
-noProductMatchedText: {
-  fontSize: 20,
-  fontWeight: 'bold',
-  color: '#666', 
-  marginTop: 20,
-},
-noProductMatchedText: {
-  fontSize: 20,
-  fontWeight: 'bold',
-  color: '#666', 
-  marginTop: 20,
-  textAlign: 'center', 
-},
+    marginTop: 10,
+    paddingHorizontal: 20,
+  },
+  matchedProductName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  searchImageButton: {
+    marginLeft: 50,
+  },
+  loadingIndicator: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 10,
+    color: '#05652D',
+  },
+  noProductMatchedText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#666',
+    marginTop: 20,
+    textAlign: 'center',
+  },
 });
 
 export default Wish;
