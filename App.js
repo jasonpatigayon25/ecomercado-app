@@ -1,3 +1,8 @@
+/* 
+ECOMercado
+Programmer/Designer: PATIGAYON, JASON B.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Alert, Keyboard } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -8,7 +13,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore, doc, getDoc, collection, where, getDocs, query } from 'firebase/firestore';
 import registerNNPushToken from 'native-notify';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
 
 // imported screens
 import SearchResults from './screens/SearchResults';
